@@ -83,14 +83,28 @@ export const getStaticProps: GetStaticProps = async (context) => {
   return { props: { plasmicData, queryCache }, revalidate: 60 };
 }
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const pageModules = await PLASMIC.fetchPages();
-  return {
-    paths: pageModules.map((mod) => ({
-      params: {
-        catchall: mod.path.substring(1).split("/"),
-      },
-    })),
-    fallback: "blocking",
-  };
+import type { GetServerSideProps } from "next";
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const catchall = context.params?.catchall;
+  const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
+  
+  const plasmicData = await PLASMIC.maybeFetchComponentData(plasmicPath);
+  if (!plasmicData) {
+    return { notFound: true };
+  }
+  const pageMeta = plasmicData.entryCompMetas[0];
+  
+  const queryCache = await extractPlasmicQueryData(
+    <PlasmicRootProvider
+      loader={PLASMIC}
+      prefetchedData={plasmicData}
+      pageRoute={pageMeta.path}
+      pageParams={pageMeta.params}
+    >
+      <PlasmicComponent component={pageMeta.displayName} />
+    </PlasmicRootProvider>
+  );
+  
+  return { props: { plasmicData, queryCache } };
 }
