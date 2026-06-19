@@ -36,6 +36,8 @@ export default function PlasmicLoaderPage(props: {
     return <Error statusCode={404} />;
   }
   const pageMeta = plasmicData.entryCompMetas[0];
+
+  console.log("Is System Dark Mode?", isDarkMode);
   
   return (
     <PlasmicRootProvider
