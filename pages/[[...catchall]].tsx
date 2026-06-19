@@ -50,7 +50,7 @@ export default function PlasmicLoaderPage(props: {
       globalVariants={[
         {
           name: "Mode",
-          value: mounted && isDarkMode ? "Dark" : undefined,
+          value: "Dark",
         },
       ]}
     >
