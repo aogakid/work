@@ -37,27 +37,29 @@ export default function PlasmicLoaderPage(props: {
   console.log("Is System Dark Mode?", isDarkMode);
   
   return (
-    <PlasmicRootProvider
-      loader={PLASMIC}
-      prefetchedData={plasmicData}
-      prefetchedQueryData={queryCache}
-      pageRoute={pageMeta.path}
-      pageParams={pageMeta.params}
-      pageQuery={router.query}
-    >
-      <PlasmicComponent 
-        component={pageMeta.displayName} 
-        componentProps={{
-          globalVariants: [
-            {
-              name: "Mode",
-              value: isDarkMode ? "Dark" : undefined,
-            }
-          ]
-        }}
-      />
-    </PlasmicRootProvider>
-  );
+  <PlasmicRootProvider
+    loader={PLASMIC}
+    prefetchedData={plasmicData}
+    prefetchedQueryData={queryCache}
+    pageRoute={pageMeta.path}
+    pageParams={pageMeta.params}
+    pageQuery={router.query}
+  >
+    <PlasmicComponent 
+      component={pageMeta.displayName} 
+      // 👇 THIS FORCES PLASMIC TO RE-RENDER IMMEDIATELY WHEN THEME FLIPS
+      key={isDarkMode ? "dark-mode" : "light-mode"} 
+      componentProps={{
+        globalVariants: [
+          {
+            name: "Mode",
+            value: isDarkMode ? "Dark" : undefined,
+          }
+        ]
+      }}
+    />
+  </PlasmicRootProvider>
+);
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
