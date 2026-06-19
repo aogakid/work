@@ -19,8 +19,10 @@ export default function PlasmicLoaderPage(props: {
   const router = useRouter();
 
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
+    setIsClient(true);
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(mediaQuery.matches);
 
@@ -47,13 +49,14 @@ export default function PlasmicLoaderPage(props: {
   >
     <PlasmicComponent 
       component={pageMeta.displayName} 
+      key={isClient ? (isDarkMode ? "dark-mode" : "light-mode") : "ssr"} 
       componentProps={{
-        globalVariants: [
+        globalVariants: isClient ? [
           {
             name: "Mode",
             value: isDarkMode ? "Dark" : undefined,
           }
-        ]
+        ] : []
       }}
     />
   </PlasmicRootProvider>
