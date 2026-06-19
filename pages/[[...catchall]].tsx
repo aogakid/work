@@ -58,7 +58,8 @@ export default function PlasmicLoaderPage(props: {
     />
   </PlasmicRootProvider>
 );
-  
+}
+
 export const getStaticProps: GetStaticProps = async (context) => {
   const { catchall } = context.params ?? {};
   const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
