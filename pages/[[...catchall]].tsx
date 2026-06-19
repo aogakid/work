@@ -5,7 +5,7 @@ import {
   ComponentRenderData,
   PlasmicRootProvider,
 } from "@plasmicapp/loader-nextjs";
-import type { GetStaticPaths, GetStaticProps } from "next";
+import type { GetServerSideProps } from "next"; 
 
 import Error from "next/error";
 import { useRouter } from "next/router";
@@ -37,61 +37,35 @@ export default function PlasmicLoaderPage(props: {
   console.log("Is System Dark Mode?", isDarkMode);
   
   return (
-  <PlasmicRootProvider
-    loader={PLASMIC}
-    prefetchedData={plasmicData}
-    prefetchedQueryData={queryCache}
-    pageRoute={pageMeta.path}
-    pageParams={pageMeta.params}
-    pageQuery={router.query}
-  >
-    <PlasmicComponent 
-      component={pageMeta.displayName} 
-      componentProps={{
-        globalVariants: [
-          {
-            name: "Mode",
-            value: isDarkMode ? "Dark" : undefined,
-          }
-        ]
-      }}
-    />
-  </PlasmicRootProvider>
-);
+    <PlasmicRootProvider
+      loader={PLASMIC}
+      prefetchedData={plasmicData}
+      prefetchedQueryData={queryCache}
+      pageRoute={pageMeta.path}
+      pageParams={pageMeta.params}
+      pageQuery={router.query}
+    >
+      <PlasmicComponent 
+        component={pageMeta.displayName} 
+        componentProps={{
+          globalVariants: [
+            {
+              name: "Mode",
+              value: isDarkMode ? "Dark" : undefined,
+            }
+          ]
+        }}
+      />
+    </PlasmicRootProvider>
+  );
 }
 
-export const getStaticProps: GetStaticProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async (context) => {
   const { catchall } = context.params ?? {};
   const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
   const plasmicData = await PLASMIC.maybeFetchComponentData(plasmicPath);
   if (!plasmicData) {
     return { props: {} };
-  }
-  const pageMeta = plasmicData.entryCompMetas[0];
-  
-  const queryCache = await extractPlasmicQueryData(
-    <PlasmicRootProvider
-      loader={PLASMIC}
-      prefetchedData={plasmicData}
-      pageRoute={pageMeta.path}
-      pageParams={pageMeta.params}
-    >
-      <PlasmicComponent component={pageMeta.displayName} />
-    </PlasmicRootProvider>
-  );
-  
-  return { props: { plasmicData, queryCache }, revalidate: 60 };
-}
-
-import type { GetServerSideProps } from "next";
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const catchall = context.params?.catchall;
-  const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
-  
-  const plasmicData = await PLASMIC.maybeFetchComponentData(plasmicPath);
-  if (!plasmicData) {
-    return { notFound: true };
   }
   const pageMeta = plasmicData.entryCompMetas[0];
   
