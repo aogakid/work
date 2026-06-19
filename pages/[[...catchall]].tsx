@@ -46,18 +46,15 @@ export default function PlasmicLoaderPage(props: {
     pageRoute={pageMeta.path}
     pageParams={pageMeta.params}
     pageQuery={router.query}
-    globalVariants={isClient ? {
-      Mode: isDarkMode ? "Dark" : "Light",
-    } : {}}
+    globalVariants={
+  isClient
+    ? (isDarkMode ? [{ name: "Mode", value: "Dark" }] : [])
+    : []
+}
   >
-        <PlasmicComponent 
-      component={pageMeta.displayName} 
-      key={isClient ? (isDarkMode ? "dark-mode" : "light-mode") : "ssr"} 
-      componentProps={{
-        globalVariants: isClient ? {
-          Mode: isDarkMode ? "Dark" : "Light",
-        } : {}
-      }}
+    <PlasmicComponent
+      component={pageMeta.displayName}
+      key={isClient ? (isDarkMode ? "dark-mode" : "light-mode") : "ssr"}
     />
   </PlasmicRootProvider>
 );
