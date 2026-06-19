@@ -19,6 +19,18 @@ export default function Document() {
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-title" content="Aogawork" />
         <link rel="manifest" href="/site.webmanifest" />
+        <style>{`
+          html, body {
+            background-color: #FFF9EB !important;
+            margin: 0;
+            padding: 0;
+          }
+          @media (prefers-color-scheme: dark) {
+            html, body {
+              background-color: #221F1C !important;
+            }
+          }
+        `}</style>
       </Head>
       <body>
         <Main />
