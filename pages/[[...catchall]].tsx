@@ -19,13 +19,14 @@ export default function PlasmicLoaderPage(props: {
   const router = useRouter();
 
   const [isDarkMode, setIsDarkMode] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false); 
 
   React.useEffect(() => {
-    // Check system preference immediately on mount
+    setMounted(true); 
+    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(mediaQuery.matches);
 
-    // Watch for system switches while the site is open
     const listener = (e: MediaQueryListEvent) => setIsDarkMode(e.matches);
     mediaQuery.addEventListener('change', listener);
     return () => mediaQuery.removeEventListener('change', listener);
@@ -47,7 +48,7 @@ export default function PlasmicLoaderPage(props: {
       globalVariants={[
         {
           name: "Mode",
-          value: isDarkMode ? "Dark" : undefined,
+          value: mounted && isDarkMode ? "Dark" : undefined,
         },
       ]}
     >
