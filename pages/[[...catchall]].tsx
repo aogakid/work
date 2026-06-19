@@ -19,10 +19,8 @@ export default function PlasmicLoaderPage(props: {
   const router = useRouter();
 
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
-    setIsClient(true);
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(mediaQuery.matches);
 
@@ -36,8 +34,6 @@ export default function PlasmicLoaderPage(props: {
   }
   const pageMeta = plasmicData.entryCompMetas[0];
 
-  console.log("Is System Dark Mode?", isDarkMode);
-  
   return (
   <PlasmicRootProvider
     loader={PLASMIC}
@@ -46,16 +42,9 @@ export default function PlasmicLoaderPage(props: {
     pageRoute={pageMeta.path}
     pageParams={pageMeta.params}
     pageQuery={router.query}
-    globalVariants={
-  isClient
-    ? (isDarkMode ? [{ name: "Mode", value: "Dark" }] : [])
-    : []
-}
+    globalVariants={isDarkMode ? [{ name: "Mode", value: "Dark" }] : []}
   >
-    <PlasmicComponent
-      component={pageMeta.displayName}
-      key={isClient ? (isDarkMode ? "dark-mode" : "light-mode") : "ssr"}
-    />
+    <PlasmicComponent component={pageMeta.displayName} />
   </PlasmicRootProvider>
 );
 }
