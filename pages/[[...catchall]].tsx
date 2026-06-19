@@ -37,25 +37,28 @@ export default function PlasmicLoaderPage(props: {
   console.log("Is System Dark Mode?", isDarkMode);
   
   return (
-    <PlasmicRootProvider
-      loader={PLASMIC}
-      prefetchedData={plasmicData}
-      prefetchedQueryData={queryCache}
-      pageRoute={pageMeta.path}
-      pageParams={pageMeta.params}
-      pageQuery={router.query}
-      globalVariants={[
-        {
-          name: "Mode",
-          value: isDarkMode ? "Dark" : undefined,
-        },
-      ]}
-    >
-      <PlasmicComponent component={pageMeta.displayName} />
-    </PlasmicRootProvider>
-  );
-}
-
+  <PlasmicRootProvider
+    loader={PLASMIC}
+    prefetchedData={plasmicData}
+    prefetchedQueryData={queryCache}
+    pageRoute={pageMeta.path}
+    pageParams={pageMeta.params}
+    pageQuery={router.query}
+  >
+    <PlasmicComponent 
+      component={pageMeta.displayName} 
+      componentProps={{
+        globalVariants: [
+          {
+            name: "Mode",
+            value: isDarkMode ? "Dark" : undefined,
+          }
+        ]
+      }}
+    />
+  </PlasmicRootProvider>
+);
+  
 export const getStaticProps: GetStaticProps = async (context) => {
   const { catchall } = context.params ?? {};
   const plasmicPath = typeof catchall === 'string' ? catchall : Array.isArray(catchall) ? `/${catchall.join('/')}` : '/';
