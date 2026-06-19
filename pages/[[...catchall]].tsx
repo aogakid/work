@@ -19,11 +19,8 @@ export default function PlasmicLoaderPage(props: {
   const router = useRouter();
 
   const [isDarkMode, setIsDarkMode] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false); 
 
   React.useEffect(() => {
-    setMounted(true); 
-    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     setIsDarkMode(mediaQuery.matches);
 
@@ -50,7 +47,7 @@ export default function PlasmicLoaderPage(props: {
       globalVariants={[
         {
           name: "Mode",
-          value: "Dark",
+          value: isDarkMode ? "Dark" : undefined,
         },
       ]}
     >
