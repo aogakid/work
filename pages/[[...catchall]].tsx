@@ -83,11 +83,11 @@ export default function PlasmicLoaderPage(props: {
 
 // Attach APIs to window outside React for Plasmic access
 if (typeof window !== 'undefined') {
-  (window as any).framerBloco = { copiar: () => {}, colar: () => {}, substituir: () => {} }
-  (window as any).framerApp = { colarNoInput: () => {}, executarPrompt: () => {}, copiarOutput: () => {}, limparTudo: () => {} }
-  (window as any).framerEncaminha = { colarNoInput: () => {}, executarEncaminhamento: () => {}, copiarOutput: () => {}, limparTudo: () => {} }
-  (window as any).framerTimer = { ativarCronometro: () => {} }
-  (window as any).framerGoogleSheets = { enviarParaPlanilha: () => {} }
+  ;(window as unknown as { framerBloco?: { copiar: () => void; colar: () => void; substituir: () => void } }).framerBloco = { copiar: () => {}, colar: () => {}, substituir: () => {} }
+  ;(window as unknown as { framerApp?: { colarNoInput: () => void; executarPrompt: () => void; copiarOutput: () => void; limparTudo: () => void } }).framerApp = { colarNoInput: () => {}, executarPrompt: () => {}, copiarOutput: () => {}, limparTudo: () => {} }
+  ;(window as unknown as { framerEncaminha?: { colarNoInput: () => void; executarEncaminhamento: () => void; copiarOutput: () => void; limparTudo: () => void } }).framerEncaminha = { colarNoInput: () => {}, executarEncaminhamento: () => {}, copiarOutput: () => {}, limparTudo: () => {} }
+  ;(window as unknown as { framerTimer?: { ativarCronometro: () => void } }).framerTimer = { ativarCronometro: () => {} }
+  ;(window as unknown as { framerGoogleSheets?: { enviarParaPlanilha: () => void } }).framerGoogleSheets = { enviarParaPlanilha: () => {} }
 }
 
 export const getStaticProps: GetStaticProps = async (context) => {
