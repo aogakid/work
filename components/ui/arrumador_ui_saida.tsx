@@ -207,32 +207,32 @@ export default function FormularioOutput() {
         const lidarComExecutarOuvinte = () => {
             app.executarPrompt?.()
         }
-        document.addEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
+        window.addEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
 
         const lidarComCopiarOuvinte = () => {
             app.copiarOutput?.()
         }
-        document.addEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
+        window.addEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
 
         const lidarComColarOuvinte = () => {
             app.colarNoInput?.()
         }
-        document.addEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
+        window.addEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
 
         const lidarComLimparOuvinte = () => {
             app.limparTudo?.()
         }
-        document.addEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
+        window.addEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
 
         return () => {
             app.executarPrompt = undefined
             app.copiarOutput = undefined
             app.colarNoInput = undefined
             app.limparTudo = undefined
-            document.removeEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
-            document.removeEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
-            document.removeEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
-            document.removeEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
+            window.removeEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
+            window.removeEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
+            window.removeEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
+            window.removeEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
         }
     }, [app, dispararRequisicao])
 

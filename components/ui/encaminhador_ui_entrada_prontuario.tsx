@@ -22,16 +22,16 @@ export default function EncaminhaInput() {
         const lidarComColarOuvinte = () => {
             enc.colarNoInput?.()
         }
-        document.addEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
+        window.addEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
 
         const lidarComExecutarOuvinte = () => {
             enc.executarEncaminhamento?.()
         }
-        document.addEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
+        window.addEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
 
         return () => {
-            document.removeEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
-            document.removeEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
+            window.removeEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
+            window.removeEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
         }
     }, [input, isStreaming, enc])
 

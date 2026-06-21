@@ -121,22 +121,22 @@ export default function Bloco() {
         const lidarComCopiarOuvinte = () => {
             editor.copiar()
         }
-        document.addEventListener("framerCopiar", lidarComCopiarOuvinte)
+        window.addEventListener("framerCopiar", lidarComCopiarOuvinte)
 
         const lidarComColarOuvinte = () => {
             editor.colar()
         }
-        document.addEventListener("framerColar", lidarComColarOuvinte)
+        window.addEventListener("framerColar", lidarComColarOuvinte)
 
         const lidarComLimparOuvinte = () => {
             editor.substituir("")
         }
-        document.addEventListener("framerLimpar", lidarComLimparOuvinte)
+        window.addEventListener("framerLimpar", lidarComLimparOuvinte)
 
         const lidarComCronometroOuvinte = () => {
             timer.ativarCronometro()
         }
-        document.addEventListener("framerCronometro", lidarComCronometroOuvinte)
+        window.addEventListener("framerCronometro", lidarComCronometroOuvinte)
 
         editor.copiar = () => {
             if (editorRef.current) {
@@ -168,10 +168,10 @@ export default function Bloco() {
                 "framerSubstituirTexto",
                 lidarComSubstituicaoOuvinte
             )
-            document.removeEventListener("framerCopiar", lidarComCopiarOuvinte)
-            document.removeEventListener("framerColar", lidarComColarOuvinte)
-            document.removeEventListener("framerLimpar", lidarComLimparOuvinte)
-            document.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
+            window.removeEventListener("framerCopiar", lidarComCopiarOuvinte)
+            window.removeEventListener("framerColar", lidarComColarOuvinte)
+            window.removeEventListener("framerLimpar", lidarComLimparOuvinte)
+            window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
         }
     }, [])
 

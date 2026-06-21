@@ -12,10 +12,10 @@ export default function EncaminhaEspecialidade() {
         const lidarComExecutarOuvinte = () => {
             enc.executarEncaminhamento?.()
         }
-        document.addEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
+        window.addEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
 
         return () => {
-            document.removeEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
+            window.removeEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
         }
     }, [specialty, enc])
 

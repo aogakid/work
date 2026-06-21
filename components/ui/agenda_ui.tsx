@@ -73,10 +73,10 @@ export default function GoogleSheetsInput() {
         const lidarComEnviarOuvinte = () => {
             sheets.enviarParaPlanilha?.()
         }
-        document.addEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
+        window.addEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
 
         return () => {
-            document.removeEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
+            window.removeEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
         }
     }, [enviarParaPlanilha, sheets])
 

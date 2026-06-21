@@ -21,16 +21,16 @@ export default function FormularioInput() {
         const lidarComColarOuvinte = () => {
             app.colarNoInput?.()
         }
-        document.addEventListener("framerColarArrumador", lidarComColarOuvinte)
+        window.addEventListener("framerColarArrumador", lidarComColarOuvinte)
 
         const lidarComExecutarOuvinte = () => {
             app.executarPrompt?.()
         }
-        document.addEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
+        window.addEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
 
         return () => {
-            document.removeEventListener("framerColarArrumador", lidarComColarOuvinte)
-            document.removeEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
+            window.removeEventListener("framerColarArrumador", lidarComColarOuvinte)
+            window.removeEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
         }
     }, [input, app, isStreaming])
 

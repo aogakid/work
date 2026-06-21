@@ -106,25 +106,25 @@ export default function EncaminhaOutput() {
         const lidarComExecutarOuvinte = () => {
             enc.executarEncaminhamento?.()
         }
-        document.addEventListener("framerExecutarEncaminhaSaida", lidarComExecutarOuvinte)
+        window.addEventListener("framerExecutarEncaminhaSaida", lidarComExecutarOuvinte)
 
         const lidarComCopiarOuvinte = () => {
             enc.copiarOutput?.()
         }
-        document.addEventListener("framerCopiarEncaminhaSaida", lidarComCopiarOuvinte)
+        window.addEventListener("framerCopiarEncaminhaSaida", lidarComCopiarOuvinte)
 
         const lidarComLimparOuvinte = () => {
             enc.limparTudo?.()
         }
-        document.addEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
+        window.addEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
 
         return () => {
             enc.executarEncaminhamento = undefined
             enc.copiarOutput = undefined
             enc.limparTudo = undefined
-            document.removeEventListener("framerExecutarEncaminhaSaida", lidarComExecutarOuvinte)
-            document.removeEventListener("framerCopiarEncaminhaSaida", lidarComCopiarOuvinte)
-            document.removeEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
+            window.removeEventListener("framerExecutarEncaminhaSaida", lidarComExecutarOuvinte)
+            window.removeEventListener("framerCopiarEncaminhaSaida", lidarComCopiarOuvinte)
+            window.removeEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
         }
     }, [enc, rawText, dispararRequisicao])
 
