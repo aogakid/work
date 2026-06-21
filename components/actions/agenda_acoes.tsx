@@ -1,8 +1,10 @@
-import { ComponentType, useState, useEffect, ReactNode } from "react"
+import { ComponentType, useState, useEffect, ReactNode, CSSProperties } from "react"
 import { useGoogleSheets } from "../contexts/AppContext"
 
-export function withGoogleSheetsSubmit(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function withGoogleSheetsSubmit<P extends { style?: CSSProperties; children?: ReactNode; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const sheets = useGoogleSheets()
         const [isCounting, setIsCounting] = useState(false)
 
@@ -96,8 +98,10 @@ export function withGoogleSheetsSubmit(Component): ComponentType {
     return WrappedComponent
 }
 
-export function withGoogleSheetsPaste(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function withGoogleSheetsPaste<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const sheets = useGoogleSheets()
         return (
             <Component
