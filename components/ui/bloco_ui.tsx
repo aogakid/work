@@ -8,7 +8,7 @@ export default function Bloco() {
         // Component initialization
     }, [editor])
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleMouseMove = () => {
         // Handler implementation
     }
 
