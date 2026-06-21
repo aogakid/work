@@ -118,6 +118,26 @@ export default function Bloco() {
             lidarComSubstituicaoOuvinte
         )
 
+        const lidarComCopiarOuvinte = () => {
+            editor.copiar()
+        }
+        document.addEventListener("framerCopiar", lidarComCopiarOuvinte)
+
+        const lidarComColarOuvinte = () => {
+            editor.colar()
+        }
+        document.addEventListener("framerColar", lidarComColarOuvinte)
+
+        const lidarComLimparOuvinte = () => {
+            editor.substituir("")
+        }
+        document.addEventListener("framerLimpar", lidarComLimparOuvinte)
+
+        const lidarComCronometroOuvinte = () => {
+            timer.ativarCronometro()
+        }
+        document.addEventListener("framerCronometro", lidarComCronometroOuvinte)
+
         editor.copiar = () => {
             if (editorRef.current) {
                 const textoLimpo = limparTextoInvisivel(
@@ -148,6 +168,10 @@ export default function Bloco() {
                 "framerSubstituirTexto",
                 lidarComSubstituicaoOuvinte
             )
+            document.removeEventListener("framerCopiar", lidarComCopiarOuvinte)
+            document.removeEventListener("framerColar", lidarComColarOuvinte)
+            document.removeEventListener("framerLimpar", lidarComLimparOuvinte)
+            document.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
         }
     }, [])
 

@@ -69,6 +69,15 @@ export default function GoogleSheetsInput() {
 
     React.useEffect(() => {
         sheets.enviarParaPlanilha = enviarParaPlanilha
+
+        const lidarComEnviarOuvinte = () => {
+            sheets.enviarParaPlanilha?.()
+        }
+        document.addEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
+
+        return () => {
+            document.removeEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
+        }
     }, [enviarParaPlanilha, sheets])
 
     return (

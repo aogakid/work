@@ -17,6 +17,21 @@ export default function FormularioInput() {
                 console.error("Erro ao ler a área de transferência:", e)
             }
         }
+
+        const lidarComColarOuvinte = () => {
+            app.colarNoInput?.()
+        }
+        document.addEventListener("framerColarArrumador", lidarComColarOuvinte)
+
+        const lidarComExecutarOuvinte = () => {
+            app.executarPrompt?.()
+        }
+        document.addEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
+
+        return () => {
+            document.removeEventListener("framerColarArrumador", lidarComColarOuvinte)
+            document.removeEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
+        }
     }, [input, app, isStreaming])
 
     React.useEffect(() => {

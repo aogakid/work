@@ -204,11 +204,35 @@ export default function FormularioOutput() {
             setRawMarkdown("")
         }
 
+        const lidarComExecutarOuvinte = () => {
+            app.executarPrompt?.()
+        }
+        document.addEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
+
+        const lidarComCopiarOuvinte = () => {
+            app.copiarOutput?.()
+        }
+        document.addEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
+
+        const lidarComColarOuvinte = () => {
+            app.colarNoInput?.()
+        }
+        document.addEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
+
+        const lidarComLimparOuvinte = () => {
+            app.limparTudo?.()
+        }
+        document.addEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
+
         return () => {
             app.executarPrompt = undefined
             app.copiarOutput = undefined
             app.colarNoInput = undefined
             app.limparTudo = undefined
+            document.removeEventListener("framerExecutarArrumadorSaida", lidarComExecutarOuvinte)
+            document.removeEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
+            document.removeEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
+            document.removeEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
         }
     }, [app, dispararRequisicao])
 

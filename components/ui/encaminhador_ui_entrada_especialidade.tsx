@@ -8,6 +8,15 @@ export default function EncaminhaEspecialidade() {
     React.useEffect(() => {
         enc.especialidade = specialty
         enc.setEspecialidade = setSpecialty
+
+        const lidarComExecutarOuvinte = () => {
+            enc.executarEncaminhamento?.()
+        }
+        document.addEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
+
+        return () => {
+            document.removeEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
+        }
     }, [specialty, enc])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {

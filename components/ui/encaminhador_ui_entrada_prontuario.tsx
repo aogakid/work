@@ -18,6 +18,21 @@ export default function EncaminhaInput() {
                 console.error("Erro ao colar texto:", e)
             }
         }
+
+        const lidarComColarOuvinte = () => {
+            enc.colarNoInput?.()
+        }
+        document.addEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
+
+        const lidarComExecutarOuvinte = () => {
+            enc.executarEncaminhamento?.()
+        }
+        document.addEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
+
+        return () => {
+            document.removeEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
+            document.removeEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
+        }
     }, [input, isStreaming, enc])
 
     React.useEffect(() => {
