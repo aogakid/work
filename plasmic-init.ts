@@ -11,6 +11,7 @@ import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
 import CalculadoraPREVENT from "./components/ui/escores_ui";
 import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
+import { PlasmicApiHelper } from "./components/ui/plasmic_helpers";
 
 // Action HOCs (code overrides)
 import {
@@ -103,6 +104,11 @@ PLASMIC.registerComponent(RastreiosPreventivos, {
   props: {},
 });
 
+PLASMIC.registerComponent(PlasmicApiHelper, {
+  name: "PlasmicApiHelper",
+  props: {},
+});
+
 // ---------------------------------------------------------------------------
 // Action HOCs (code overrides)
 // ---------------------------------------------------------------------------
@@ -140,4 +146,28 @@ export {
   comBotaoColarEncaminha,
   comBotaoCopiarEncaminha,
   comBotaoLimparEncaminha,
+};
+
+// ---------------------------------------------------------------------------
+// Global API for Plasmic run code
+// ---------------------------------------------------------------------------
+
+// These functions will be available in Plasmic's "run code" context
+declare global {
+  interface Window {
+    framerBloco?: { copiar: () => void; colar: () => void; substituir: (texto: string) => void };
+    framerApp?: { colarNoInput: () => void; executarPrompt: () => void; copiarOutput: () => void; limparTudo: () => void };
+    framerEncaminha?: { colarNoInput: () => void; executarEncaminhamento: () => void; copiarOutput: () => void; limparTudo: () => void };
+    framerTimer?: { ativarCronometro: () => void };
+    framerGoogleSheets?: { enviarParaPlanilha: () => void };
+  }
+}
+
+// Export for Plasmic to access
+export const plasmicGlobalApi = {
+  framerBloco: () => (typeof window !== 'undefined' ? window.framerBloco : null),
+  framerApp: () => (typeof window !== 'undefined' ? window.framerApp : null),
+  framerEncaminha: () => (typeof window !== 'undefined' ? window.framerEncaminha : null),
+  framerTimer: () => (typeof window !== 'undefined' ? window.framerTimer : null),
+  framerGoogleSheets: () => (typeof window !== 'undefined' ? window.framerGoogleSheets : null),
 };
