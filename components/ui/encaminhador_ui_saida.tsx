@@ -25,7 +25,7 @@ export default function EncaminhaOutput() {
     const [rawText, setRawText] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
 
-    async function dispararRequisicao() {
+    const dispararRequisicao = React.useCallback(async () => {
         if (isStreaming) return
 
         const input = enc.textoInput?.trim()
@@ -90,7 +90,7 @@ export default function EncaminhaOutput() {
             setIsStreaming(false)
             enc.isStreaming = false
         }
-    }
+    }, [enc, isStreaming])
 
     React.useEffect(() => {
         enc.executarEncaminhamento = () => dispararRequisicao()
@@ -108,7 +108,7 @@ export default function EncaminhaOutput() {
             enc.copiarOutput = undefined
             enc.limparTudo = undefined
         }
-    }, [enc, rawText, isStreaming])
+    }, [enc, rawText, dispararRequisicao])
 
     const totalOutput = rawText.length
 
