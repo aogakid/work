@@ -12,11 +12,11 @@ export const GoogleSheetsContext = createContext<GoogleSheetsApi | null>(null)
 
 export function useGoogleSheets(): GoogleSheetsApi {
     const ctx = useContext(GoogleSheetsContext)
-    if (!ctx)
-        throw new Error(
-            "useGoogleSheets must be used within a GoogleSheetsContext.Provider"
-        )
-    return ctx
+    const fallbackRef = useRef<GoogleSheetsApi | null>(null)
+    if (!fallbackRef.current) {
+        fallbackRef.current = { textoInput: "" }
+    }
+    return ctx || fallbackRef.current
 }
 
 export function GoogleSheetsProvider({ children }: { children: ReactNode }) {
@@ -45,9 +45,15 @@ export const AppContext = createContext<AppApi | null>(null)
 
 export function useApp(): AppApi {
     const ctx = useContext(AppContext)
-    if (!ctx)
-        throw new Error("useApp must be used within an AppContext.Provider")
-    return ctx
+    const fallbackRef = useRef<AppApi | null>(null)
+    if (!fallbackRef.current) {
+        fallbackRef.current = {
+            textoInput: "",
+            setTextoInput: () => {},
+            isStreaming: false,
+        }
+    }
+    return ctx || fallbackRef.current
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -80,11 +86,17 @@ export const EncaminhaContext = createContext<EncaminhaApi | null>(null)
 
 export function useEncaminha(): EncaminhaApi {
     const ctx = useContext(EncaminhaContext)
-    if (!ctx)
-        throw new Error(
-            "useEncaminha must be used within an EncaminhaContext.Provider"
-        )
-    return ctx
+    const fallbackRef = useRef<EncaminhaApi | null>(null)
+    if (!fallbackRef.current) {
+        fallbackRef.current = {
+            textoInput: "",
+            setTextoInput: () => {},
+            especialidade: "",
+            setEspecialidade: () => {},
+            isStreaming: false,
+        }
+    }
+    return ctx || fallbackRef.current
 }
 
 export function EncaminhaProvider({ children }: { children: ReactNode }) {
@@ -115,11 +127,15 @@ export const EditorContext = createContext<EditorApi | null>(null)
 
 export function useEditor(): EditorApi {
     const ctx = useContext(EditorContext)
-    if (!ctx)
-        throw new Error(
-            "useEditor must be used within an EditorContext.Provider"
-        )
-    return ctx
+    const fallbackRef = useRef<EditorApi | null>(null)
+    if (!fallbackRef.current) {
+        fallbackRef.current = {
+            copiar: () => {},
+            colar: () => {},
+            substituir: () => {},
+        }
+    }
+    return ctx || fallbackRef.current
 }
 
 export function EditorProvider({ children }: { children: ReactNode }) {
@@ -144,11 +160,13 @@ export const TimerContext = createContext<TimerApi | null>(null)
 
 export function useTimer(): TimerApi {
     const ctx = useContext(TimerContext)
-    if (!ctx)
-        throw new Error(
-            "useTimer must be used within a TimerContext.Provider"
-        )
-    return ctx
+    const fallbackRef = useRef<TimerApi | null>(null)
+    if (!fallbackRef.current) {
+        fallbackRef.current = {
+            ativarCronometro: () => {},
+        }
+    }
+    return ctx || fallbackRef.current
 }
 
 export function TimerProvider({ children }: { children: ReactNode }) {
