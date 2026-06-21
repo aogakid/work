@@ -29,3 +29,25 @@ export function PlasmicApiHelper() {
 
     return null
 }
+
+// Component that exposes functions as props for Plasmic
+export function PlasmicTrigger({ onCopiar, onColar, onLimpar, onCronometro, onSubstituir }: {
+    onCopiar?: () => void
+    onColar?: () => void
+    onLimpar?: () => void
+    onCronometro?: () => void
+    onSubstituir?: (texto: string) => void
+}) {
+    const editor = useEditor()
+    const timer = useTimer()
+
+    React.useEffect(() => {
+        if (onCopiar) onCopiar = editor.copiar
+        if (onColar) onColar = editor.colar
+        if (onLimpar) onLimpar = () => editor.substituir("")
+        if (onCronometro) onCronometro = timer.ativarCronometro
+        if (onSubstituir) onSubstituir = editor.substituir
+    }, [editor, timer, onCopiar, onColar, onLimpar, onCronometro, onSubstituir])
+
+    return null
+}

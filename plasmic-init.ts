@@ -11,7 +11,7 @@ import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
 import CalculadoraPREVENT from "./components/ui/escores_ui";
 import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
-import { PlasmicApiHelper } from "./components/ui/plasmic_helpers";
+import { PlasmicApiHelper, PlasmicTrigger } from "./components/ui/plasmic_helpers";
 
 // Action HOCs (code overrides)
 import {
@@ -107,6 +107,32 @@ PLASMIC.registerComponent(RastreiosPreventivos, {
 PLASMIC.registerComponent(PlasmicApiHelper, {
   name: "PlasmicApiHelper",
   props: {},
+});
+
+PLASMIC.registerComponent(PlasmicTrigger, {
+  name: "PlasmicTrigger",
+  props: {
+    onCopiar: {
+      type: "function",
+      defaultValue: () => {},
+    },
+    onColar: {
+      type: "function",
+      defaultValue: () => {},
+    },
+    onLimpar: {
+      type: "function",
+      defaultValue: () => {},
+    },
+    onCronometro: {
+      type: "function",
+      defaultValue: () => {},
+    },
+    onSubstituir: {
+      type: "function",
+      defaultValue: () => {},
+    },
+  },
 });
 
 // ---------------------------------------------------------------------------
