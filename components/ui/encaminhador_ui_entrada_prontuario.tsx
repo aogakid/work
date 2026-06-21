@@ -30,7 +30,7 @@ export default function EncaminhaInput() {
         window.addEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
 
         // Global API for Plasmic
-        ;(globalThis as any).framerEncaminhaProntuario = {
+        ;(globalThis as unknown as { framerEncaminhaProntuario?: { colar: () => void; executar: () => void } }).framerEncaminhaProntuario = {
             colar: () => enc.colarNoInput?.(),
             executar: () => enc.executarEncaminhamento?.(),
         }
@@ -38,8 +38,9 @@ export default function EncaminhaInput() {
         return () => {
             window.removeEventListener("framerColarEncaminhaProntuario", lidarComColarOuvinte)
             window.removeEventListener("framerExecutarEncaminhaProntuario", lidarComExecutarOuvinte)
-            ;(globalThis as any).framerEncaminhaProntuario = undefined
+            ;(globalThis as unknown as { framerEncaminhaProntuario?: { colar: () => void; executar: () => void } }).framerEncaminhaProntuario = undefined
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [input, isStreaming, enc])
 
     React.useEffect(() => {
