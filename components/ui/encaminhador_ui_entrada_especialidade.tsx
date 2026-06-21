@@ -14,14 +14,8 @@ export default function EncaminhaEspecialidade() {
         }
         window.addEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerEncaminhaEspecialidade?: { executar: () => void } }).framerEncaminhaEspecialidade = {
-            executar: () => enc.executarEncaminhamento?.(),
-        }
-
         return () => {
             window.removeEventListener("framerExecutarEncaminhaEspecialidade", lidarComExecutarOuvinte)
-            ;(globalThis as unknown as { framerEncaminhaEspecialidade?: { executar: () => void } }).framerEncaminhaEspecialidade = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [specialty, enc])

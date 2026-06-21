@@ -138,15 +138,6 @@ export default function Bloco() {
         }
         window.addEventListener("framerCronometro", lidarComCronometroOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerBloco?: { copiar: () => void; colar: () => void; limpar: () => void; cronometro: () => void; substituir: (texto: string) => void } }).framerBloco = {
-            copiar: () => editor.copiar(),
-            colar: () => editor.colar(),
-            limpar: () => editor.substituir(""),
-            cronometro: () => timer.ativarCronometro(),
-            substituir: (texto: string) => editor.substituir(texto),
-        }
-
         editor.copiar = () => {
             if (editorRef.current) {
                 const textoLimpo = limparTextoInvisivel(
@@ -181,7 +172,6 @@ export default function Bloco() {
             window.removeEventListener("framerColar", lidarComColarOuvinte)
             window.removeEventListener("framerLimpar", lidarComLimparOuvinte)
             window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
-            ;(globalThis as unknown as { framerBloco?: { copiar: () => void; colar: () => void; limpar: () => void; cronometro: () => void; substituir: (texto: string) => void } }).framerBloco = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])

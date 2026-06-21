@@ -118,13 +118,6 @@ export default function EncaminhaOutput() {
         }
         window.addEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerEncaminhaSaida?: { executar: () => void; copiar: () => void; limpar: () => void } }).framerEncaminhaSaida = {
-            executar: () => enc.executarEncaminhamento?.(),
-            copiar: () => enc.copiarOutput?.(),
-            limpar: () => enc.limparTudo?.(),
-        }
-
         return () => {
             enc.executarEncaminhamento = undefined
             enc.copiarOutput = undefined
@@ -132,7 +125,6 @@ export default function EncaminhaOutput() {
             window.removeEventListener("framerExecutarEncaminhaSaida", lidarComExecutarOuvinte)
             window.removeEventListener("framerCopiarEncaminhaSaida", lidarComCopiarOuvinte)
             window.removeEventListener("framerLimparEncaminhaSaida", lidarComLimparOuvinte)
-            ;(globalThis as unknown as { framerEncaminhaSaida?: { executar: () => void; copiar: () => void; limpar: () => void } }).framerEncaminhaSaida = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enc, rawText, dispararRequisicao])

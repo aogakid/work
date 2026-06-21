@@ -28,16 +28,9 @@ export default function FormularioInput() {
         }
         window.addEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerArrumadorEntrada?: { colar: () => void; executar: () => void } }).framerArrumadorEntrada = {
-            colar: () => app.colarNoInput?.(),
-            executar: () => app.executarPrompt?.(),
-        }
-
         return () => {
             window.removeEventListener("framerColarArrumador", lidarComColarOuvinte)
             window.removeEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
-            ;(globalThis as unknown as { framerArrumadorEntrada?: { colar: () => void; executar: () => void } }).framerArrumadorEntrada = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [input, app, isStreaming])

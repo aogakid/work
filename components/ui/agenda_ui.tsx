@@ -75,14 +75,8 @@ export default function GoogleSheetsInput() {
         }
         window.addEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerAgenda?: { enviar: () => void } }).framerAgenda = {
-            enviar: () => sheets.enviarParaPlanilha?.(),
-        }
-
         return () => {
             window.removeEventListener("framerEnviarAgenda", lidarComEnviarOuvinte)
-            ;(globalThis as unknown as { framerAgenda?: { enviar: () => void } }).framerAgenda = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enviarParaPlanilha, sheets])

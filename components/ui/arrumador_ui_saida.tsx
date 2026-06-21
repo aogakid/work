@@ -224,14 +224,6 @@ export default function FormularioOutput() {
         }
         window.addEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
 
-        // Global API for Plasmic
-        ;(globalThis as unknown as { framerArrumadorSaida?: { executar: () => void; copiar: () => void; colar: () => void; limpar: () => void } }).framerArrumadorSaida = {
-            executar: () => app.executarPrompt?.(),
-            copiar: () => app.copiarOutput?.(),
-            colar: () => app.colarNoInput?.(),
-            limpar: () => app.limparTudo?.(),
-        }
-
         return () => {
             app.executarPrompt = undefined
             app.copiarOutput = undefined
@@ -241,7 +233,6 @@ export default function FormularioOutput() {
             window.removeEventListener("framerCopiarArrumadorSaida", lidarComCopiarOuvinte)
             window.removeEventListener("framerColarArrumadorSaida", lidarComColarOuvinte)
             window.removeEventListener("framerLimparArrumadorSaida", lidarComLimparOuvinte)
-            ;(globalThis as unknown as { framerArrumadorSaida?: { executar: () => void; copiar: () => void; colar: () => void; limpar: () => void } }).framerArrumadorSaida = undefined
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [app, dispararRequisicao])
