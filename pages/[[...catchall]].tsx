@@ -10,6 +10,7 @@ import type { GetStaticPaths, GetStaticProps } from "next";
 import Error from "next/error";
 import { useRouter } from "next/router";
 import { PLASMIC } from "@/plasmic-init";
+import { AllProviders } from "@/components/contexts/AppContext";
 
 export default function PlasmicLoaderPage(props: {
   plasmicData?: ComponentRenderData;
@@ -35,17 +36,19 @@ export default function PlasmicLoaderPage(props: {
   const pageMeta = plasmicData.entryCompMetas[0];
 
   return (
-  <PlasmicRootProvider
-    loader={PLASMIC}
-    prefetchedData={plasmicData}
-    prefetchedQueryData={queryCache}
-    pageRoute={pageMeta.path}
-    pageParams={pageMeta.params}
-    pageQuery={router.query}
-    globalVariants={isDarkMode ? [{ name: "Mode", value: "dark" }] : []}
-  >
-    <PlasmicComponent component={pageMeta.displayName} />
-  </PlasmicRootProvider>
+  <AllProviders>
+    <PlasmicRootProvider
+      loader={PLASMIC}
+      prefetchedData={plasmicData}
+      prefetchedQueryData={queryCache}
+      pageRoute={pageMeta.path}
+      pageParams={pageMeta.params}
+      pageQuery={router.query}
+      globalVariants={isDarkMode ? [{ name: "Mode", value: "dark" }] : []}
+    >
+      <PlasmicComponent component={pageMeta.displayName} />
+    </PlasmicRootProvider>
+  </AllProviders>
 );
 }
 

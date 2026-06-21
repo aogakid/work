@@ -1,58 +1,28 @@
 import * as React from "react"
-
-declare global {
-    interface Window {
-        framerAppApi?: {
-            textoInput: string
-            setTextoInput: (t: string) => void
-            isStreaming: boolean
-            executarPrompt?: () => void
-            colarNoInput?: () => void
-        }
-    }
-}
+import { useApp } from "../contexts/AppContext"
 
 export default function FormularioInput() {
+    const app = useApp()
     const [input, setInput] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
 
-    // Sincroniza o estado local e adiciona a função de colar na ponte global
     React.useEffect(() => {
-        if (!window.framerAppApi) {
-            window.framerAppApi = {
-                textoInput: input,
-                setTextoInput: setInput,
-                isStreaming: isStreaming,
-                colarNoInput: async () => {
-                    try {
-                        const textoClp = await navigator.clipboard.readText()
-                        setInput(textoClp)
-                    } catch (e) {
-                        console.error("Erro ao ler a área de transferência:", e)
-                    }
-                },
-            }
-        } else {
-            window.framerAppApi.textoInput = input
-            window.framerAppApi.setTextoInput = setInput
-            window.framerAppApi.colarNoInput = async () => {
-                try {
-                    const textoClp = await navigator.clipboard.readText()
-                    setInput(textoClp)
-                } catch (e) {
-                    console.error("Erro ao ler a área de transferência:", e)
-                }
+        app.textoInput = input
+        app.setTextoInput = setInput
+        app.colarNoInput = async () => {
+            try {
+                const textoClp = await navigator.clipboard.readText()
+                setInput(textoClp)
+            } catch (e) {
+                console.error("Erro ao ler a área de transferência:", e)
             }
         }
     }, [input, isStreaming])
 
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (
-                window.framerAppApi &&
-                window.framerAppApi.isStreaming !== isStreaming
-            ) {
-                setIsStreaming(window.framerAppApi.isStreaming)
+            if (app.isStreaming !== isStreaming) {
+                setIsStreaming(app.isStreaming)
             }
         }, 100)
         return () => clearInterval(interval)
@@ -61,18 +31,14 @@ export default function FormularioInput() {
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
             e.preventDefault()
-            if (window.framerAppApi && window.framerAppApi.executarPrompt) {
-                window.framerAppApi.executarPrompt()
-            }
+            app.executarPrompt?.()
         }
     }
     const anonimizar = (texto: string): string => {
-        // Captura nome entre "Id: " e ", NN anos" (ex: "Id: José Airton da Silva, 49 anos")
         const match = texto.match(/Id:\s+([^,]+),\s*\d+\s*anos/i)
         if (!match) return texto
         const nome = match[1].trim()
         if (!nome || nome.length < 3) return texto
-        // Escapa caracteres especiais do nome pra uso em regex
         const escaped = nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         return texto.replace(new RegExp(escaped, "gi"), "[Nome do Paciente]")
     }
@@ -87,7 +53,6 @@ export default function FormularioInput() {
         e.preventDefault()
         const texto = e.clipboardData.getData("text/plain")
         const anonimizado = anonimizar(texto)
-        // Insere no cursor via execCommand para preservar posição
         document.execCommand("insertText", false, anonimizado)
     }
     const totalInput = input.length

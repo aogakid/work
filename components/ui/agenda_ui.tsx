@@ -1,31 +1,20 @@
 import * as React from "react"
+import { useGoogleSheets } from "../contexts/AppContext"
 
-declare global {
-    interface Window {
-        framerGoogleSheetsApi?: {
-            textoInput: string
-            enviarParaPlanilha?: () => Promise<void>
-        }
-    }
-}
-
-// COLE AQUI A SUA URL GERADA NO GOOGLE APPS SCRIPT
 const GAS_WEB_APP_URL =
     "https://script.google.com/macros/s/AKfycbx5e1DSXQ2tZqEtMHbCU9a9dvP8Ial8q7LsZ1A7LYHSLsnPvABURMhPmDP-yWBLStmcng/exec"
 
 export default function GoogleSheetsInput() {
+    const sheets = useGoogleSheets()
     const [input, setInput] = React.useState("")
 
     React.useEffect(() => {
-        if (!window.framerGoogleSheetsApi) {
-            window.framerGoogleSheetsApi = { textoInput: input }
-        } else {
-            window.framerGoogleSheetsApi.textoInput = input
-        }
+        sheets.textoInput = input
     }, [input])
+
     React.useEffect(() => {
         const escutarColagem = (e: CustomEvent<string>) => {
-            setInput(e.detail) // Força o React a atualizar o texto na tela
+            setInput(e.detail)
         }
 
         window.addEventListener(
@@ -57,8 +46,6 @@ export default function GoogleSheetsInput() {
             const resultado = await resposta.json()
 
             if (resultado.status === "sucesso" && resultado.urlPdf) {
-                // Abre o visualizador oficial em tela cheia na nova aba (embedded=false)
-                // Isso impede o download e exibe o A4 perfeito na tela
                 const urlVisualizadorCompleto =
                     "https://docs.google.com/viewer?url=" +
                     encodeURIComponent(resultado.urlPdf) +
@@ -81,12 +68,7 @@ export default function GoogleSheetsInput() {
     }
 
     React.useEffect(() => {
-        if (window.framerGoogleSheetsApi) {
-            window.framerGoogleSheetsApi = {
-                ...window.framerGoogleSheetsApi,
-                enviarParaPlanilha: enviarParaPlanilha,
-            }
-        }
+        sheets.enviarParaPlanilha = enviarParaPlanilha
     }, [input])
 
     return (

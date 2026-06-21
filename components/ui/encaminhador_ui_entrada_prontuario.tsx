@@ -1,34 +1,16 @@
 import * as React from "react"
-
-declare global {
-    interface Window {
-        framerEncaminhaApi?: {
-            textoInput: string
-            setTextoInput: (t: string) => void
-            isStreaming: boolean
-            executarEncaminhamento?: () => void
-            colarNoInput?: () => void
-        }
-    }
-}
+import { useEncaminha } from "../contexts/AppContext"
 
 export default function EncaminhaInput() {
+    const enc = useEncaminha()
     const [input, setInput] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
 
     React.useEffect(() => {
-        if (!window.framerEncaminhaApi) {
-            window.framerEncaminhaApi = {
-                textoInput: input,
-                setTextoInput: setInput,
-                isStreaming: isStreaming,
-            }
-        } else {
-            window.framerEncaminhaApi.textoInput = input
-            window.framerEncaminhaApi.setTextoInput = setInput
-        }
+        enc.textoInput = input
+        enc.setTextoInput = setInput
 
-        window.framerEncaminhaApi.colarNoInput = async () => {
+        enc.colarNoInput = async () => {
             try {
                 const textoClp = await navigator.clipboard.readText()
                 setInput(anonimizar(textoClp))
@@ -40,11 +22,8 @@ export default function EncaminhaInput() {
 
     React.useEffect(() => {
         const interval = setInterval(() => {
-            if (
-                window.framerEncaminhaApi &&
-                window.framerEncaminhaApi.isStreaming !== isStreaming
-            ) {
-                setIsStreaming(window.framerEncaminhaApi.isStreaming)
+            if (enc.isStreaming !== isStreaming) {
+                setIsStreaming(enc.isStreaming)
             }
         }, 100)
         return () => clearInterval(interval)
@@ -53,12 +32,7 @@ export default function EncaminhaInput() {
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
             e.preventDefault()
-            if (
-                window.framerEncaminhaApi &&
-                window.framerEncaminhaApi.executarEncaminhamento
-            ) {
-                window.framerEncaminhaApi.executarEncaminhamento()
-            }
+            enc.executarEncaminhamento?.()
         }
     }
     const anonimizar = (texto: string): string => {

@@ -1,18 +1,6 @@
 import * as React from "react"
 import { createClient } from "@supabase/supabase-js"
-
-declare global {
-    interface Window {
-        framerEditorApi?: {
-            copiar: () => void
-            colar: () => void
-            substituir: (novoTexto: string) => void
-        }
-        framerTimerApi?: {
-            ativarCronometro: () => void
-        }
-    }
-}
+import { useEditor, useTimer } from "../contexts/AppContext"
 
 const supabase = createClient(
     "https://odqdzyqjpufitvahrhiq.supabase.co",
@@ -20,6 +8,8 @@ const supabase = createClient(
 )
 
 export default function Bloco() {
+    const editor = useEditor()
+    const timer = useTimer()
     const editorRef = React.useRef<HTMLDivElement>(null)
     const [markdownContent, setMarkdownContent] = React.useState("")
     const initialContentRef = React.useRef<string | null>(null)
@@ -128,33 +118,29 @@ export default function Bloco() {
             lidarComSubstituicaoOuvinte
         )
 
-        window.framerEditorApi = {
-            copiar: () => {
-                if (editorRef.current) {
-                    const textoLimpo = limparTextoInvisivel(
-                        editorRef.current.innerText
-                    )
-                    navigator.clipboard.writeText(textoLimpo)
-                }
-            },
-            colar: async () => {
-                try {
-                    const text = await navigator.clipboard.readText()
-                    atualizarConteudoEditor(text)
-                } catch (err) {
-                    console.error(err)
-                }
-            },
-            substituir: (novoTexto) => {
-                atualizarConteudoEditor(novoTexto || "")
-            },
+        editor.copiar = () => {
+            if (editorRef.current) {
+                const textoLimpo = limparTextoInvisivel(
+                    editorRef.current.innerText
+                )
+                navigator.clipboard.writeText(textoLimpo)
+            }
+        }
+        editor.colar = async () => {
+            try {
+                const text = await navigator.clipboard.readText()
+                atualizarConteudoEditor(text)
+            } catch (err) {
+                console.error(err)
+            }
+        }
+        editor.substituir = (novoTexto) => {
+            atualizarConteudoEditor(novoTexto || "")
         }
 
-        window.framerTimerApi = {
-            ativarCronometro: () => {
-                fecharCronometroCompleto()
-                setMostrarSetupRelogio(true)
-            },
+        timer.ativarCronometro = () => {
+            fecharCronometroCompleto()
+            setMostrarSetupRelogio(true)
         }
 
         return () => {
@@ -162,8 +148,6 @@ export default function Bloco() {
                 "framerSubstituirTexto",
                 lidarComSubstituicaoOuvinte
             )
-            delete window.framerEditorApi
-            delete window.framerTimerApi
         }
     }, [])
 
