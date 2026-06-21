@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useState, useMemo } from "react"
-import { addPropertyControls } from "framer"
+
 
 const injectStyles = `
   :root {
@@ -1235,4 +1235,3 @@ export default function CalculadoraGestacional({ style }: Props) {
     )
 }
 
-addPropertyControls(CalculadoraGestacional, {})

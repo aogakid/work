@@ -8,6 +8,8 @@ import Bloco from "./components/ui/bloco_ui";
 import EncaminhaEspecialidade from "./components/ui/encaminhador_ui_entrada_especialidade";
 import EncaminhaInput from "./components/ui/encaminhador_ui_entrada_prontuario";
 import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
+import CalculadoraPREVENT from "./components/ui/escores_ui";
+import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
 
 // Action HOCs (code overrides)
@@ -83,6 +85,16 @@ PLASMIC.registerComponent(EncaminhaInput, {
 
 PLASMIC.registerComponent(EncaminhaOutput, {
   name: "EncaminhaOutput",
+  props: {},
+});
+
+PLASMIC.registerComponent(CalculadoraPREVENT, {
+  name: "CalculadoraPREVENT",
+  props: {},
+});
+
+PLASMIC.registerComponent(CalculadoraGestacional, {
+  name: "CalculadoraGestacional",
   props: {},
 });
 
