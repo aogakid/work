@@ -1,39 +1,19 @@
 import * as React from "react"
-
-declare global {
-    interface Window {
-        framerEncaminhaApi?: {
-            especialidade: string
-            setEspecialidade: (t: string) => void
-            executarEncaminhamento?: () => void
-        }
-    }
-}
+import { useEncaminha } from "../contexts/AppContext"
 
 export default function EncaminhaEspecialidade() {
+    const enc = useEncaminha()
     const [specialty, setSpecialty] = React.useState("")
 
     React.useEffect(() => {
-        if (!window.framerEncaminhaApi) {
-            window.framerEncaminhaApi = {
-                especialidade: specialty,
-                setEspecialidade: setSpecialty,
-            }
-        } else {
-            window.framerEncaminhaApi.especialidade = specialty
-            window.framerEncaminhaApi.setEspecialidade = setSpecialty
-        }
+        enc.especialidade = specialty
+        enc.setEspecialidade = setSpecialty
     }, [specialty])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
             e.preventDefault()
-            if (
-                window.framerEncaminhaApi &&
-                window.framerEncaminhaApi.executarEncaminhamento
-            ) {
-                window.framerEncaminhaApi.executarEncaminhamento()
-            }
+            enc.executarEncaminhamento?.()
         }
     }
 

@@ -1,19 +1,5 @@
 import * as React from "react"
-
-declare global {
-    interface Window {
-        framerEncaminhaApi?: {
-            textoInput: string
-            setTextoInput: (t: string) => void
-            especialidade: string
-            setEspecialidade: (t: string) => void
-            isStreaming: boolean
-            executarEncaminhamento?: () => void
-            copiarOutput?: () => void
-            limparTudo?: () => void
-        }
-    }
-}
+import { useEncaminha } from "../contexts/AppContext"
 
 const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
 
@@ -33,19 +19,20 @@ Modelo de output:
 Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento], encaminho-o para avaliação especializada em [especialidade].`
 
 export default function EncaminhaOutput() {
+    const enc = useEncaminha()
     const [rawText, setRawText] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
 
     async function dispararRequisicao() {
-        if (!window.framerEncaminhaApi || isStreaming) return
+        if (isStreaming) return
 
-        const input = window.framerEncaminhaApi.textoInput?.trim()
-        const specialty = window.framerEncaminhaApi.especialidade?.trim()
+        const input = enc.textoInput?.trim()
+        const specialty = enc.especialidade?.trim()
 
         if (!input || !specialty) return
 
         setIsStreaming(true)
-        window.framerEncaminhaApi.isStreaming = true
+        enc.isStreaming = true
         setRawText("")
 
         const userPrompt = `Especialidade de destino: ${specialty}\n\nProntuário:\n${input}`
@@ -92,40 +79,32 @@ export default function EncaminhaOutput() {
                             acumulado += part
                             setRawText(acumulado)
                         }
-                    } catch (e) {}
+                    } catch {}
                 }
             }
-        } catch (err) {
+        } catch {
             setRawText("erro ao gerar o encaminhamento.")
         } finally {
             setIsStreaming(false)
-            if (window.framerEncaminhaApi)
-                window.framerEncaminhaApi.isStreaming = false
+            enc.isStreaming = false
         }
     }
 
     React.useEffect(() => {
-        if (!window.framerEncaminhaApi) {
-            window.framerEncaminhaApi = {
-                textoInput: "",
-                setTextoInput: () => {},
-                especialidade: "",
-                setEspecialidade: () => {},
-                isStreaming: isStreaming,
-            }
-        }
-
-        window.framerEncaminhaApi.executarEncaminhamento = () =>
-            dispararRequisicao()
-        window.framerEncaminhaApi.copiarOutput = () => {
+        enc.executarEncaminhamento = () => dispararRequisicao()
+        enc.copiarOutput = () => {
             if (rawText) navigator.clipboard.writeText(rawText)
         }
-        window.framerEncaminhaApi.limparTudo = () => {
-            if (window.framerEncaminhaApi?.setTextoInput)
-                window.framerEncaminhaApi.setTextoInput("")
-            if (window.framerEncaminhaApi?.setEspecialidade)
-                window.framerEncaminhaApi.setEspecialidade("")
+        enc.limparTudo = () => {
+            enc.setTextoInput("")
+            enc.setEspecialidade("")
             setRawText("")
+        }
+
+        return () => {
+            enc.executarEncaminhamento = undefined
+            enc.copiarOutput = undefined
+            enc.limparTudo = undefined
         }
     }, [rawText, isStreaming])
 

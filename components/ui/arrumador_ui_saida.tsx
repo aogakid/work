@@ -1,18 +1,5 @@
 import * as React from "react"
-
-declare global {
-    interface Window {
-        framerAppApi?: {
-            textoInput: string
-            setTextoInput: (t: string) => void
-            isStreaming: boolean
-            executarPrompt?: () => void
-            copiarOutput?: () => void
-            colarNoInput?: () => void
-            limparTudo?: () => void
-        }
-    }
-}
+import { useApp } from "../contexts/AppContext"
 
 const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
 
@@ -120,10 +107,10 @@ Modelo de output:
   -  `
 
 export default function FormularioOutput() {
+    const app = useApp()
     const [rawMarkdown, setRawMarkdown] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
 
-    // Referências mutáveis para as funções do Framer não pegarem valores congelados
     const isStreamingRef = React.useRef(isStreaming)
     const rawMarkdownRef = React.useRef(rawMarkdown)
 
@@ -136,13 +123,12 @@ export default function FormularioOutput() {
     }, [rawMarkdown])
 
     async function dispararRequisicao() {
-        // Evita chamadas duplicadas checando o valor em tempo real da Ref
-        if (!window.framerAppApi || isStreamingRef.current) return
-        const textoOriginal = window.framerAppApi.textoInput?.trim()
+        if (isStreamingRef.current) return
+        const textoOriginal = app.textoInput?.trim()
         if (!textoOriginal) return
 
         setIsStreaming(true)
-        window.framerAppApi.isStreaming = true
+        app.isStreaming = true
         setRawMarkdown("")
 
         try {
@@ -185,63 +171,47 @@ export default function FormularioOutput() {
                             acumulado += part
                             setRawMarkdown(acumulado)
                         }
-                    } catch (e) {}
+                    } catch {}
                 }
             }
-        } catch (err) {
+        } catch {
             setRawMarkdown("deu erro")
         } finally {
             setIsStreaming(false)
-            if (window.framerAppApi) window.framerAppApi.isStreaming = false
+            app.isStreaming = false
         }
     }
 
-    // Inicialização única do objeto global para não causar vazamento de memória
     React.useEffect(() => {
-        if (!window.framerAppApi) {
-            window.framerAppApi = {
-                textoInput: "",
-                setTextoInput: () => {},
-                isStreaming: false,
-            }
-        }
+        app.executarPrompt = () => dispararRequisicao()
 
-        window.framerAppApi.executarPrompt = () => dispararRequisicao()
-
-        window.framerAppApi.copiarOutput = () => {
-            // Usa o valor atualizado da referência para ignorar o delay do estado
+        app.copiarOutput = () => {
             const textoLimpo = rawMarkdownRef.current
                 .replaceAll("$.", " ")
                 .replaceAll("$", " ")
             if (textoLimpo) navigator.clipboard.writeText(textoLimpo)
         }
 
-        window.framerAppApi.colarNoInput = async () => {
+        app.colarNoInput = async () => {
             try {
                 const txt = await navigator.clipboard.readText()
-                if (window.framerAppApi?.setTextoInput)
-                    window.framerAppApi.setTextoInput(txt)
-            } catch (e) {}
+                app.setTextoInput(txt)
+            } catch {}
         }
 
-        window.framerAppApi.limparTudo = () => {
-            if (window.framerAppApi?.setTextoInput)
-                window.framerAppApi.setTextoInput("")
+        app.limparTudo = () => {
+            app.setTextoInput("")
             setRawMarkdown("")
         }
 
         return () => {
-            // Limpeza básica se o componente desmontar
-            if (window.framerAppApi) {
-                delete window.framerAppApi.executarPrompt
-                delete window.framerAppApi.copiarOutput
-                delete window.framerAppApi.colarNoInput
-                delete window.framerAppApi.limparTudo
-            }
+            app.executarPrompt = undefined
+            app.copiarOutput = undefined
+            app.colarNoInput = undefined
+            app.limparTudo = undefined
         }
-    }, []) // Array de dependências VAZIO: roda apenas uma vez no ciclo de vida
+    }, [])
 
-    // Filtra dinamicamente os símbolos de controle apenas para exibição visual
     const markdownExibido = rawMarkdown.replaceAll("$.", "").replaceAll("$", "")
     const totalOutput = rawMarkdown.length
 

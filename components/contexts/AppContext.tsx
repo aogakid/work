@@ -1,4 +1,4 @@
-import { createContext, useContext } from "react"
+import { createContext, useContext, useRef, type ReactNode } from "react"
 
 // ---------------------------------------------------------------------------
 // 1. GoogleSheetsContext  (replaces window.framerGoogleSheetsApi)
@@ -17,6 +17,15 @@ export function useGoogleSheets(): GoogleSheetsApi {
             "useGoogleSheets must be used within a GoogleSheetsContext.Provider"
         )
     return ctx
+}
+
+export function GoogleSheetsProvider({ children }: { children: ReactNode }) {
+    const api = useRef<GoogleSheetsApi>({ textoInput: "" }).current
+    return (
+        <GoogleSheetsContext.Provider value={api}>
+            {children}
+        </GoogleSheetsContext.Provider>
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -39,6 +48,17 @@ export function useApp(): AppApi {
     if (!ctx)
         throw new Error("useApp must be used within an AppContext.Provider")
     return ctx
+}
+
+export function AppProvider({ children }: { children: ReactNode }) {
+    const api = useRef<AppApi>({
+        textoInput: "",
+        setTextoInput: () => {},
+        isStreaming: false,
+    }).current
+    return (
+        <AppContext.Provider value={api}>{children}</AppContext.Provider>
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +87,21 @@ export function useEncaminha(): EncaminhaApi {
     return ctx
 }
 
+export function EncaminhaProvider({ children }: { children: ReactNode }) {
+    const api = useRef<EncaminhaApi>({
+        textoInput: "",
+        setTextoInput: () => {},
+        especialidade: "",
+        setEspecialidade: () => {},
+        isStreaming: false,
+    }).current
+    return (
+        <EncaminhaContext.Provider value={api}>
+            {children}
+        </EncaminhaContext.Provider>
+    )
+}
+
 // ---------------------------------------------------------------------------
 // 4. EditorContext  (replaces window.framerEditorApi)
 // ---------------------------------------------------------------------------
@@ -87,6 +122,17 @@ export function useEditor(): EditorApi {
     return ctx
 }
 
+export function EditorProvider({ children }: { children: ReactNode }) {
+    const api = useRef<EditorApi>({
+        copiar: () => {},
+        colar: () => {},
+        substituir: () => {},
+    }).current
+    return (
+        <EditorContext.Provider value={api}>{children}</EditorContext.Provider>
+    )
+}
+
 // ---------------------------------------------------------------------------
 // 5. TimerContext  (replaces window.framerTimerApi)
 // ---------------------------------------------------------------------------
@@ -103,4 +149,30 @@ export function useTimer(): TimerApi {
             "useTimer must be used within a TimerContext.Provider"
         )
     return ctx
+}
+
+export function TimerProvider({ children }: { children: ReactNode }) {
+    const api = useRef<TimerApi>({
+        ativarCronometro: () => {},
+    }).current
+    return (
+        <TimerContext.Provider value={api}>{children}</TimerContext.Provider>
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Combined provider — wraps all contexts for convenience
+// ---------------------------------------------------------------------------
+export function AllProviders({ children }: { children: ReactNode }) {
+    return (
+        <GoogleSheetsProvider>
+            <AppProvider>
+                <EncaminhaProvider>
+                    <EditorProvider>
+                        <TimerProvider>{children}</TimerProvider>
+                    </EditorProvider>
+                </EncaminhaProvider>
+            </AppProvider>
+        </GoogleSheetsProvider>
+    )
 }
