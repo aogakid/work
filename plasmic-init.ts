@@ -111,28 +111,7 @@ PLASMIC.registerComponent(PlasmicApiHelper, {
 
 PLASMIC.registerComponent(PlasmicTrigger, {
   name: "PlasmicTrigger",
-  props: {
-    onCopiar: {
-      type: "function",
-      defaultValue: () => {},
-    },
-    onColar: {
-      type: "function",
-      defaultValue: () => {},
-    },
-    onLimpar: {
-      type: "function",
-      defaultValue: () => {},
-    },
-    onCronometro: {
-      type: "function",
-      defaultValue: () => {},
-    },
-    onSubstituir: {
-      type: "function",
-      defaultValue: () => {},
-    },
-  },
+  props: {},
 });
 
 // ---------------------------------------------------------------------------
