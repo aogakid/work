@@ -1,9 +1,11 @@
 import * as React from "react"
-import type { ComponentType } from "react"
+import type { ComponentType, CSSProperties } from "react"
 import { useTimer } from "../contexts/AppContext"
 
-export function comTriggerCronometro(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comTriggerCronometro<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const timer = useTimer()
         return (
             <Component

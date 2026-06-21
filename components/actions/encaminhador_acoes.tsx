@@ -1,8 +1,10 @@
 import type { ComponentType } from "react"
 import { useEncaminha } from "../contexts/AppContext"
 
-export function comBotaoGerar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoGerar<P extends { onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -15,8 +17,10 @@ export function comBotaoGerar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoColarEncaminha(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoColarEncaminha<P extends { onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -29,8 +33,10 @@ export function comBotaoColarEncaminha(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoCopiarEncaminha(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoCopiarEncaminha<P extends { onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -43,8 +49,10 @@ export function comBotaoCopiarEncaminha(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoLimparEncaminha(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoLimparEncaminha<P extends { onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const enc = useEncaminha()
         return (
             <Component

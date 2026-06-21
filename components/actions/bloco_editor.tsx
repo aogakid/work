@@ -1,5 +1,5 @@
 import * as React from "react"
-import type { ComponentType } from "react"
+import type { ComponentType, CSSProperties } from "react"
 import { useEditor } from "../contexts/AppContext"
 import {
     MODELO_CONSULTA,
@@ -7,8 +7,10 @@ import {
     MODELO_PRE_NATAL,
 } from "./Modelos.tsx"
 
-export function comBotaoCopiar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoCopiar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const editor = useEditor()
         return (
             <Component
@@ -22,8 +24,10 @@ export function comBotaoCopiar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoColar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoColar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const editor = useEditor()
         return (
             <Component
@@ -37,8 +41,10 @@ export function comBotaoColar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function SubstituirConsultaAgendada(Component): ComponentType {
-    const WrappedComponent = (props) => (
+export function SubstituirConsultaAgendada<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => (
         <Component
             {...props}
             style={{ ...props.style, cursor: "pointer" }}
@@ -54,8 +60,10 @@ export function SubstituirConsultaAgendada(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comSubstituirDemandaEspontanea(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comSubstituirDemandaEspontanea<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const editor = useEditor()
         return (
             <Component
@@ -69,8 +77,10 @@ export function comSubstituirDemandaEspontanea(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comSubstituirPreNatal(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comSubstituirPreNatal<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const editor = useEditor()
         return (
             <Component
@@ -84,8 +94,10 @@ export function comSubstituirPreNatal(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoLimparEditor(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoLimparEditor<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const editor = useEditor()
         return (
             <Component

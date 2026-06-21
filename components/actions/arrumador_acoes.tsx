@@ -1,9 +1,11 @@
 import * as React from "react"
-import type { ComponentType } from "react"
+import type { ComponentType, CSSProperties } from "react"
 import { useApp } from "../contexts/AppContext"
 
-export function comBotaoDisparar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoDisparar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const app = useApp()
         return (
             <Component
@@ -25,8 +27,10 @@ export function comBotaoDisparar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoCopiar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoCopiar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const app = useApp()
         return (
             <Component
@@ -40,8 +44,10 @@ export function comBotaoCopiar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoLimpar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoLimpar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const app = useApp()
         return (
             <Component
@@ -55,8 +61,10 @@ export function comBotaoLimpar(Component): ComponentType {
     return WrappedComponent
 }
 
-export function comBotaoColar(Component): ComponentType {
-    const WrappedComponent = (props) => {
+export function comBotaoColar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
+    Component: ComponentType<P>
+): ComponentType<P> {
+    const WrappedComponent = (props: P) => {
         const app = useApp()
         return (
             <Component
