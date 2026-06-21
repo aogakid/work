@@ -14,7 +14,7 @@ export default function Bloco() {
     const [markdownContent, setMarkdownContent] = React.useState("")
     const initialContentRef = React.useRef<string | null>(null)
     const [saveTime, setSaveTime] = React.useState<string | null>(null)
-    const [showPopup, setShowPopup] = React.useState(false)
+    const [, setShowPopup] = React.useState(false)
 
     // --- ESTADOS DO CRONÔMETRO ---
     const [tempoLimite, setTempoLimite] = React.useState<number>(15)
@@ -216,7 +216,7 @@ export default function Bloco() {
         const range = selection.getRangeAt(0)
         if (!range) return
 
-        let currentBlock =
+        const currentBlock =
             range.startContainer.parentElement === editorRef.current
                 ? (range.startContainer as HTMLElement)
                 : range.startContainer.parentElement
@@ -284,7 +284,7 @@ export default function Bloco() {
         const centroX = rect.left + rect.width / 2
         const centroY = rect.top + rect.height / 2
 
-        let anguloRad = Math.atan2(clientY - centroY, clientX - centroX)
+        const anguloRad = Math.atan2(clientY - centroY, clientX - centroX)
         let anguloGraus = anguloRad * (180 / Math.PI) + 90
         if (anguloGraus < 0) anguloGraus += 360
 
