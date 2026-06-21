@@ -1,6 +1,22 @@
 import * as React from "react"
 import { useState, useEffect, useRef } from "react"
 
+interface FatoresRisco {
+    tabagista: boolean
+    dm: boolean
+    hiv: boolean
+    gestante: boolean
+}
+
+interface RastreioItem {
+    id: string
+    titulo: string
+    cat: string
+    condicao: (i: number, s: string, f: FatoresRisco) => boolean
+    metodo: string
+    obs?: string
+}
+
 // --- INJEÇÃO DE CSS AVANÇADO (FOCO CIRÚRGICO, EXPANSAO NO HOVER E RESPONSIVIDADE EM 3 NÍVEIS) ---
 const injectStyles = `
   :root {
@@ -345,7 +361,13 @@ const CORES_CATEGORIAS: Record<
     },
 }
 
-function CardAnimado({ r, ticked, onToggle }) {
+interface CardAnimadoProps {
+    r: RastreioItem
+    ticked: boolean
+    onToggle: () => void
+}
+
+function CardAnimado({ r, ticked, onToggle }: CardAnimadoProps) {
     const cardRef = useRef<HTMLDivElement>(null)
     const [transformStyle, setTransformStyle] = useState<string>(
         "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)"
@@ -421,22 +443,6 @@ function CardAnimado({ r, ticked, onToggle }) {
             </div>
         </div>
     )
-}
-
-interface FatoresRisco {
-    tabagista: boolean
-    dm: boolean
-    hiv: boolean
-    gestante: boolean
-}
-
-interface RastreioItem {
-    id: string
-    titulo: string
-    cat: string
-    condicao: (i: number, s: string, f: FatoresRisco) => boolean
-    metodo: string
-    obs?: string
 }
 
 // --- BASE DE DADOS DOS RASTREIOS ---
