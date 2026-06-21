@@ -21,7 +21,7 @@ Regras obrigatórias:
 - Output apenas em markdown, sem negritos
 - Deixe as informações da Avaliação e do Plano concisas
 
-CAPITALIZAÇÃO
+CAPITALIZAÇ��O
 - Deve seguir a norma culta do português obrigatoriamente
 - O início de TODA frase e TODO item de lista após '-' deve começar com letra maiúscula
 - Nomes próprios com iniciais maiúsculas
@@ -122,7 +122,7 @@ export default function FormularioOutput() {
         rawMarkdownRef.current = rawMarkdown
     }, [rawMarkdown])
 
-    async function dispararRequisicao() {
+    const dispararRequisicao = React.useCallback(async () => {
         if (isStreamingRef.current) return
         const textoOriginal = app.textoInput?.trim()
         if (!textoOriginal) return
@@ -180,7 +180,7 @@ export default function FormularioOutput() {
             setIsStreaming(false)
             app.isStreaming = false
         }
-    }
+    }, [app])
 
     React.useEffect(() => {
         app.executarPrompt = () => dispararRequisicao()
@@ -210,7 +210,7 @@ export default function FormularioOutput() {
             app.colarNoInput = undefined
             app.limparTudo = undefined
         }
-    }, [])
+    }, [app, dispararRequisicao])
 
     const markdownExibido = rawMarkdown.replaceAll("$.", "").replaceAll("$", "")
     const totalOutput = rawMarkdown.length
