@@ -28,7 +28,7 @@ export default function GoogleSheetsInput() {
             )
     }, [])
 
-    const enviarParaPlanilha = async () => {
+    const enviarParaPlanilha = React.useCallback(async () => {
         if (!input.trim()) return
 
         window.dispatchEvent(
@@ -65,11 +65,11 @@ export default function GoogleSheetsInput() {
                 new CustomEvent("gas-sending-status", { detail: false })
             )
         }
-    }
+    }, [input])
 
     React.useEffect(() => {
         sheets.enviarParaPlanilha = enviarParaPlanilha
-    }, [input, sheets])
+    }, [enviarParaPlanilha, sheets])
 
     return (
         <div
