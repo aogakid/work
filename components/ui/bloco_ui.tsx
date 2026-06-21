@@ -1,7 +1,11 @@
 import * as React from "react"
 import { useEditor } from "../contexts/AppContext"
 
-export default function Bloco() {
+interface BlocoProps {
+    className?: string
+}
+
+export default function Bloco({ className }: BlocoProps) {
     const editor = useEditor()
 
     React.useEffect(() => {
@@ -18,6 +22,7 @@ export default function Bloco() {
 
     return (
         <div
+            className={className}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
         >
