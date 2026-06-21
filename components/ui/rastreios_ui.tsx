@@ -423,20 +423,36 @@ function CardAnimado({ r, ticked, onToggle }) {
     )
 }
 
+interface FatoresRisco {
+    tabagista: boolean
+    dm: boolean
+    hiv: boolean
+    gestante: boolean
+}
+
+interface RastreioItem {
+    id: string
+    titulo: string
+    cat: string
+    condicao: (i: number, s: string, f: FatoresRisco) => boolean
+    metodo: string
+    obs?: string
+}
+
 // --- BASE DE DADOS DOS RASTREIOS ---
-const rData = [
+const rData: RastreioItem[] = [
     {
         id: "has",
         titulo: "Hipertensão arterial",
         cat: "Cardiovascular",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "Aferição de PA a cada 1–2 anos se PA normal; anual se limítrofe (130–139/85–89 mmHg).",
     },
     {
         id: "dm2",
         titulo: "Diabetes mellitus tipo 2",
         cat: "Cardiovascular",
-        condicao: (i, s, f) => i >= 35 || (i >= 18 && f.dm),
+        condicao: (i, _s, f) => i >= 35 || (i >= 18 && f.dm),
         metodo: "Glicemia de jejum ou HbA1c a cada 3 anos.",
     },
     {
@@ -453,7 +469,7 @@ const rData = [
         id: "obesidade",
         titulo: "Obesidade",
         cat: "Rotina",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "Aferição de peso, altura e IMC em toda consulta.",
         obs: "Circunferência abdominal se IMC ≥25. Intervenção comportamental intensiva se IMC ≥30.",
     },
@@ -461,28 +477,28 @@ const rData = [
         id: "mama",
         titulo: "Câncer de mama",
         cat: "Oncologia",
-        condicao: (i, s, f) => s === "F" && i >= 40 && i <= 74,
+        condicao: (i, s) => s === "F" && i >= 40 && i <= 74,
         metodo: "Mamografia bienal 40–74 anos.",
     },
     {
         id: "utero",
         titulo: "Câncer do colo do útero",
         cat: "Oncologia",
-        condicao: (i, s, f) => s === "F" && i >= 25 && i <= 64,
+        condicao: (i, s) => s === "F" && i >= 25 && i <= 64,
         metodo: "Novo: DNA-HPV a cada 5 anos. Antigo: colpocitologia a cada 3 anos.",
     },
     {
         id: "colorretal",
         titulo: "Câncer colorretal",
         cat: "Oncologia",
-        condicao: (i, s, f) => i >= 45 && i <= 75,
+        condicao: (i) => i >= 45 && i <= 75,
         metodo: "PSOF anual ou colonoscopia a cada 10 anos.",
     },
     {
         id: "pulmao",
         titulo: "Câncer de pulmão",
         cat: "Oncologia",
-        condicao: (i, s, f) => i >= 50 && i <= 80 && f.tabagista,
+        condicao: (i, _s, f) => i >= 50 && i <= 80 && f.tabagista,
         metodo: "TC de tórax de baixa dose anualmente.",
         obs: "Critérios: tabagista ativo ou que cessou há < 15 anos com ≥20 maços-ano.",
     },
@@ -490,7 +506,7 @@ const rData = [
         id: "prostata",
         titulo: "Câncer de próstata",
         cat: "Oncologia",
-        condicao: (i, s, f) => s === "M" && i >= 50 && i <= 70,
+        condicao: (i, s) => s === "M" && i >= 50 && i <= 70,
         metodo: "PSA.",
         obs: "Decisão compartilhada. Antecipar 40–45 anos se afrodescendente ou hist. familiar 1º grau.",
     },
@@ -505,14 +521,14 @@ const rData = [
         id: "mental",
         titulo: "Depressão",
         cat: "Saúde mental",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "PHQ-2 como triagem inicial em toda consulta. Se ≥3, fazer PHQ-9",
     },
     {
         id: "ansiedade",
         titulo: "Ansiedade",
         cat: "Saúde mental",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "GAD-2 como triagem inicial em toda consulta. Se ≥3, fazer GAD-7.",
     },
     {
@@ -528,7 +544,7 @@ const rData = [
         id: "alcool",
         titulo: "Abuso de álcool",
         cat: "Saúde mental",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "AUDIT-C em toda consulta.",
         obs: "Pontuação ≥4 (homens) ou ≥3 (mulheres) → AUDIT completo.",
     },
@@ -536,21 +552,21 @@ const rData = [
         id: "tabaco",
         titulo: "Tabagismo",
         cat: "Rotina",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "5 A's em toda consulta -> Fagerström.",
     },
     {
         id: "violencia",
         titulo: "Violência doméstica",
         cat: "Saúde mental",
-        condicao: (i, s, f) => s === "F" && i >= 14,
+        condicao: (i, s) => s === "F" && i >= 14,
         metodo: "HITS ou pergunta direta em toda consulta",
     },
     {
         id: "hiv",
         titulo: "Infecção por HIV",
         cat: "Infectologia",
-        condicao: (i, s, f) => i >= 15 && i <= 65,
+        condicao: (i) => i >= 15 && i <= 65,
         metodo: "Anti-HIV ao menos 1x na vida.",
         obs: "Anual em populações de risco. Gestantes: em toda gestação.",
     },
@@ -558,7 +574,7 @@ const rData = [
         id: "sifilis",
         titulo: "Sífilis",
         cat: "Infectologia",
-        condicao: (i, s, f) => i >= 15,
+        condicao: (i) => i >= 15,
         metodo: "VDRL ao menos 1x/ano em populações de risco.",
         obs: "Gestantes: triagem no 1º trimestre, 3º trimestre e no parto.",
     },
@@ -566,7 +582,7 @@ const rData = [
         id: "hepatite",
         titulo: "Hepatites B e C",
         cat: "Infectologia",
-        condicao: (i, s, f) => i >= 18,
+        condicao: (i) => i >= 18,
         metodo: "Anti-HCV ao menos 1x na vida e HBsAg em populações de risco.",
         obs: "Gestantes: HBsAg no 1º trimestre.",
     },
@@ -574,7 +590,7 @@ const rData = [
         id: "tb",
         titulo: "Tuberculose",
         cat: "Infectologia",
-        condicao: (i, s, f) => i >= 15 && f.hiv,
+        condicao: (i, _s, f) => i >= 15 && f.hiv,
         metodo: "PPD/IGRA anualmente",
         obs: "Rastreio ativo em vulneráveis e contactantes.",
     },
@@ -582,7 +598,7 @@ const rData = [
         id: "osteo",
         titulo: "Osteoporose",
         cat: "Rotina",
-        condicao: (i, s, f) =>
+        condicao: (i, s) =>
             (s === "F" && i >= 65) ||
             (s === "F" && i >= 50 && i <= 64) ||
             (s === "M" && i >= 70),
@@ -592,21 +608,21 @@ const rData = [
         id: "cognitivo",
         titulo: "Déficit cognitivo / demência",
         cat: "Neurológico",
-        condicao: (i, s, f) => i >= 65,
+        condicao: (i) => i >= 65,
         metodo: "Mini-Cog ou MEEM toda consulta.",
     },
     {
         id: "visual",
         titulo: "Déficit visual",
         cat: "Neurológico",
-        condicao: (i, s, f) => i >= 65 || (i >= 40 && f.dm),
+        condicao: (i, _s, f) => i >= 65 || (i >= 40 && f.dm),
         metodo: "Fundoscopia anual.",
     },
     {
         id: "auditivo",
         titulo: "Déficit auditivo",
         cat: "Neurológico",
-        condicao: (i, s, f) => i >= 65,
+        condicao: (i) => i >= 65,
         metodo: "Pergunta de triagem auditiva (Whisper Test) toda consulta -> audiometria.",
     },
 ]
@@ -621,7 +637,7 @@ const ordemCategorias = [
     "Rotina",
 ]
 
-export default function RastreiosPreventivos(props) {
+export default function RastreiosPreventivos() {
     const [idade, setIdade] = useState<string>("")
     const [sexo, setSexo] = useState<string>("")
     const [tabagista, setTabagista] = useState<boolean>(false)
@@ -629,7 +645,7 @@ export default function RastreiosPreventivos(props) {
     const [hiv, setHiv] = useState<boolean>(false)
     const [gestante, setGestante] = useState<boolean>(false)
 
-    const [indicados, setIndicados] = useState<any[]>([])
+    const [indicados, setIndicados] = useState<RastreioItem[]>([])
     const [feitos, setFeitos] = useState<Record<string, boolean>>({})
 
     useEffect(() => {
@@ -648,7 +664,7 @@ export default function RastreiosPreventivos(props) {
         setFeitos((prev) => ({ ...prev, [id]: !prev[id] }))
     }
 
-    const grupos: Record<string, any[]> = {}
+    const grupos: Record<string, RastreioItem[]> = {}
     indicados.forEach((r) => {
         if (!grupos[r.cat]) grupos[r.cat] = []
         grupos[r.cat].push(r)

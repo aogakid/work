@@ -922,12 +922,8 @@ function IconeCheck() {
 
 function BarraProgressoGestacional({
     percentual,
-    dum,
-    dpp,
 }: {
     percentual: number
-    dum: Date
-    dpp: Date
 }) {
     const pos = Math.min(100, Math.max(0, percentual))
 
@@ -1156,8 +1152,6 @@ export default function CalculadoraGestacional({ style }: Props) {
 
                         <BarraProgressoGestacional
                             percentual={resultado.percentual}
-                            dum={resultado.dum}
-                            dpp={resultado.dpp}
                         />
 
                         {resultado.mensagemErro && (

@@ -265,6 +265,15 @@ interface Props {
     style?: React.CSSProperties
 }
 
+interface ResultadoEscore {
+    risco10Anos: string;
+    idadeVascular: string | number;
+    categoriaRisco: string;
+    alvoLdl: string;
+    estatinaSugerida: string;
+    seguimento: string;
+}
+
 export default function CalculadoraPREVENT({ style }: Props) {
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
@@ -287,7 +296,7 @@ export default function CalculadoraPREVENT({ style }: Props) {
     const [fumante, setFumante] = useState(false)
     const [antiHipertensivos, setAntiHipertensivos] = useState(false)
     const [usoEstatinas, setUsoEstatinas] = useState(false)
-    const [resultado, setResultado] = useState<any>(null)
+    const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
 
     // Track which fields have been touched (blurred)
     const [camposTocados, setCamposTocados] = useState({
@@ -546,12 +555,6 @@ export default function CalculadoraPREVENT({ style }: Props) {
         return num >= 100 && num <= 250
     }
 
-    const validarImc = (val: string) => {
-        const num = parseFloat(val)
-        if (!val) return false
-        return num >= 10 && num <= 80
-    }
-
     const obterEstiloInputInvalido = (
         valido: boolean,
         tocado: boolean,
@@ -692,7 +695,7 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             : 0.1412555 * (valorHba1c - 5.3)
 
                     // SDI adjustment terms (from cvd.js official formula)
-                    let sdiAdjustment = 0
+                    const sdiAdjustment = 0
                     // Note: SDI values would need to be added as input parameters
                     // For now, using 0 as placeholder since SDI is not in current UI
 
@@ -814,7 +817,7 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             : 0.1048297 * (valorHba1c - 5.3)
 
                     // SDI adjustment terms (from cvd.js official formula)
-                    let sdiAdjustment = 0
+                    const sdiAdjustment = 0
                     // Note: SDI values would need to be added as input parameters
                     // For now, using 0 as placeholder since SDI is not in current UI
 
