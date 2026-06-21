@@ -57,6 +57,88 @@ export default function PlasmicLoaderPage(props: {
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
+  // Listen for postMessage from Plasmic run code
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'framerBloco') {
+        const api = (window as unknown as { framerBloco?: { copiar: () => void; colar: () => void; substituir: (texto: string) => void } }).framerBloco
+        if (api) {
+          switch (event.data.action) {
+            case 'copiar':
+              api.copiar()
+              break
+            case 'colar':
+              api.colar()
+              break
+            case 'limpar':
+              api.substituir('')
+              break
+            case 'substituir':
+              api.substituir(event.data.texto || '')
+              break
+          }
+        }
+      } else if (event.data.type === 'framerApp') {
+        const api = (window as unknown as { framerApp?: { colarNoInput: () => void; executarPrompt: () => void; copiarOutput: () => void; limparTudo: () => void } }).framerApp
+        if (api) {
+          switch (event.data.action) {
+            case 'colarNoInput':
+              api.colarNoInput?.()
+              break
+            case 'executarPrompt':
+              api.executarPrompt?.()
+              break
+            case 'copiarOutput':
+              api.copiarOutput?.()
+              break
+            case 'limparTudo':
+              api.limparTudo?.()
+              break
+          }
+        }
+      } else if (event.data.type === 'framerEncaminha') {
+        const api = (window as unknown as { framerEncaminha?: { colarNoInput: () => void; executarEncaminhamento: () => void; copiarOutput: () => void; limparTudo: () => void } }).framerEncaminha
+        if (api) {
+          switch (event.data.action) {
+            case 'colarNoInput':
+              api.colarNoInput?.()
+              break
+            case 'executarEncaminhamento':
+              api.executarEncaminhamento?.()
+              break
+            case 'copiarOutput':
+              api.copiarOutput?.()
+              break
+            case 'limparTudo':
+              api.limparTudo?.()
+              break
+          }
+        }
+      } else if (event.data.type === 'framerTimer') {
+        const api = (window as unknown as { framerTimer?: { ativarCronometro: () => void } }).framerTimer
+        if (api) {
+          switch (event.data.action) {
+            case 'ativarCronometro':
+              api.ativarCronometro()
+              break
+          }
+        }
+      } else if (event.data.type === 'framerGoogleSheets') {
+        const api = (window as unknown as { framerGoogleSheets?: { enviarParaPlanilha: () => void } }).framerGoogleSheets
+        if (api) {
+          switch (event.data.action) {
+            case 'enviarParaPlanilha':
+              api.enviarParaPlanilha?.()
+              break
+          }
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [])
+
   if (!plasmicData || plasmicData.entryCompMetas.length === 0) {
     return <Error statusCode={404} />;
   }
