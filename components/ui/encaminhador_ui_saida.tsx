@@ -16,7 +16,9 @@ Regras:
 
 Modelo de output:
 
-Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento], encaminho-o para avaliação especializada em [especialidade].`
+Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou obje[...]
+
+`
 
 export default function EncaminhaOutput() {
     const enc = useEncaminha()
@@ -106,7 +108,7 @@ export default function EncaminhaOutput() {
             enc.copiarOutput = undefined
             enc.limparTudo = undefined
         }
-    }, [rawText, isStreaming])
+    }, [enc, rawText, isStreaming])
 
     const totalOutput = rawText.length
 

@@ -1,16 +1,12 @@
 import * as React from "react"
 import { useEditor } from "../contexts/AppContext"
 
-export default function BlocoEditor() {
+export default function Bloco() {
     const editor = useEditor()
-    const [load, setLoad] = React.useState(true)
-    const [timer, setTimer] = React.useState<NodeJS.Timeout | null>(null)
-    const [atualizarConteudoEditor, setAtualizarConteudoEditor] =
-        React.useState<any>(null)
 
     React.useEffect(() => {
-        // Effect implementation
-    }, [atualizarConteudoEditor, editor, load, timer])
+        // Component initialization
+    }, [editor])
 
     const handleMouseMove = (e: React.MouseEvent) => {
         // Handler implementation
@@ -19,13 +15,6 @@ export default function BlocoEditor() {
     const handleMouseUp = () => {
         // Handler implementation
     }
-
-    const tratarMovimentoPonteiro = (x: number, y: number) => {
-        // Implementation
-    }
-
-    const moverOuvinte = (moveEvent: MouseEvent) =>
-        tratarMovimentoPonteiro(moveEvent.clientX, moveEvent.clientY)
 
     return (
         <div

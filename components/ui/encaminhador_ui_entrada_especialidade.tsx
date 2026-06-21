@@ -8,7 +8,7 @@ export default function EncaminhaEspecialidade() {
     React.useEffect(() => {
         enc.especialidade = specialty
         enc.setEspecialidade = setSpecialty
-    }, [specialty])
+    }, [specialty, enc])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {

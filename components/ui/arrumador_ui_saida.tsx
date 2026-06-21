@@ -25,7 +25,7 @@ CAPITALIZAÇÃO
 - Deve seguir a norma culta do português obrigatoriamente
 - O início de TODA frase e TODO item de lista após '-' deve começar com letra maiúscula
 - Nomes próprios com iniciais maiúsculas
-- Siglas clássicas e clínicas devem permanecer manter seu padrão: PA, FC, FR, SatO2, IMC, AC, AR, SSVV, HDA, QP, AP, AF, HV, CID, MMII, MMSS, DM, HAS, IRC, DPOC, TCE, AVC, RCR, BNF, TC, RNM etc.
+- Siglas clássicas e clínicas devem permanecer manter seu padrão: PA, FC, FR, SatO2, IMC, AC, AR, SSVV, HDA, QP, AP, AF, HV, CID, MMII, MMSS, DM, HAS, IRC, DPOC, TCE, AVC, RCR, BNF, TC, RNM etc[...]
 - Medicamentos genéricos em minúsculo: dipirona, losartana
 
 Exames laboratoriais quando presentes devem seguir o formato
@@ -38,73 +38,73 @@ Modelo de output:
 - Id: 
 - QP: 
 - HDA
-  - 
+   - 
 - Queixas adicionais
-  - 
+   - 
 - Antecedentes pessoais
-  - Condições
-    - 
-  - Cirurgias
-    - 
-  - Medicamentos
-    - 
-  - Alergias
-    - 
-  - Vacinação
-    - 
+   - Condições
+     - 
+   - Cirurgias
+     - 
+   - Medicamentos
+     - 
+   - Alergias
+     - 
+   - Vacinação
+     - 
 - AF: 
 - HV
-  - Etilismo: 
-  - Tabagismo: 
-  - Drogas: 
-  - Exercício: 
-  - Dieta: 
-  - Hidratação: 
-  - Evacuações: 
-  - Diurese: 
-  - Sono: 
-  - Humor: 
-  - Lazer: 
+   - Etilismo: 
+   - Tabagismo: 
+   - Drogas: 
+   - Exercício: 
+   - Dieta: 
+   - Hidratação: 
+   - Evacuações: 
+   - Diurese: 
+   - Sono: 
+   - Humor: 
+   - Lazer: 
 ## Objetivo
 - Exame físico
-  - SSVV
-    - PA: 
-    - Peso: 
-    - Alt: 
-    - IMC: 
-  - Ect: 
-  - AC: 
-  - AR: 
-  - Ext: 
+   - SSVV
+     - PA: 
+     - Peso: 
+     - Alt: 
+     - IMC: 
+   - Ect: 
+   - AC: 
+   - AR: 
+   - Ext: 
 - Complementar
-  - Laboratório
-    - 
-  - Imagem
-    - 
-  - Rastreios
-    - 
-  - Escores
-    - 
+   - Laboratório
+     - 
+   - Imagem
+     - 
+   - Rastreios
+     - 
+   - Escores
+     - 
 ## Avaliação
 - QP
-  -  
+   -  
 - Queixas adicionais
-  -  
+   -  
 - Condições crônicas
-  -  
+   -  
 - Prevenção
-  -  
+   -  
 ## Plano
 - QP
-  -  
+   -  
 - Queixas adicionais
-  -  
+   -  
 - Condições crônicas
-  -  
+   -  
 - Prevenção
-  -  
+   -  
 - Seguimento
-  -  `
+   -  `
 
 export default function FormularioOutput() {
     const app = useApp()

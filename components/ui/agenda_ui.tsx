@@ -10,7 +10,7 @@ export default function GoogleSheetsInput() {
 
     React.useEffect(() => {
         sheets.textoInput = input
-    }, [input])
+    }, [input, sheets])
 
     React.useEffect(() => {
         const escutarColagem = (e: CustomEvent<string>) => {
@@ -69,7 +69,7 @@ export default function GoogleSheetsInput() {
 
     React.useEffect(() => {
         sheets.enviarParaPlanilha = enviarParaPlanilha
-    }, [input])
+    }, [input, sheets])
 
     return (
         <div

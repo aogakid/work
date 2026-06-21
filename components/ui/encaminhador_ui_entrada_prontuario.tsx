@@ -18,7 +18,7 @@ export default function EncaminhaInput() {
                 console.error("Erro ao colar texto:", e)
             }
         }
-    }, [input, isStreaming])
+    }, [input, isStreaming, enc])
 
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -27,7 +27,7 @@ export default function EncaminhaInput() {
             }
         }, 100)
         return () => clearInterval(interval)
-    }, [isStreaming])
+    }, [isStreaming, enc.isStreaming])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
