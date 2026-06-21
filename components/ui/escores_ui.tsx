@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useState, useEffect } from "react"
-import { addPropertyControls } from "framer"
+
 
 const injectStyles = `
   :root {
@@ -1452,4 +1452,3 @@ export default function CalculadoraPREVENT({ style }: Props) {
     )
 }
 
-addPropertyControls(CalculadoraPREVENT, {})
