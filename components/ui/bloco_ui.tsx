@@ -138,6 +138,15 @@ export default function Bloco() {
         }
         window.addEventListener("framerCronometro", lidarComCronometroOuvinte)
 
+        // Global API for Plasmic
+        ;(globalThis as any).framerBloco = {
+            copiar: () => editor.copiar(),
+            colar: () => editor.colar(),
+            limpar: () => editor.substituir(""),
+            cronometro: () => timer.ativarCronometro(),
+            substituir: (texto: string) => editor.substituir(texto),
+        }
+
         editor.copiar = () => {
             if (editorRef.current) {
                 const textoLimpo = limparTextoInvisivel(
@@ -172,6 +181,7 @@ export default function Bloco() {
             window.removeEventListener("framerColar", lidarComColarOuvinte)
             window.removeEventListener("framerLimpar", lidarComLimparOuvinte)
             window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
+            ;(globalThis as any).framerBloco = undefined
         }
     }, [])
 

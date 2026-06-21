@@ -28,9 +28,16 @@ export default function FormularioInput() {
         }
         window.addEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
 
+        // Global API for Plasmic
+        ;(globalThis as any).framerArrumadorEntrada = {
+            colar: () => app.colarNoInput?.(),
+            executar: () => app.executarPrompt?.(),
+        }
+
         return () => {
             window.removeEventListener("framerColarArrumador", lidarComColarOuvinte)
             window.removeEventListener("framerExecutarArrumador", lidarComExecutarOuvinte)
+            ;(globalThis as any).framerArrumadorEntrada = undefined
         }
     }, [input, app, isStreaming])
 
