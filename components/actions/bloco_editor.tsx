@@ -5,7 +5,7 @@ import {
     MODELO_CONSULTA,
     MODELO_DEMANDA_ESPONTANEA,
     MODELO_PRE_NATAL,
-} from "./Modelos.tsx"
+} from "../contexts/bloco_modelos"
 
 export function comBotaoCopiar<P extends { style?: CSSProperties; onClick?: () => void | Promise<void> }>(
     Component: ComponentType<P>
