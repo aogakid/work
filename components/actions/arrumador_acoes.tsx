@@ -3,7 +3,7 @@ import type { ComponentType } from "react"
 import { useApp } from "../contexts/AppContext"
 
 export function comBotaoDisparar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const app = useApp()
         return (
             <Component
@@ -21,10 +21,12 @@ export function comBotaoDisparar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoDisparar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoCopiar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const app = useApp()
         return (
             <Component
@@ -34,10 +36,12 @@ export function comBotaoCopiar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoCopiar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoLimpar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const app = useApp()
         return (
             <Component
@@ -47,10 +51,12 @@ export function comBotaoLimpar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoLimpar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoColar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const app = useApp()
         return (
             <Component
@@ -60,4 +66,6 @@ export function comBotaoColar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoColar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }

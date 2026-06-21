@@ -8,7 +8,7 @@ import {
 } from "./Modelos.tsx"
 
 export function comBotaoCopiar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const editor = useEditor()
         return (
             <Component
@@ -18,10 +18,12 @@ export function comBotaoCopiar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoCopiar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoColar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const editor = useEditor()
         return (
             <Component
@@ -31,10 +33,12 @@ export function comBotaoColar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoColar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function SubstituirConsultaAgendada(Component): ComponentType {
-    return (props) => (
+    const WrappedComponent = (props) => (
         <Component
             {...props}
             style={{ ...props.style, cursor: "pointer" }}
@@ -46,10 +50,12 @@ export function SubstituirConsultaAgendada(Component): ComponentType {
             }}
         />
     )
+    WrappedComponent.displayName = `SubstituirConsultaAgendada(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comSubstituirDemandaEspontanea(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const editor = useEditor()
         return (
             <Component
@@ -59,10 +65,12 @@ export function comSubstituirDemandaEspontanea(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comSubstituirDemandaEspontanea(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comSubstituirPreNatal(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const editor = useEditor()
         return (
             <Component
@@ -72,10 +80,12 @@ export function comSubstituirPreNatal(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comSubstituirPreNatal(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoLimparEditor(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const editor = useEditor()
         return (
             <Component
@@ -85,4 +95,6 @@ export function comBotaoLimparEditor(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoLimparEditor(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }

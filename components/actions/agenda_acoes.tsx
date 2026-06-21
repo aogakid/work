@@ -2,7 +2,7 @@ import { ComponentType, useState, useEffect, ReactNode } from "react"
 import { useGoogleSheets } from "../contexts/AppContext"
 
 export function withGoogleSheetsSubmit(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const sheets = useGoogleSheets()
         const [isCounting, setIsCounting] = useState(false)
 
@@ -92,10 +92,12 @@ export function withGoogleSheetsSubmit(Component): ComponentType {
             </Component>
         )
     }
+    WrappedComponent.displayName = `withGoogleSheetsSubmit(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function withGoogleSheetsPaste(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const sheets = useGoogleSheets()
         return (
             <Component
@@ -131,4 +133,6 @@ export function withGoogleSheetsPaste(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `withGoogleSheetsPaste(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }

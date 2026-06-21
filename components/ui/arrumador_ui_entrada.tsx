@@ -17,7 +17,7 @@ export default function FormularioInput() {
                 console.error("Erro ao ler a área de transferência:", e)
             }
         }
-    }, [input, isStreaming])
+    }, [input, app, isStreaming])
 
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -26,7 +26,7 @@ export default function FormularioInput() {
             }
         }, 100)
         return () => clearInterval(interval)
-    }, [isStreaming])
+    }, [app.isStreaming, isStreaming])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -41,12 +41,6 @@ export default function FormularioInput() {
         if (!nome || nome.length < 3) return texto
         const escaped = nome.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
         return texto.replace(new RegExp(escaped, "gi"), "[Nome do Paciente]")
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const raw = e.target.value
-        const anonimizado = anonimizar(raw)
-        setInput(anonimizado)
     }
 
     const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {

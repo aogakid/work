@@ -2,7 +2,7 @@ import type { ComponentType } from "react"
 import { useEncaminha } from "../contexts/AppContext"
 
 export function comBotaoGerar(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -11,10 +11,12 @@ export function comBotaoGerar(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoGerar(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoColarEncaminha(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -23,10 +25,12 @@ export function comBotaoColarEncaminha(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoColarEncaminha(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoCopiarEncaminha(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -35,10 +39,12 @@ export function comBotaoCopiarEncaminha(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoCopiarEncaminha(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
 
 export function comBotaoLimparEncaminha(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const enc = useEncaminha()
         return (
             <Component
@@ -47,4 +53,6 @@ export function comBotaoLimparEncaminha(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comBotaoLimparEncaminha(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }

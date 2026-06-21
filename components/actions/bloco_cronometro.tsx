@@ -3,7 +3,7 @@ import type { ComponentType } from "react"
 import { useTimer } from "../contexts/AppContext"
 
 export function comTriggerCronometro(Component): ComponentType {
-    return (props) => {
+    const WrappedComponent = (props) => {
         const timer = useTimer()
         return (
             <Component
@@ -13,4 +13,6 @@ export function comTriggerCronometro(Component): ComponentType {
             />
         )
     }
+    WrappedComponent.displayName = `comTriggerCronometro(${Component.displayName || Component.name || 'Component'})`
+    return WrappedComponent
 }
