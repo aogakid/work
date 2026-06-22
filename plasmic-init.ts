@@ -27,9 +27,6 @@ import { comTriggerCronometro } from "./components/actions/bloco_cronometro";
 import {
   comBotaoCopiar as comBotaoCopiarEditor,
   comBotaoColar as comBotaoColarEditor,
-  SubstituirConsultaAgendada,
-  comSubstituirDemandaEspontanea,
-  comSubstituirPreNatal,
   comBotaoLimparEditor,
 } from "./components/actions/bloco_editor";
 import {
@@ -211,9 +208,6 @@ export {
 export {
   comBotaoCopiarEditor,
   comBotaoColarEditor,
-  SubstituirConsultaAgendada,
-  comSubstituirDemandaEspontanea,
-  comSubstituirPreNatal,
   comBotaoLimparEditor,
 };
 
