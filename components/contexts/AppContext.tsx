@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useRef, type ReactNode } from "react"
 
 // ---------------------------------------------------------------------------
 // 1. GoogleSheetsContext  (replaces window.framerGoogleSheetsApi)
@@ -21,14 +21,6 @@ export function useGoogleSheets(): GoogleSheetsApi {
 
 export function GoogleSheetsProvider({ children }: { children: ReactNode }) {
     const api = useRef<GoogleSheetsApi>({ textoInput: "" }).current
-
-    // Attach to globalThis for Plasmic access
-    useEffect(() => {
-        ;(globalThis as unknown as { framerGoogleSheets?: GoogleSheetsApi }).framerGoogleSheets = api
-        return () => {
-            ;(globalThis as unknown as { framerGoogleSheets?: GoogleSheetsApi }).framerGoogleSheets = undefined
-        }
-    }, [api])
 
     return (
         <GoogleSheetsContext.Provider value={api}>
@@ -71,14 +63,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTextoInput: () => {},
         isStreaming: false,
     }).current
-
-    // Attach to globalThis for Plasmic access
-    useEffect(() => {
-        ;(globalThis as unknown as { framerApp?: AppApi }).framerApp = api
-        return () => {
-            ;(globalThis as unknown as { framerApp?: AppApi }).framerApp = undefined
-        }
-    }, [api])
 
     return (
         <AppContext.Provider value={api}>{children}</AppContext.Provider>
@@ -126,14 +110,6 @@ export function EncaminhaProvider({ children }: { children: ReactNode }) {
         isStreaming: false,
     }).current
 
-    // Attach to globalThis for Plasmic access
-    useEffect(() => {
-        ;(globalThis as unknown as { framerEncaminha?: EncaminhaApi }).framerEncaminha = api
-        return () => {
-            ;(globalThis as unknown as { framerEncaminha?: EncaminhaApi }).framerEncaminha = undefined
-        }
-    }, [api])
-
     return (
         <EncaminhaContext.Provider value={api}>
             {children}
@@ -172,14 +148,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
         substituir: () => {},
     }).current
 
-    // Attach to globalThis for Plasmic access
-    useEffect(() => {
-        ;(globalThis as unknown as { framerBloco?: EditorApi }).framerBloco = api
-        return () => {
-            ;(globalThis as unknown as { framerBloco?: EditorApi }).framerBloco = undefined
-        }
-    }, [api])
-
     return (
         <EditorContext.Provider value={api}>{children}</EditorContext.Provider>
     )
@@ -209,14 +177,6 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const api = useRef<TimerApi>({
         ativarCronometro: () => {},
     }).current
-
-    // Attach to globalThis for Plasmic access
-    useEffect(() => {
-        ;(globalThis as unknown as { framerTimer?: TimerApi }).framerTimer = api
-        return () => {
-            ;(globalThis as unknown as { framerTimer?: TimerApi }).framerTimer = undefined
-        }
-    }, [api])
 
     return (
         <TimerContext.Provider value={api}>{children}</TimerContext.Provider>
