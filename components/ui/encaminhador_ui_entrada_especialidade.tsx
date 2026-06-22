@@ -1,7 +1,12 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useEncaminha } from "../contexts/AppContext"
 
-export default function EncaminhaEspecialidade() {
+export interface EncaminhaEspecialidadeActions {
+    executarEncaminhamento(): void
+}
+
+const EncaminhaEspecialidade = forwardRef<EncaminhaEspecialidadeActions>(function EncaminhaEspecialidade(_props, ref) {
     const enc = useEncaminha()
     const [specialty, setSpecialty] = React.useState("")
 
@@ -19,6 +24,13 @@ export default function EncaminhaEspecialidade() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [specialty, enc])
+
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        executarEncaminhamento: () => {
+            enc.executarEncaminhamento?.()
+        },
+    }), [enc])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -104,4 +116,6 @@ export default function EncaminhaEspecialidade() {
             />
         </div>
     )
-}
+})
+
+export default EncaminhaEspecialidade

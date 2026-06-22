@@ -1,4 +1,5 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useApp } from "../contexts/AppContext"
 
 const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
@@ -106,7 +107,14 @@ Modelo de output:
 - Seguimento
    -  `
 
-export default function FormularioOutput() {
+export interface FormularioOutputActions {
+    executarPrompt(): void
+    copiarOutput(): void
+    colarNoInput(): void
+    limparTudo(): void
+}
+
+const FormularioOutput = forwardRef<FormularioOutputActions>(function FormularioOutput(_props, ref) {
     const app = useApp()
     const [rawMarkdown, setRawMarkdown] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
@@ -237,6 +245,27 @@ export default function FormularioOutput() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [app, dispararRequisicao])
 
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        executarPrompt: () => dispararRequisicao(),
+        copiarOutput: () => {
+            const textoLimpo = rawMarkdownRef.current
+                .replaceAll("$.", " ")
+                .replaceAll("$", " ")
+            if (textoLimpo) navigator.clipboard.writeText(textoLimpo)
+        },
+        colarNoInput: async () => {
+            try {
+                const txt = await navigator.clipboard.readText()
+                app.setTextoInput(txt)
+            } catch {}
+        },
+        limparTudo: () => {
+            app.setTextoInput("")
+            setRawMarkdown("")
+        },
+    }), [app, dispararRequisicao, setRawMarkdown])
+
     const markdownExibido = rawMarkdown.replaceAll("$.", "").replaceAll("$", "")
     const totalOutput = rawMarkdown.length
 
@@ -331,4 +360,6 @@ export default function FormularioOutput() {
             )}
         </div>
     )
-}
+})
+
+export default FormularioOutput

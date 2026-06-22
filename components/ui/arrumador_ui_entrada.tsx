@@ -1,7 +1,13 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useApp } from "../contexts/AppContext"
 
-export default function FormularioInput() {
+export interface FormularioInputActions {
+    colarNoInput(): void
+    executarPrompt(): void
+}
+
+const FormularioInput = forwardRef<FormularioInputActions>(function FormularioInput(_props, ref) {
     const app = useApp()
     const [input, setInput] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
@@ -43,6 +49,21 @@ export default function FormularioInput() {
         }, 100)
         return () => clearInterval(interval)
     }, [app.isStreaming, isStreaming])
+
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        colarNoInput: async () => {
+            try {
+                const textoClp = await navigator.clipboard.readText()
+                setInput(textoClp)
+            } catch (e) {
+                console.error("Erro ao ler a área de transferência:", e)
+            }
+        },
+        executarPrompt: () => {
+            app.executarPrompt?.()
+        },
+    }), [app, setInput])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -153,4 +174,6 @@ export default function FormularioInput() {
             </div>
         </div>
     )
-}
+})
+
+export default FormularioInput

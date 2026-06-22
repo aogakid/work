@@ -57,36 +57,122 @@ export const PLASMIC = initPlasmicLoader({
 PLASMIC.registerComponent(GoogleSheetsInput, {
   name: "GoogleSheetsInput",
   props: {},
+  refActions: {
+    enviarParaPlanilha: {
+      description: "Send content to Google Sheets",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(FormularioInput, {
   name: "FormularioInput",
   props: {},
+  refActions: {
+    colarNoInput: {
+      description: "Paste content from clipboard to input",
+      argTypes: [],
+    },
+    executarPrompt: {
+      description: "Execute the arrumador prompt",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(FormularioOutput, {
   name: "FormularioOutput",
   props: {},
+  refActions: {
+    executarPrompt: {
+      description: "Execute the arrumador prompt",
+      argTypes: [],
+    },
+    copiarOutput: {
+      description: "Copy output to clipboard",
+      argTypes: [],
+    },
+    colarNoInput: {
+      description: "Paste content from clipboard to input",
+      argTypes: [],
+    },
+    limparTudo: {
+      description: "Clear input and output",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(Bloco, {
   name: "Bloco",
   props: {},
+  refActions: {
+    copiar: {
+      description: "Copy editor content to clipboard",
+      argTypes: [],
+    },
+    colar: {
+      description: "Paste content from clipboard to editor",
+      argTypes: [],
+    },
+    substituir: {
+      description: "Replace editor content with specified text",
+      argTypes: [{ name: "texto", type: "string" }],
+    },
+    limpar: {
+      description: "Clear editor content",
+      argTypes: [],
+    },
+    cronometro: {
+      description: "Activate timer",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(EncaminhaEspecialidade, {
   name: "EncaminhaEspecialidade",
   props: {},
+  refActions: {
+    executarEncaminhamento: {
+      description: "Execute the encaminhamento",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(EncaminhaInput, {
   name: "EncaminhaInput",
   props: {},
+  refActions: {
+    colarNoInput: {
+      description: "Paste content from clipboard to input",
+      argTypes: [],
+    },
+    executarEncaminhamento: {
+      description: "Execute the encaminhamento",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(EncaminhaOutput, {
   name: "EncaminhaOutput",
   props: {},
+  refActions: {
+    executarEncaminhamento: {
+      description: "Execute the encaminhamento",
+      argTypes: [],
+    },
+    copiarOutput: {
+      description: "Copy output to clipboard",
+      argTypes: [],
+    },
+    limparTudo: {
+      description: "Clear input and output",
+      argTypes: [],
+    },
+  },
 });
 
 PLASMIC.registerComponent(CalculadoraPREVENT, {

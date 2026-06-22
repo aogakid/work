@@ -1,7 +1,13 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useEncaminha } from "../contexts/AppContext"
 
-export default function EncaminhaInput() {
+export interface EncaminhaInputActions {
+    colarNoInput(): void
+    executarEncaminhamento(): void
+}
+
+const EncaminhaInput = forwardRef<EncaminhaInputActions>(function EncaminhaInput(_props, ref) {
     const enc = useEncaminha()
     const [input, setInput] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
@@ -44,6 +50,21 @@ export default function EncaminhaInput() {
         }, 100)
         return () => clearInterval(interval)
     }, [isStreaming, enc.isStreaming])
+
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        colarNoInput: async () => {
+            try {
+                const textoClp = await navigator.clipboard.readText()
+                setInput(anonimizar(textoClp))
+            } catch (e) {
+                console.error("Erro ao colar texto:", e)
+            }
+        },
+        executarEncaminhamento: () => {
+            enc.executarEncaminhamento?.()
+        },
+    }), [enc, setInput])
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -158,4 +179,6 @@ export default function EncaminhaInput() {
             </div>
         </div>
     )
-}
+})
+
+export default EncaminhaInput

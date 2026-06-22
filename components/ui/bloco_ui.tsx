@@ -1,4 +1,5 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
 
@@ -7,7 +8,15 @@ const supabase = createClient(
     "sb_publishable_5ftHtUIl4DlyHy9KQ-jvGw_AfnhQn1Q"
 )
 
-export default function Bloco() {
+export interface BlocoActions {
+    copiar(): void
+    colar(): void
+    substituir(texto: string): void
+    limpar(): void
+    cronometro(): void
+}
+
+const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const editor = useEditor()
     const timer = useTimer()
     const editorRef = React.useRef<HTMLDivElement>(null)
@@ -226,6 +235,36 @@ export default function Bloco() {
         }, 5000)
         return () => clearTimeout(popupTimeout)
     }, [saveTime, markdownContent])
+
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        copiar: () => {
+            if (editorRef.current) {
+                const textoLimpo = limparTextoInvisivel(
+                    editorRef.current.innerText
+                )
+                navigator.clipboard.writeText(textoLimpo)
+            }
+        },
+        colar: async () => {
+            try {
+                const text = await navigator.clipboard.readText()
+                atualizarConteudoEditor(text)
+            } catch (err) {
+                console.error(err)
+            }
+        },
+        substituir: (texto: string) => {
+            atualizarConteudoEditor(texto || "")
+        },
+        limpar: () => {
+            atualizarConteudoEditor("")
+        },
+        cronometro: () => {
+            fecharCronometroCompleto()
+            setMostrarSetupRelogio(true)
+        },
+    }), [editorRef])
 
     const handleInput = () => {
         setMarkdownContent(
@@ -1312,4 +1351,6 @@ export default function Bloco() {
             />
         </div>
     )
-}
+})
+
+export default Bloco

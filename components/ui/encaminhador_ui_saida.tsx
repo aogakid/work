@@ -1,4 +1,5 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useEncaminha } from "../contexts/AppContext"
 
 const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
@@ -20,7 +21,13 @@ Paciente de [idade] anos, portador de [condições crônicas], com queixas de [s
 
 `
 
-export default function EncaminhaOutput() {
+export interface EncaminhaOutputActions {
+    executarEncaminhamento(): void
+    copiarOutput(): void
+    limparTudo(): void
+}
+
+const EncaminhaOutput = forwardRef<EncaminhaOutputActions>(function EncaminhaOutput(_props, ref) {
     const enc = useEncaminha()
     const [rawText, setRawText] = React.useState("")
     const [isStreaming, setIsStreaming] = React.useState(false)
@@ -129,6 +136,19 @@ export default function EncaminhaOutput() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enc, rawText, dispararRequisicao])
 
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        executarEncaminhamento: () => dispararRequisicao(),
+        copiarOutput: () => {
+            if (rawText) navigator.clipboard.writeText(rawText)
+        },
+        limparTudo: () => {
+            enc.setTextoInput("")
+            enc.setEspecialidade("")
+            setRawText("")
+        },
+    }), [enc, dispararRequisicao, rawText, setRawText])
+
     const totalOutput = rawText.length
 
     return (
@@ -225,4 +245,6 @@ export default function EncaminhaOutput() {
             )}
         </div>
     )
-}
+})
+
+export default EncaminhaOutput

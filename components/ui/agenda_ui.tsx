@@ -1,10 +1,15 @@
 import * as React from "react"
+import { forwardRef, useImperativeHandle } from "react"
 import { useGoogleSheets } from "../contexts/AppContext"
 
 const GAS_WEB_APP_URL =
     "https://script.google.com/macros/s/AKfycbx5e1DSXQ2tZqEtMHbCU9a9dvP8Ial8q7LsZ1A7LYHSLsnPvABURMhPmDP-yWBLStmcng/exec"
 
-export default function GoogleSheetsInput() {
+export interface GoogleSheetsInputActions {
+    enviarParaPlanilha(): void
+}
+
+const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSheetsInput(_props, ref) {
     const sheets = useGoogleSheets()
     const [input, setInput] = React.useState("")
 
@@ -81,6 +86,11 @@ export default function GoogleSheetsInput() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [enviarParaPlanilha, sheets])
 
+    // Expose actions via useImperativeHandle
+    useImperativeHandle(ref, () => ({
+        enviarParaPlanilha: () => enviarParaPlanilha(),
+    }), [enviarParaPlanilha])
+
     return (
         <div
             style={{
@@ -122,4 +132,6 @@ Hora	Usuário	Tipo Agendamento	Observação
             />
         </div>
     )
-}
+})
+
+export default GoogleSheetsInput
