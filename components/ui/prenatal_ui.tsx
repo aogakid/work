@@ -269,7 +269,6 @@ const styles = {
         padding: "24px",
         borderRadius: "16px",
         width: "100%",
-        maxWidth: "80vw",
         boxSizing: "border-box" as const,
     },
     title: {
