@@ -7,21 +7,31 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const link = (e.target as HTMLElement).closest("a");
+      const target = e.target as HTMLElement;
+      const link = target.closest("[href]") as HTMLAnchorElement | null;
       if (!link?.href) return;
 
-      const url = new URL(link.href);
+      let url: URL;
+      try {
+        url = new URL(link.href);
+      } catch {
+        return;
+      }
+
       if (url.origin !== location.origin) return;
+      if (url.pathname === location.pathname) return;
       if (!document.startViewTransition) return;
 
       e.preventDefault();
-      document.startViewTransition(() => {
-        router.push(url.pathname);
+      e.stopPropagation();
+
+      document.startViewTransition(async () => {
+        await router.push(url.pathname);
       });
     };
 
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
+    document.addEventListener("click", handleClick, true); // capture phase
+    return () => document.removeEventListener("click", handleClick, true);
   }, [router]);
 
   return <Component {...pageProps} />;
