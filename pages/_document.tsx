@@ -6,7 +6,6 @@ export default function Document() {
       <Head>
         <meta name="theme-color" content="#FFF9EB" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#221F1C" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link 
@@ -47,6 +46,9 @@ export default function Document() {
           @keyframes slide-in-up {
             from { transform: translateY(100%); }
             to { transform: translateY(0); }
+          }
+          .plasmic-default__svg * {
+            stroke-width: 2.5 !important;
           }
         `}</style>
       </Head>
