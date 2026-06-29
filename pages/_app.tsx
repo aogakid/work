@@ -8,7 +8,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   useEffect(() => {
     const originalPush = router.push.bind(router);
 
-    (router as any).push = (...args: any[]) => {
+    (router as typeof router & { push: typeof router.push }).push = (...args: Parameters<typeof router.push>) => {
       if (!document.startViewTransition) {
         return originalPush(...args);
       }
@@ -22,7 +22,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     };
 
     return () => {
-      (router as any).push = originalPush;
+      (router as typeof router & { push: typeof router.push }).push = originalPush;
     };
   }, [router]);
 
