@@ -4,8 +4,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <meta name="theme-color" content="#FFF9EB" />
-        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#221F1C" />
+        <meta name="theme-color" content="#FFFDF5" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link 
@@ -20,13 +20,13 @@ export default function Document() {
         <link rel="manifest" href="/site.webmanifest" />
         <style>{`
           html, body {
-            background-color: #FFF9EB !important;
+            background-color: #FFFDF5 !important;
             margin: 0;
             padding: 0;
           }
           @media (prefers-color-scheme: dark) {
             html, body {
-              background-color: #221F1C !important;
+              background-color: #000000 !important;
             }
           }
           ::view-transition-old(root) {
