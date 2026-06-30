@@ -264,7 +264,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             fecharCronometroCompleto()
             setMostrarSetupRelogio(true)
         },
-    }), [editorRef])
+    })) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleInput = () => {
         setMarkdownContent(
