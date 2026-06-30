@@ -6,6 +6,8 @@ export default function Document() {
       <Head>
         <meta name="theme-color" content="#FFFDF5" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link 
@@ -23,6 +25,8 @@ export default function Document() {
             background-color: #FFFDF5 !important;
             margin: 0;
             padding: 0;
+            overscroll-behavior-y: none;
+            -webkit-overflow-scrolling: touch;
           }
           @media (prefers-color-scheme: dark) {
             html, body {
@@ -49,6 +53,14 @@ export default function Document() {
           }
           .plasmic-default__svg * {
             stroke-width: 2.5 !important;
+          }
+          html::-webkit-scrollbar,
+          body::-webkit-scrollbar {
+            display: none;
+          }
+          html {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
           }
         `}</style>
       </Head>
