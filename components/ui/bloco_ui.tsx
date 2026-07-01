@@ -23,7 +23,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [markdownContent, setMarkdownContent] = React.useState("")
     const initialContentRef = React.useRef<string | null>(null)
     const [saveTime, setSaveTime] = React.useState<string | null>(null)
-    const [, setShowPopup] = React.useState(false)
+    const [showSavePopup, setShowSavePopup] = React.useState(false)
+    const [username, setUsername] = React.useState<string | null>(null)
+    const [showUsernameInput, setShowUsernameInput] = React.useState(true)
+    const usernameInputRef = React.useRef<HTMLInputElement>(null)
 
     // --- ESTADOS DO CRONÔMETRO ---
     const [tempoLimite, setTempoLimite] = React.useState<number>(15)
@@ -34,6 +37,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         React.useState<boolean>(false)
     const [isPaused, setIsPaused] = React.useState<boolean>(false)
     const [hoverTimer, setHoverTimer] = React.useState<boolean>(false)
+    const [mostrarBurocracia, setMostrarBurocracia] = React.useState<boolean>(false)
+    const [tempoBurocracia, setTempoBurocracia] = React.useState<number>(15)
 
     const [shakeTimeCount, setShakeTimeCount] = React.useState<number>(0)
     const [shakeProgressCount, setShakeProgressCount] =
@@ -52,6 +57,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         return (txt || "")
             .replace(/\u00A0/g, " ") // Converte Non-Breaking Space para espaço comum
             .replace(/\u200B/g, "") // Remove Zero-Width Space completamente
+            .split("\n")
+            .map((line) => line.trimEnd()) // Only trim trailing whitespace to preserve indentation
+            .filter((line, index, arr) => {
+                // Keep line if it's not empty, or if it's the only empty line between non-empty lines
+                if (line !== "") return true
+                const prevEmpty = index > 0 && arr[index - 1] === ""
+                const nextEmpty = index < arr.length - 1 && arr[index + 1] === ""
+                return !prevEmpty && !nextEmpty
+            })
+            .join("\n")
     }
 
     const executarRenderStyles = () => {
@@ -95,10 +110,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     }
 
     async function load() {
+        if (!username) return
         const { data } = await supabase
             .from("pages")
             .select("*")
-            .eq("id", "bloco")
+            .eq("id", username)
             .single()
         if (data?.content && editorRef.current) {
             initialContentRef.current = limparTextoInvisivel(data.content)
@@ -110,7 +126,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     }
 
     React.useEffect(() => {
-        load()
+        if (username) {
+            load()
+        }
 
         const lidarComSubstituicaoOuvinte = (e: Event) => {
             const customEvent = e as CustomEvent
@@ -183,7 +201,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [username])
 
     React.useEffect(() => {
         let interval: NodeJS.Timeout
@@ -208,16 +226,21 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     React.useEffect(() => {
         if (
             initialContentRef.current === null ||
-            markdownContent === initialContentRef.current
+            markdownContent === initialContentRef.current ||
+            !username
         )
             return
-        setShowPopup(false)
+        setShowSavePopup(false)
         const timeout = setTimeout(async () => {
             const conteudoSalvar = limparTextoInvisivel(markdownContent)
+            const expiresAt = new Date()
+            expiresAt.setDate(expiresAt.getDate() + 7)
             await supabase.from("pages").upsert({
-                id: "bloco",
+                id: username,
+                username,
                 content: conteudoSalvar,
                 updated_at: new Date(),
+                expires_at: expiresAt.toISOString(),
             })
             initialContentRef.current = conteudoSalvar
             const agora = new Date()
@@ -226,12 +249,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             setSaveTime(`${hh}:${mm}`)
         }, 800)
         return () => clearTimeout(timeout)
-    }, [markdownContent])
+    }, [markdownContent, username])
 
     React.useEffect(() => {
         if (!saveTime) return
         const popupTimeout = setTimeout(() => {
-            setShowPopup(true)
+            setShowSavePopup(true)
         }, 5000)
         return () => clearTimeout(popupTimeout)
     }, [saveTime, markdownContent])
@@ -376,11 +399,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         ? `${String(minutosPassados).padStart(2, "0")} min.`
         : "00 min."
 
-    const totalSegundosLimite = tempoLimite * 60
-    const limiteSegundosS = totalSegundosLimite * 0.5
-    const limiteSegundosO = totalSegundosLimite * 0.6
-    const limiteSegundosA = totalSegundosLimite * 0.7
-    const limiteSegundosP = totalSegundosLimite
+    const totalSegundosLimite = (tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)) * 60
+    const limiteSegundosS = tempoLimite * 60 * 0.5
+    const limiteSegundosO = tempoLimite * 60 * 0.6
+    const limiteSegundosA = tempoLimite * 60 * 0.7
+    const limiteSegundosP = tempoLimite * 60
+    const limiteSegundosB = totalSegundosLimite
 
     let secaoAtual = "S"
     let secaoExtrapolada = false
@@ -389,6 +413,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     let progressoVaoO = 0
     let progressoVaoA = 0
     let progressoVaoP = 0
+    let progressoVaoB = 0
     let progressoExtrapolado = 0
 
     if (cronometroAtivo) {
@@ -419,6 +444,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 ((segundosDecorridos - limiteSegundosA) /
                     (limiteSegundosP - limiteSegundosA)) *
                 100
+        } else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) {
+            secaoAtual = "B"
+            progressoVaoS = 100
+            progressoVaoO = 100
+            progressoVaoA = 100
+            progressoVaoP = 100
+            progressoVaoB =
+                ((segundosDecorridos - limiteSegundosP) /
+                    (limiteSegundosB - limiteSegundosP)) *
+                100
         } else {
             secaoAtual = "FIM"
             secaoExtrapolada = true
@@ -426,8 +461,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             progressoVaoO = 100
             progressoVaoA = 100
             progressoVaoP = 100
+            progressoVaoB = 100
+            const baseLimite = mostrarBurocracia ? limiteSegundosB : limiteSegundosP
             progressoExtrapolado = Math.min(
-                (segundosDecorridos - limiteSegundosP) * 0.35,
+                (segundosDecorridos - baseLimite) * 0.35,
                 55
             )
         }
@@ -515,6 +552,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 chipBg = "rgba(249, 115, 22, 0.12)"
                 chipBorder = "rgba(249, 115, 22, 0.25)"
                 chipTextColor = "#f97316"
+            } else if (secaoAtual === "B") {
+                chipBg = "rgba(139, 92, 246, 0.12)"
+                chipBorder = "rgba(139, 92, 246, 0.25)"
+                chipTextColor = "#8b5cf6"
             }
         }
     }
@@ -714,6 +755,129 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 }
             `}</style>
 
+            {/* USERNAME INPUT MODAL */}
+            {showUsernameInput && (
+                <div
+                    className="framer-timer-entrance gas-ui-blockout"
+                    style={{
+                        position: "absolute",
+                        top: "0",
+                        left: "0",
+                        right: "0",
+                        bottom: "0",
+                        background: "rgba(0, 0, 0, 0.5)",
+                        backdropFilter: "blur(8px)",
+                        zIndex: 30,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                    }}
+                >
+                    <div
+                        style={{
+                            background: "var(--editor-bg)",
+                            border: "1px solid var(--editor-border)",
+                            borderRadius: "12px",
+                            padding: "24px",
+                            width: "280px",
+                            maxWidth: "90vw",
+                            boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: "14px",
+                                fontWeight: 600,
+                                color: "var(--editor-text)",
+                                marginBottom: "16px",
+                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                            }}
+                        >
+                            digite seu usuário
+                        </div>
+                        <input
+                            ref={usernameInputRef}
+                            type="text"
+                            placeholder="usuário"
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                    const target = e.target as HTMLInputElement
+                                    const name = target.value.trim()
+                                    if (name) {
+                                        setUsername(name)
+                                        setShowUsernameInput(false)
+                                    }
+                                }
+                            }}
+                            style={{
+                                width: "100%",
+                                padding: "10px 12px",
+                                borderRadius: "6px",
+                                border: "1px solid var(--editor-border)",
+                                background: "var(--editor-bg)",
+                                color: "var(--editor-text)",
+                                fontSize: "13px",
+                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                outline: "none",
+                                marginBottom: "12px",
+                            }}
+                        />
+                        <button
+                            onClick={() => {
+                                const name = usernameInputRef.current?.value.trim()
+                                if (name) {
+                                    setUsername(name)
+                                    setShowUsernameInput(false)
+                                }
+                            }}
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                borderRadius: "6px",
+                                border: "none",
+                                background: "#3b82f6",
+                                color: "#ffffff",
+                                fontSize: "13px",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                            }}
+                        >
+                            acessar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* CHIP DE SALVO */}
+            {showSavePopup && saveTime && (
+                <div
+                    className="framer-timer-entrance gas-ui-blockout"
+                    style={{
+                        position: "absolute",
+                        top: "16px",
+                        right: "16px",
+                        background: "rgba(34, 197, 94, 0.12)",
+                        backdropFilter: "blur(12px)",
+                        border: "1px solid rgba(34, 197, 94, 0.25)",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        zIndex: 20,
+                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: "#22c55e",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                    }}
+                >
+                    <span>✓</span>
+                    <span>salvo às {saveTime}</span>
+                </div>
+            )}
+
             {/* POPUP DE SELEÇÃO DINÂMICO */}
             {mostrarSetupRelogio && (
                 <div
@@ -900,6 +1064,111 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             minutos
                         </span>
                     </div>
+
+                    {/* TOGGLE DE BUROCRACIA */}
+                    <div
+                        style={{
+                            width: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: "8px",
+                            marginTop: "8px",
+                        }}
+                    >
+                        <span
+                            style={{
+                                fontSize: "9px",
+                                fontWeight: 600,
+                                color: "var(--meta-text)",
+                                letterSpacing: "0.5px",
+                            }}
+                        >
+                            burocracia
+                        </span>
+                        <button
+                            onClick={() => setMostrarBurocracia(!mostrarBurocracia)}
+                            style={{
+                                width: "36px",
+                                height: "20px",
+                                borderRadius: "10px",
+                                background: mostrarBurocracia
+                                    ? corDinamicaPopup
+                                    : "rgba(120,113,108,0.2)",
+                                border: "none",
+                                cursor: "pointer",
+                                position: "relative",
+                                transition: "background 0.2s",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: "16px",
+                                    height: "16px",
+                                    borderRadius: "50%",
+                                    background: "#ffffff",
+                                    position: "absolute",
+                                    top: "2px",
+                                    left: mostrarBurocracia ? "18px" : "2px",
+                                    transition: "left 0.2s",
+                                }}
+                            />
+                        </button>
+                    </div>
+
+                    {/* INPUT DE TEMPO DE BUROCRACIA */}
+                    {mostrarBurocracia && (
+                        <div
+                            style={{
+                                width: "100%",
+                                marginBottom: "8px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                            }}
+                        >
+                            <input
+                                type="number"
+                                value={tempoBurocracia}
+                                onChange={(e) =>
+                                    setTempoBurocracia(
+                                        Math.max(1, Math.min(60, Number(e.target.value) || 1))
+                                    )
+                                }
+                                style={{
+                                    width: "50px",
+                                    padding: "6px 8px",
+                                    borderRadius: "5px",
+                                    border: "1px solid var(--editor-border)",
+                                    background: "var(--editor-bg)",
+                                    color: "var(--editor-text)",
+                                    fontSize: "11px",
+                                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                    outline: "none",
+                                    textAlign: "center",
+                                }}
+                            />
+                            <span
+                                style={{
+                                    fontSize: "11px",
+                                    fontWeight: 500,
+                                    color: "var(--meta-text)",
+                                }}
+                            >
+                                min
+                            </span>
+                            <div
+                                style={{
+                                    fontSize: "9px",
+                                    fontWeight: 600,
+                                    color: corDinamicaPopup,
+                                    marginLeft: "auto",
+                                }}
+                            >
+                                total: {tempoLimite + tempoBurocracia} min
+                            </div>
+                        </div>
+                    )}
 
                     <button
                         onClick={dispararCronometroAtivo}
@@ -1235,6 +1504,54 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 }}
                             />
                         </div>
+
+                        {/* B - BUROCRACIA */}
+                        {mostrarBurocracia && (
+                            <>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "2px",
+                                        opacity:
+                                            segundosDecorridos >= limiteSegundosP
+                                                ? 1
+                                                : 0.25,
+                                    }}
+                                >
+                                    <span style={{ fontWeight: 700, color: "#8b5cf6" }}>
+                                        B
+                                    </span>
+                                    {segundosDecorridos >= limiteSegundosB && (
+                                        <span
+                                            style={{
+                                                color: "#8b5cf6",
+                                                fontWeight: 700,
+                                                fontSize: "10px",
+                                            }}
+                                        >
+                                            ✓
+                                        </span>
+                                    )}
+                                </div>
+                                <div
+                                    className="gas-soap-track"
+                                    style={{
+                                        width: secaoAtual === "B" ? "14px" : "0px",
+                                        opacity: secaoAtual === "B" ? 1 : 0,
+                                    }}
+                                >
+                                    <div
+                                        className="gas-soap-progress"
+                                        style={{
+                                            width: `${progressoVaoB}%`,
+                                            background: "#8b5cf6",
+                                            height: "100%",
+                                        }}
+                                    />
+                                </div>
+                            </>
+                        )}
 
                         {/* OVERTIME */}
                         {secaoExtrapolada && (
