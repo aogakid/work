@@ -26,6 +26,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [showSavePopup, setShowSavePopup] = React.useState(false)
     const [username, setUsername] = React.useState<string | null>(null)
     const [showUsernameInput, setShowUsernameInput] = React.useState(true)
+    const [inputUsername, setInputUsername] = React.useState("")
     const usernameInputRef = React.useRef<HTMLInputElement>(null)
 
     // --- ESTADOS DO CRONÔMETRO ---
@@ -35,6 +36,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [cronometroAtivo, setCronometroAtivo] = React.useState<boolean>(false)
     const [mostrarSetupRelogio, setMostrarSetupRelogio] =
         React.useState<boolean>(false)
+    const [relogioExiting, setRelogioExiting] = React.useState<boolean>(false)
     const [isPaused, setIsPaused] = React.useState<boolean>(false)
     const [hoverTimer, setHoverTimer] = React.useState<boolean>(false)
     const [mostrarBurocracia, setMostrarBurocracia] = React.useState<boolean>(false)
@@ -58,7 +60,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             .replace(/\u00A0/g, " ") // Converte Non-Breaking Space para espaço comum
             .replace(/\u200B/g, "") // Remove Zero-Width Space completamente
             .split("\n")
-            .map((line) => line.trimEnd()) // Only trim trailing whitespace to preserve indentation
+            .map((line) => {
+                const trimmed = line.trimEnd()
+                // Se a linha original terminava com '-' seguido de espaço(s), preservamos exatamente um espaço após o '-'
+                if (trimmed.endsWith("-") && line.match(/^[\s\t]*- +$/)) {
+                    return trimmed + " "
+                }
+                return trimmed
+            })
             .filter((line, index, arr) => {
                 // Keep line if it's not empty, or if it's the only empty line between non-empty lines
                 if (line !== "") return true
@@ -255,7 +264,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         if (!saveTime) return
         const popupTimeout = setTimeout(() => {
             setShowSavePopup(true)
-        }, 5000)
+        }, 3000)
         return () => clearTimeout(popupTimeout)
     }, [saveTime, markdownContent])
 
@@ -635,12 +644,19 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 }
 
                 .framer-editor-container { background: var(--editor-bg); border: 1px solid var(--editor-border); box-shadow: var(--editor-shadow); }
-                .framer-markdown-editor { font-family: "Google Sans", "Plus Jakarta Sans", sans-serif; }
-                .framer-markdown-editor div { margin-bottom: 6px; color: var(--editor-text) !important; line-height: 1.2; }
+                .framer-markdown-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400}
+                .framer-markdown-editor div { margin-bottom: 6px; color: var(--editor-text) !important; line-height: 1.5; }
                 
                 /* ESTILOS DE RENDERIZAÇÃO DO MARKDOWN */
                 .framer-markdown-editor .md-h1 { font-family: "Playfair Display", serif; font-size: 24px; font-weight: 900; margin-top: 16px; margin-bottom: 8px; }
-                .framer-markdown-editor .md-h2 { font-family: "Playfair Display", serif; font-size: 20px; font-weight: 400; margin-top: 14px; margin-bottom: 6px; }
+                .framer-markdown-editor .md-h2 { font-family: "Playfair Display", serif; font-size: 20px; font-weight: 600; margin-top: 24px; margin-bottom: 6px; }
+                .framer-markdown-editor .md-h2::before {
+                    content: "";
+                    display: block;
+                    height: 1px;
+                    background: var(--editor-border);
+                    margin-bottom: 12px;
+                }
                 .framer-markdown-editor .md-li { display: block; margin-bottom: 4px; }
                 .framer-markdown-editor .md-body { font-size: 15px; font-weight: 400; }
 
@@ -655,6 +671,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     100% { transform: scale(1) translateY(0); opacity: 1; }
                 }
                 .framer-timer-entrance { animation: gasPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+                @keyframes gasFadeOut {
+                    0% { opacity: 1; transform: scale(1) translateY(0); }
+                    100% { opacity: 0; transform: scale(0.95) translateY(8px); }
+                }
+                .framer-timer-exit {
+                    animation: gasFadeOut 0.2s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+                }
 
                 @keyframes gasAmplifiedShake {
                     0%, 100% { transform: scale(1) rotate(0deg); }
@@ -700,6 +724,24 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     border: none;
                 }
                 .gas-hover-btn:active { transform: scale(0.85); }
+                .gas-hover-btn:hover { transform: scale(1.12); }
+                .gas-scale-hover {
+                    transition: transform 0.2s ease-in-out, background 0.2s, opacity 0.2s, box-shadow 0.2s;
+                }
+                .gas-scale-hover:hover:not(:disabled) {
+                    transform: scale(1.05);
+                }
+                .gas-scale-hover:active:not(:disabled) {
+                    transform: scale(0.95);
+                }
+                input[type="number"]::-webkit-inner-spin-button,
+                input[type="number"]::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+                input[type="number"] {
+                    -moz-appearance: textfield;
+                }
 
                 .gas-btn-pause-bars {
                     font-weight: 700 !important;
@@ -771,6 +813,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        boxSizing: "border-box",
                     }}
                 >
                     <div
@@ -782,6 +825,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             width: "280px",
                             maxWidth: "90vw",
                             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+                            boxSizing: "border-box",
+                            display: "flex",
+                            flexDirection: "column",
                         }}
                     >
                         <div
@@ -790,7 +836,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 fontWeight: 600,
                                 color: "var(--editor-text)",
                                 marginBottom: "16px",
-                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                fontFamily: '"Google Sans Flex", sans-serif',
+                                boxSizing: "border-box",
                             }}
                         >
                             digite seu usuário
@@ -799,11 +846,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             ref={usernameInputRef}
                             type="text"
                             placeholder="usuário"
+                            value={inputUsername}
+                            onChange={(e) => setInputUsername(e.target.value)}
                             autoFocus
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                    const target = e.target as HTMLInputElement
-                                    const name = target.value.trim()
+                                    const name = inputUsername.trim()
                                     if (name) {
                                         setUsername(name)
                                         setShowUsernameInput(false)
@@ -818,14 +866,17 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 background: "var(--editor-bg)",
                                 color: "var(--editor-text)",
                                 fontSize: "13px",
-                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                fontFamily: '"Google Sans Flex", sans-serif',
                                 outline: "none",
                                 marginBottom: "12px",
+                                boxSizing: "border-box",
                             }}
                         />
                         <button
+                            className="gas-scale-hover"
+                            disabled={!inputUsername.trim()}
                             onClick={() => {
-                                const name = usernameInputRef.current?.value.trim()
+                                const name = inputUsername.trim()
                                 if (name) {
                                     setUsername(name)
                                     setShowUsernameInput(false)
@@ -836,16 +887,31 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 padding: "10px",
                                 borderRadius: "6px",
                                 border: "none",
-                                background: "#3b82f6",
-                                color: "#ffffff",
+                                background: inputUsername.trim() ? "#3b82f6" : "rgba(120, 113, 108, 0.2)",
+                                color: inputUsername.trim() ? "#ffffff" : "var(--meta-text)",
                                 fontSize: "13px",
                                 fontWeight: 600,
-                                cursor: "pointer",
-                                fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                cursor: inputUsername.trim() ? "pointer" : "not-allowed",
+                                fontFamily: '"Google Sans Flex", sans-serif',
+                                boxSizing: "border-box",
                             }}
                         >
                             acessar
                         </button>
+                        <div
+                            style={{
+                                fontSize: "10px",
+                                color: "var(--meta-text)",
+                                marginTop: "12px",
+                                textAlign: "center",
+                                lineHeight: "1.4",
+                                fontFamily: '"Google Sans Flex", sans-serif',
+                                opacity: 0.8,
+                                boxSizing: "border-box",
+                            }}
+                        >
+                            suas anotações expiram automaticamente após 7 dias de inatividade
+                        </div>
                     </div>
                 </div>
             )}
@@ -864,7 +930,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         borderRadius: "8px",
                         padding: "6px 12px",
                         zIndex: 20,
-                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontFamily: '"Google Sans Flex", sans-serif',
                         fontSize: "11px",
                         fontWeight: 600,
                         color: "#22c55e",
@@ -880,8 +946,28 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
             {/* POPUP DE SELEÇÃO DINÂMICO */}
             {mostrarSetupRelogio && (
-                <div
-                    className="framer-timer-entrance gas-ui-blockout"
+                <>
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 19,
+                            background: "transparent",
+                            pointerEvents: "auto",
+                        }}
+                        onClick={() => setRelogioExiting(true)}
+                    />
+                    <div
+                        className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`}
+                        onAnimationEnd={() => {
+                            if (relogioExiting) {
+                                setMostrarSetupRelogio(false)
+                                setRelogioExiting(false)
+                            }
+                        }}
                     style={{
                         position: "absolute",
                         bottom: "16px",
@@ -892,7 +978,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         borderRadius: "12px",
                         padding: "14px",
                         zIndex: 20,
-                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontFamily: '"Google Sans Flex", sans-serif',
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
@@ -904,28 +990,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         style={{
                             display: "flex",
                             width: "100%",
-                            justifyContent: "space-between",
+                            justifyContent: "center",
                             alignItems: "center",
                             marginBottom: "10px",
                         }}
                     >
-                        <button
-                            onClick={() =>
-                                setTempoLimite((prev) => Math.max(1, prev - 15))
-                            }
-                            style={{
-                                background: "rgba(120,113,108,0.12)",
-                                border: "none",
-                                color: corDinamicaPopup,
-                                borderRadius: "5px",
-                                padding: "3px 7px",
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                            }}
-                        >
-                            -15
-                        </button>
                         <span
                             style={{
                                 fontSize: "9px",
@@ -936,25 +1005,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         >
                             TEMPO
                         </span>
-                        <button
-                            onClick={() =>
-                                setTempoLimite((prev) =>
-                                    Math.min(60, prev + 15)
-                                )
-                            }
-                            style={{
-                                background: "rgba(120,113,108,0.12)",
-                                border: "none",
-                                color: corDinamicaPopup,
-                                borderRadius: "5px",
-                                padding: "3px 7px",
-                                fontSize: "10px",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                            }}
-                        >
-                            +15
-                        </button>
                     </div>
 
                     <svg
@@ -1046,23 +1096,72 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                     <div
                         style={{
-                            fontSize: "14px",
-                            fontWeight: 700,
-                            color: "var(--editor-text)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
                             marginTop: "10px",
                             marginBottom: "10px",
                         }}
                     >
-                        {tempoLimite}{" "}
-                        <span
+                        <button
+                            className="gas-scale-hover"
+                            onClick={() =>
+                                setTempoLimite((prev) => Math.max(1, prev - 15))
+                            }
                             style={{
+                                background: "rgba(120,113,108,0.12)",
+                                border: "none",
+                                color: corDinamicaPopup,
+                                borderRadius: "5px",
+                                padding: "3px 7px",
                                 fontSize: "10px",
-                                fontWeight: 500,
-                                color: "var(--meta-text)",
+                                fontWeight: 700,
+                                cursor: "pointer",
                             }}
                         >
-                            minutos
-                        </span>
+                            -15
+                        </button>
+                        <div
+                            style={{
+                                fontSize: "14px",
+                                fontWeight: 700,
+                                color: "var(--editor-text)",
+                                display: "flex",
+                                alignItems: "baseline",
+                                gap: "2px",
+                            }}
+                        >
+                            {tempoLimite}
+                            <span
+                                style={{
+                                    fontSize: "10px",
+                                    fontWeight: 500,
+                                    color: "var(--meta-text)",
+                                }}
+                            >
+                                minutos
+                            </span>
+                        </div>
+                        <button
+                            className="gas-scale-hover"
+                            onClick={() =>
+                                setTempoLimite((prev) =>
+                                    Math.min(60, prev + 15)
+                                )
+                            }
+                            style={{
+                                background: "rgba(120,113,108,0.12)",
+                                border: "none",
+                                color: corDinamicaPopup,
+                                borderRadius: "5px",
+                                padding: "3px 7px",
+                                fontSize: "10px",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                            }}
+                        >
+                            +15
+                        </button>
                     </div>
 
                     {/* TOGGLE DE BUROCRACIA */}
@@ -1087,6 +1186,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             burocracia
                         </span>
                         <button
+                            className="gas-scale-hover"
                             onClick={() => setMostrarBurocracia(!mostrarBurocracia)}
                             style={{
                                 width: "36px",
@@ -1098,7 +1198,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 border: "none",
                                 cursor: "pointer",
                                 position: "relative",
-                                transition: "background 0.2s",
+                                transition: "background 0.2s, transform 0.2s ease-in-out",
                             }}
                         >
                             <div
@@ -1135,6 +1235,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                         Math.max(1, Math.min(60, Number(e.target.value) || 1))
                                     )
                                 }
+                                onWheel={(e) => e.currentTarget.blur()}
                                 style={{
                                     width: "50px",
                                     padding: "6px 8px",
@@ -1143,7 +1244,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                     background: "var(--editor-bg)",
                                     color: "var(--editor-text)",
                                     fontSize: "11px",
-                                    fontFamily: '"Plus Jakarta Sans", sans-serif',
+                                    fontFamily: '"Google Sans Flex", sans-serif',
                                     outline: "none",
                                     textAlign: "center",
                                 }}
@@ -1171,6 +1272,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     )}
 
                     <button
+                        className="gas-scale-hover"
                         onClick={dispararCronometroAtivo}
                         style={{
                             width: "100%",
@@ -1192,9 +1294,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
                         }}
                     >
-                        <span>▶</span> Iniciar
+                        <span>▶</span> iniciar
                     </button>
                 </div>
+                </>
             )}
 
             {/* BARRA DE INTERFACE ADAPTATIVA */}
@@ -1216,7 +1319,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 : "6px 10px",
                             borderRadius: "6px",
                             fontSize: "11px",
-                            fontFamily: '"Plus Jakarta Sans", sans-serif',
+                            fontFamily: '"Google Sans Flex", sans-serif',
                             color: chipTextColor,
                             border: `1px solid ${chipBorder}`,
                             transition: "transform 0.25s",
@@ -1322,7 +1425,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             padding: "6px 12px",
                             borderRadius: "6px",
                             fontSize: "11px",
-                            fontFamily: '"Plus Jakarta Sans", sans-serif',
+                            fontFamily: '"Google Sans Flex", sans-serif',
                             color: "var(--meta-text)",
                             border: secaoExtrapolada
                                 ? "1px solid rgba(120, 113, 108, 0.18)"
@@ -1622,7 +1725,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         padding: "6px 10px",
                         borderRadius: "6px",
                         fontSize: "11px",
-                        fontFamily: '"Plus Jakarta Sans", sans-serif',
+                        fontFamily: '"Google Sans Flex", sans-serif',
                         color: limiteAtingido
                             ? "var(--limite-text)"
                             : "var(--meta-text)",
