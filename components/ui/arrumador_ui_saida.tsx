@@ -10,102 +10,105 @@ Objetivo:
 Transformar o texto em estrutura SOAP preservando o máximo possível do conteúdo original
 
 Regras obrigatórias:
-- Não resumir
 - Manter espaços de indentação das listas
-- Não omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final
-- Não sintetizar sintomas
+- Não resumir ou omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final
+- Não sintetizar sintomas, inferir diagnósticos ou definir condutas
 - Não inventar conteúdo
-- Não trazer dados do Objetivo para o Subjetivo
-- A Id deve conter todas as informações da ID original
+- A Id (identificação) deve conter todas as informações da ID original
 - Agrupar na HDA queixas relacionadas em parágrafos
+- Não trazer dados do Objetivo para o Subjetivo, nem duplicar informações já presentes
+- As informações de Avaliação/Análise e Plano/Conduta devem ser concisas e constar no tópico de pendências
 - Campos sem informação: $
-- Output apenas em markdown, sem negritos
-- Deixe as informações da Avaliação e do Plano concisas
+- Output apenas em markdown puro, sem negritos
 
-CAPITALIZAÇ��O
-- Deve seguir a norma culta do português obrigatoriamente
-- O início de TODA frase e TODO item de lista após '-' deve começar com letra maiúscula
-- Nomes próprios com iniciais maiúsculas
+CAPITALIZAÇÃO
+- Deve seguir a norma culta do português obrigatoriamente: início de frases, listas, nomes próprios em maiúsculo.
+- Medicamentos em minúsculo, exceto quando em início de frase ou lista
 - Siglas clássicas e clínicas devem permanecer manter seu padrão: PA, FC, FR, SatO2, IMC, AC, AR, SSVV, HDA, QP, AP, AF, HV, CID, MMII, MMSS, DM, HAS, IRC, DPOC, TCE, AVC, RCR, BNF, TC, RNM etc[...]
-- Medicamentos genéricos em minúsculo: dipirona, losartana
 
-Exames laboratoriais quando presentes devem seguir o formato
-(DD/MM/AAAA): Hb 99 | Ht 99 | Plaq 999999 | etc.
+Exames laboratoriais quando presentes devem seguir o formato:
+(DD/MM/AAAA): Hb 99 | Ht 99 | etc.
 
 Modelo de output:
 
 # Consulta Agendada
+
 ## Subjetivo
 - Id: 
 - QP: 
 - HDA
-   - 
+  - 
 - Queixas adicionais
-   - 
+  - 
+- Pendências da consulta anterior
+  - 
 - Antecedentes pessoais
-   - Condições
-     - 
-   - Cirurgias
-     - 
-   - Medicamentos
-     - 
-   - Alergias
-     - 
-   - Vacinação
-     - 
+  - Condições
+    - 
+  - Cirurgias
+    - 
+  - Medicamentos
+    - 
+  - Alergias
+    - 
+  - Vacinação
+    - 
 - AF: 
 - HV
-   - Etilismo: 
-   - Tabagismo: 
-   - Drogas: 
-   - Exercício: 
-   - Dieta: 
-   - Hidratação: 
-   - Evacuações: 
-   - Diurese: 
-   - Sono: 
-   - Humor: 
-   - Lazer: 
+  - Etilismo: 
+  - Tabagismo: 
+  - Drogas: 
+  - Exercício: 
+  - Dieta: 
+  - Hidratação: 
+  - Evacuações: 
+  - Diurese: 
+  - Sono: 
+  - Humor: 
+  - Lazer: 
+
 ## Objetivo
 - Exame físico
-   - SSVV
-     - PA: 
-     - Peso: 
-     - Alt: 
-     - IMC: 
-   - Ect: 
-   - AC: 
-   - AR: 
-   - Ext: 
+  - SSVV
+    - PA: 
+    - Peso: 
+    - Alt: 
+    - IMC: 
+  - Ect: 
+  - AC: 
+  - AR: 
+  - Ext: 
 - Complementar
-   - Laboratório
-     - 
-   - Imagem
-     - 
-   - Rastreios
-     - 
-   - Escores
-     - 
+  - Laboratório
+    - 
+  - Imagem
+    - 
+  - Escores
+    - `
+
+const TEMPLATE_APPENDIX = `
+
 ## Avaliação
 - QP
-   -  
+  - 
 - Queixas adicionais
-   -  
+  - 
 - Condições crônicas
-   -  
-- Prevenção
-   -  
+  - 
+- Riscos
+  - 
+
 ## Plano
 - QP
-   -  
+  - 
 - Queixas adicionais
-   -  
+  - 
 - Condições crônicas
-   -  
-- Prevenção
-   -  
+  - 
+- Riscos
+  - 
 - Seguimento
-   -  `
+  - `
 
 export interface FormularioOutputActions {
     executarPrompt(): void
@@ -182,6 +185,8 @@ const FormularioOutput = forwardRef<FormularioOutputActions>(function Formulario
                     } catch {}
                 }
             }
+            // Append template appendix after successful streaming
+            setRawMarkdown((prev) => prev + TEMPLATE_APPENDIX)
         } catch {
             setRawMarkdown("deu erro")
         } finally {

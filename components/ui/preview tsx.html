@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Preview TSX</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f0; }
+    #root { padding: 16px; max-width: 1200px; margin: 0 auto; }
+    #controls { 
+      position: fixed; 
+      top: 10px; 
+      right: 10px; 
+      background: white; 
+      padding: 10px; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+    #controls input { 
+      padding: 6px; 
+      border: 1px solid #ddd; 
+      border-radius: 4px; 
+      margin-right: 8px;
+      width: 200px;
+    }
+    #controls button {
+      padding: 6px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #error {
+      color: #dc2626;
+      padding: 20px;
+      background: #fef2f2;
+      border-radius: 8px;
+      margin: 16px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <input type="text" id="filename" placeholder="arquivo.tsx" value="visita_ui.tsx" />
+    <button onclick="loadComponent()">Carregar</button>
+  </div>
+  <div id="root">Carregando...</div>
+  <div id="error" style="display: none;"></div>
+
+  <script>
+  async function loadComponent() {
+    const filename = document.getElementById('filename').value;
+    const errorDiv = document.getElementById('error');
+    const rootDiv = document.getElementById('root');
+    
+    try {
+      const response = await fetch(filename);
+      if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
+      
+      let tsxCode = await response.text();
+      
+      // Limpa tipos e interfaces isoladas de alto nível
+      tsxCode = tsxCode.replace(/interface\s+[^{]+\{[\s\S]*?\}/g, '');
+      tsxCode = tsxCode.replace(/type\s+[^=]+=\s*[\s\S]*?;/g, '');
+      
+      // COMPILAÇÃO CORRETA: Forçamos o runtime clássico para evitar o uso de 'react/jsx-runtime'
+      const { code } = Babel.transform(tsxCode, {
+        presets: [
+          ['react', { runtime: 'classic' }], // <- O segredo está aqui! Faz o Babel gerar React.createElement diretamente
+          'typescript'
+        ],
+        plugins: ['transform-modules-commonjs'],
+        filename: 'component.tsx' 
+      });
+      
+      // Ambiente CommonJS simulado
+      const module = { exports: {} };
+      const exports = module.exports;
+      
+      // Injetor de módulos necessários
+      const require = (moduleName) => {
+        if (moduleName === 'react') return React;
+        if (moduleName === 'react-dom') return ReactDOM;
+        
+        // Fallback seguro para outras bibliotecas de terceiros (ex: lucide-react)
+        console.warn(`Módulo '${moduleName}' foi importado mas não está disponível globalmente. Injetando mock padrão.`);
+        return new Proxy({}, {
+          get: () => () => React.createElement('span', { style: { display: 'none' } })
+        });
+      };
+
+      // Injeta os hooks mais comuns diretamente no escopo global da execução
+      const { useState, useEffect, useRef, useCallback, useMemo, useId } = React;
+
+      // Executa o script transpilado
+      const fn = new Function('module', 'exports', 'require', 'React', 'ReactDOM', 'useState', 'useEffect', 'useRef', 'useCallback', 'useMemo', 'useId', code);
+      fn(module, exports, require, React, ReactDOM, useState, useEffect, useRef, useCallback, useMemo, useId);
+      
+      // Resgata o componente exportado (default ou named)
+      const Component = module.exports.default || module.exports;
+      
+      if (!Component || (typeof Component !== 'function' && typeof Component !== 'object')) {
+        throw new Error("Não foi possível encontrar um componente React válido exportado em visita_ui.tsx");
+      }
+      
+      // Renderização na div root
+      if (rootDiv._reactRoot) {
+        rootDiv._reactRoot.unmount();
+      }
+      const root = ReactDOM.createRoot(rootDiv);
+      rootDiv._reactRoot = root;
+      root.render(React.createElement(Component));
+      
+      errorDiv.style.display = 'none';
+    } catch (error) {
+      console.error('Error loading component:', error);
+      errorDiv.textContent = `Erro: ${error.message}`;
+      errorDiv.style.display = 'block';
+      rootDiv.innerHTML = '';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', loadComponent);
+  document.getElementById('filename').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') loadComponent();
+  });
+</script>
+</body>
+</html>

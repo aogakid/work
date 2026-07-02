@@ -7,19 +7,18 @@ const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
 const SYSTEM_PROMPT = `Você é um médico de família gerando um resumo clínico para encaminhamento a uma especialidade.
 
 Regras:
-- Output: um único parágrafo corrido, sem listas, sem markdown.
+- Output: um único parágrafo corrido, sem listas, sem formatação.
 - Incluir apenas informações relevantes para a especialidade solicitada.
 - Linguagem técnica, objetiva, norma culta do português.
 - A primeira linha deve ser "ENCAMINHAMENTO" e só na próxima iniciar o parágrafo.
 - Não inventar informações. Usar apenas o que está no prontuário.
+- Não repetir informações já presentes.
 - A ordem do output deve ser o modelo.
 - Tamanho máximo: 10 linhas.
 
 Modelo de output:
 
-Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou obje[...]
-
-`
+Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento], encaminho para avaliação da[especialidade].`
 
 export interface EncaminhaOutputActions {
     executarEncaminhamento(): void

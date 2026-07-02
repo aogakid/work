@@ -820,7 +820,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         style={{
                             background: "var(--editor-bg)",
                             border: "1px solid var(--editor-border)",
-                            borderRadius: "12px",
+                            borderRadius: "20px",
                             padding: "24px",
                             width: "280px",
                             maxWidth: "90vw",
@@ -845,7 +845,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         <input
                             ref={usernameInputRef}
                             type="text"
-                            placeholder="usuário"
+                            placeholder="aogakid"
                             value={inputUsername}
                             onChange={(e) => setInputUsername(e.target.value)}
                             autoFocus
@@ -861,7 +861,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             style={{
                                 width: "100%",
                                 padding: "10px 12px",
-                                borderRadius: "6px",
+                                borderRadius: "10px",
                                 border: "1px solid var(--editor-border)",
                                 background: "var(--editor-bg)",
                                 color: "var(--editor-text)",
