@@ -11,6 +11,7 @@ import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
 import CalculadoraPREVENT from "./components/ui/escores_ui";
 import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
+import CalculadoraVisita from "./components/ui/visita_ui";
 
 // Action HOCs (code overrides)
 import {
@@ -183,6 +184,11 @@ PLASMIC.registerComponent(CalculadoraGestacional, {
 
 PLASMIC.registerComponent(RastreiosPreventivos, {
   name: "RastreiosPreventivos",
+  props: {},
+});
+
+PLASMIC.registerComponent(CalculadoraVisita, {
+  name: "CalculadoraVisita",
   props: {},
 });
 

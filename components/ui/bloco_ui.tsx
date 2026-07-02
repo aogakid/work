@@ -861,7 +861,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             style={{
                                 width: "100%",
                                 padding: "10px 12px",
-                                borderRadius: "10px",
+                                borderRadius: "12px",
                                 border: "1px solid var(--editor-border)",
                                 background: "var(--editor-bg)",
                                 color: "var(--editor-text)",
@@ -885,7 +885,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             style={{
                                 width: "100%",
                                 padding: "10px",
-                                borderRadius: "6px",
+                                borderRadius: "12px",
                                 border: "none",
                                 background: inputUsername.trim() ? "#3b82f6" : "rgba(120, 113, 108, 0.2)",
                                 color: inputUsername.trim() ? "#ffffff" : "var(--meta-text)",

@@ -40,8 +40,6 @@ Modelo de output:
   - 
 - Queixas adicionais
   - 
-- Pendências da consulta anterior
-  - 
 - Antecedentes pessoais
   - Condições
     - 
@@ -84,7 +82,10 @@ Modelo de output:
   - Imagem
     - 
   - Escores
-    - `
+    - 
+
+## Pendências anteriores
+- `
 
 const TEMPLATE_APPENDIX = `
 
