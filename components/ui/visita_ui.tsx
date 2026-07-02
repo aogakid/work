@@ -470,10 +470,9 @@ export default function CalculadoraVisita({ style }: Props) {
             <div className="visita-root">
                 <div className="visita-fields-grid">
                     
-                    <div style={styles.sectionLabel}>Dados Gerais</div>
+                    <div style={styles.sectionLabel}>Idade (anos)</div>
                     <div style={{ gridColumn: "1 / -1" }}>
                         <div style={styles.inputGroup}>
-                            <label style={styles.label}>Idade (anos)</label>
                             <input
                                 type="number"
                                 placeholder="Ex: 78"
@@ -510,7 +509,7 @@ export default function CalculadoraVisita({ style }: Props) {
                         </div>
                     </div>
 
-                    <div style={styles.sectionLabel}>Funcionalidade e Mobilidade</div>
+                    <div style={styles.sectionLabel}></div>
                     <div style={{ gridColumn: "1 / -1", display: "flex", gap: "12px" }}>
                         <div style={{ ...styles.inputGroup, flex: 1 }}>
                             <label style={styles.label}>Funcionalidade</label>
@@ -557,7 +556,7 @@ export default function CalculadoraVisita({ style }: Props) {
                         </div>
                     </div>
 
-                    <div style={styles.sectionLabel}>Fragilidade (cada item selecionado soma 2 pontos)</div>
+                    <div style={styles.sectionLabel}>Fragilidade</div>
                     <div style={{ gridColumn: "1 / -1" }}>
                         <div className="visita-chips-grid">
                             {fragilidadeOptions.map((option) => (
@@ -573,7 +572,7 @@ export default function CalculadoraVisita({ style }: Props) {
                     </div>
 
                     {/* SEÇÃO: CALCULADORA PPS INTEGRADA COM TONALIZAÇÃO DINÂMICA */}
-<div style={styles.sectionLabel}>Calculadora de Performance Paliativa (PPSv2)</div>
+<div style={styles.sectionLabel}>Escore de Performance Paliativo (PPS)</div>
 <div 
     className="pps-calc-grid" 
     style={{
@@ -676,7 +675,7 @@ export default function CalculadoraVisita({ style }: Props) {
     {/* CHIP DE RESULTADO EXCLUSIVO DO PPS */}
     <div style={{ gridColumn: "1 / -1" }}>
         <div style={styles.ppsChipResult(ppsCalculado)}>
-            {ppsCalculado !== null ? `PPS Calculado: ${ppsCalculado}%` : "Aguardando dados estruturais do PPS..."}
+            {ppsCalculado !== null ? `PPS Calculado: ${ppsCalculado}%` : "complete os dados acima"}
         </div>
     </div>
 </div>
