@@ -12,6 +12,7 @@ import CalculadoraPREVENT from "./components/ui/escores_ui";
 import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
 import CalculadoraVisita from "./components/ui/visita_ui";
+import PuericulturaUI from "./components/ui/puericultura_ui";
 
 // Action HOCs (code overrides)
 import {
@@ -189,6 +190,11 @@ PLASMIC.registerComponent(RastreiosPreventivos, {
 
 PLASMIC.registerComponent(CalculadoraVisita, {
   name: "CalculadoraVisita",
+  props: {},
+});
+
+PLASMIC.registerComponent(PuericulturaUI, {
+  name: "PuericulturaUI",
   props: {},
 });
 
