@@ -1,5 +1,5 @@
 import * as React from "react"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 const injectStyles = `
   :root {
@@ -235,7 +235,7 @@ const styles = {
   },
 }
 
-type FieldType = "single_choice" | "multiple_choice" | "text_required" | "text_optional"
+type FieldType = "single_choice" | "multiple_choice" | "text_required" | "text_optional" | "divider"
 
 interface FormField {
   id: string
@@ -260,165 +260,53 @@ const secoes = [
   { id: "crescimento", label: "Crescimento" }
 ]
 
-const AGE_GROUP_FORMS: AgeGroupForm[] = [
-  {
-    ageRange: "0-28d",
-    fields: [
-      {
-        id: "aleitamento",
-        label: "Tipo de Aleitamento",
-        type: "single_choice",
-        options: ["Exclusivo", "Predominante", "Misto", "Artificial"],
-        value: "",
-        section: "geral"
-      },
-      {
-        id: "peso_nascimento",
-        label: "Peso ao nascer (g)",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "comorbidades",
-        label: "Comorbidades",
-        type: "multiple_choice",
-        options: ["Icterícia", "Hipoglicemia", "Infecção", "Cardiopatia", "Outras"],
-        value: [],
-        section: "desenvolvimento"
-      },
-      {
-        id: "observacoes",
-        label: "Observações",
-        type: "text_optional",
-        value: "",
-        section: "geral"
-      }
-    ]
-  },
-  {
-    ageRange: "1-12m",
-    fields: [
-      {
-        id: "aleitamento",
-        label: "Tipo de Aleitamento",
-        type: "single_choice",
-        options: ["Exclusivo", "Complementado", "Artificial"],
-        value: "",
-        section: "desenvolvimento"
-      },
-      {
-        id: "desenvolvimento",
-        label: "Desenvolvimento Neuropsicomotor",
-        type: "single_choice",
-        options: ["Adequado", "Leve atraso", "Atraso significativo"],
-        value: "",
-        section: "desenvolvimento"
-      },
-      {
-        id: "vacinas",
-        label: "Vacinas em dia",       // aparece no formulário
-        labelMd: "Situação vacinal",   // aparece no markdown copiado
-        type: "single_choice",
-        options: ["Sim", "Não", "Parcialmente"],
-        optionsMd: ["Esquema vacinal em dia", "Esquema vacinal atrasado", "Esquema vacinal parcialmente atualizado"],
-        value: "",
-        section: "desenvolvimento"
-      },
-      {
-        id: "peso",
-        label: "Peso atual (kg)",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "altura",
-        label: "Comprimento/Altura (cm)",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "imc",
-        label: "IMC",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "perimetro_cefalico",
-        label: "Perímetro Cefálico (cm)",
-        type: "text_optional",
-        value: "",
-        section: "crescimento"
-      }
-    ]
-  },
-  {
-    ageRange: "1-5y",
-    fields: [
-      {
-        id: "desenvolvimento",
-        label: "Desenvolvimento Neuropsicomotor",
-        type: "single_choice",
-        options: ["Adequado", "Leve atraso", "Atraso significativo"],
-        value: "",
-        section: "desenvolvimento"
-      },
-      {
-        id: "vacinas",
-        label: "Vacinas em dia",
-        type: "single_choice",
-        options: ["Sim", "Não", "Parcialmente"],
-        value: "",
-        section: "desenvolvimento"
-      },
-      {
-        id: "peso",
-        label: "Peso atual (kg)",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "altura",
-        label: "Altura (cm)",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "imc",
-        label: "IMC",
-        type: "text_required",
-        value: "",
-        section: "crescimento"
-      },
-      {
-        id: "alimentacao",
-        label: "Alimentação",
-        type: "multiple_choice",
-        options: ["Variada", "Restrita", "Adequada para idade", "Fast food frequente"],
-        value: [],
-        section: "desenvolvimento"
-      },
-      {
-        id: "observacoes",
-        label: "Observações",
-        type: "text_optional",
-        value: "",
-        section: "geral"
-      }
-    ]
-  }
+interface AgeBracket {
+  ageRange: string
+  maxMonths: number
+}
+
+const AGE_BRACKETS: AgeBracket[] = [
+  { ageRange: "1m",     maxMonths: 1 },
+  { ageRange: "2m",     maxMonths: 2 },
+  { ageRange: "3-4m",   maxMonths: 4 },
+  { ageRange: "5-6m",   maxMonths: 6 },
+  { ageRange: "7-9m",   maxMonths: 9 },
+  { ageRange: "10-12m", maxMonths: 12 },
+  { ageRange: "13-15m", maxMonths: 15 },
+  { ageRange: "16-18m", maxMonths: 18 },
+  { ageRange: "19-24m", maxMonths: 24 },
+  { ageRange: "25-30m", maxMonths: 30 },
+  { ageRange: "31-36m", maxMonths: 36 },
+  { ageRange: "37-42m", maxMonths: 42 },
+  { ageRange: "43-48m", maxMonths: 48 },
+  { ageRange: "49-54m", maxMonths: 54 },
+  { ageRange: "55-60m", maxMonths: 60 },
+  { ageRange: "61-66m", maxMonths: 66 },
+  { ageRange: "67-72m", maxMonths: 72 },
+  { ageRange: "6-10y",  maxMonths: 120 },
 ]
+
+// Recebe idade total em meses (decimal) e devolve a faixa correspondente.
+function resolveFaixaEtaria(totalMeses: number): string {
+  const bracket = AGE_BRACKETS.find(b => totalMeses <= b.maxMonths)
+  return bracket?.ageRange ?? AGE_BRACKETS[AGE_BRACKETS.length - 1].ageRange
+}
+
+// Rótulo clínico amplo, independente da faixa fina usada para carregar o formulário.
+function resolveLabelClinico(diffDays: number, totalMeses: number): string {
+  if (diffDays <= 28) return "neonato"
+  if (totalMeses <= 24) return "lactente"
+  if (totalMeses <= 84) return "pré-escolar"
+  if (totalMeses <= 120) return "escolar"
+  return "adolescente"
+}
 
 interface Props {
   style?: React.CSSProperties
 }
 
 export default function PuericulturaUI({ style }: Props) {
+  const [ageGroupForms, setAgeGroupForms] = useState<AgeGroupForm[]>([])
   const [dataNascimento, setDataNascimento] = useState<string>("")
   const [idadeAnos, setIdadeAnos] = useState<string>("")
   const [idadeMeses, setIdadeMeses] = useState<string>("")
@@ -427,39 +315,79 @@ export default function PuericulturaUI({ style }: Props) {
   const [formFields, setFormFields] = useState<FormField[]>([])
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
+  const [labelClinico, setLabelClinico] = useState<string>("")
+  const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea ao conteúdo
+  useEffect(() => {
+    const el = mdTextareaRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [markdownOutput])
+
+    useEffect(() => {
+    fetch("puericultura.json")
+      .then((res) => res.json())
+      .then((data) => {
+        setAgeGroupForms(Array.isArray(data) ? (data as AgeGroupForm[]) : [])
+      })
+  }, [])
 
   useEffect(() => {
     if (!dataNascimento) {
       if (!idadeAnos && !idadeMeses) {
         setIdadeCalculada("")
         setFaixaEtaria("")
+        setLabelClinico("")
         setFormFields([])
       }
       return
     }
 
-    const nascimento = new Date(dataNascimento)
+    // Parsear como data local (evita offset UTC deslocar o dia)
+    const [ano, mes, dia] = dataNascimento.split("-").map(Number)
+    const nascimento = new Date(ano, mes - 1, dia)
     const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
 
-    const diffTime = Math.abs(hoje.getTime() - nascimento.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    const diffTime = hoje.getTime() - nascimento.getTime()
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
 
-    const anos = hoje.getFullYear() - nascimento.getFullYear()
-    const meses = hoje.getMonth() - nascimento.getMonth()
+    // Meses completos por calendário, sem arredondamento por média de dias/mês (evita erro de faixa etária)
+    let anosCalc = hoje.getFullYear() - nascimento.getFullYear()
+    let mesesCalc = hoje.getMonth() - nascimento.getMonth()
+    const diasCalc = hoje.getDate() - nascimento.getDate()
+    if (diasCalc < 0) mesesCalc -= 1
+    if (mesesCalc < 0) {
+      anosCalc -= 1
+      mesesCalc += 12
+    }
+    const totalMeses = anosCalc * 12 + mesesCalc
+    const mesesTotais = totalMeses
+    const anosDisplay = anosCalc
+    const mesesDisplay = mesesCalc
 
     let idadeTexto = ""
-    if (diffDays < 30) {
-      idadeTexto = `${diffDays} dias`
+    if (diffDays <= 28) {
+      idadeTexto = `${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`
       setFaixaEtaria("0-28d")
-    } else if (diffDays < 365) {
-      const mesesTotais = Math.floor(diffDays / 30.44)
+      setLabelClinico(resolveLabelClinico(diffDays, totalMeses))
+    } else if (mesesTotais === 0) {
+      // 29-30 dias: ainda menos de 1 mês completo
+      idadeTexto = `${diffDays} dias`
+      setFaixaEtaria(resolveFaixaEtaria(totalMeses))
+      setLabelClinico(resolveLabelClinico(diffDays, totalMeses))
+    } else if (anosDisplay < 1) {
       idadeTexto = `${mesesTotais} ${mesesTotais === 1 ? 'mês' : 'meses'}`
-      setFaixaEtaria("1-12m")
+      setFaixaEtaria(resolveFaixaEtaria(totalMeses))
+      setLabelClinico(resolveLabelClinico(diffDays, totalMeses))
     } else {
-      const anosTexto = anos === 1 ? 'ano' : 'anos'
-      const mesesTexto = meses === 1 ? 'mês' : 'meses'
-      idadeTexto = `${anos} ${anosTexto}, ${meses} ${mesesTexto}`
-      setFaixaEtaria("1-5y")
+      const anosTexto = anosDisplay === 1 ? 'ano' : 'anos'
+      const mesesTexto = mesesDisplay === 1 ? 'mês' : 'meses'
+      idadeTexto = `${anosDisplay} ${anosTexto}${mesesDisplay > 0 ? `, ${mesesDisplay} ${mesesTexto}` : ''}`
+      setFaixaEtaria(resolveFaixaEtaria(totalMeses))
+      setLabelClinico(resolveLabelClinico(999, totalMeses))
     }
 
     setIdadeCalculada(idadeTexto)
@@ -470,6 +398,7 @@ export default function PuericulturaUI({ style }: Props) {
       if (!dataNascimento) {
         setIdadeCalculada("")
         setFaixaEtaria("")
+        setLabelClinico("")
         setFormFields([])
       }
       return
@@ -477,22 +406,23 @@ export default function PuericulturaUI({ style }: Props) {
 
     const anosNum = parseInt(idadeAnos) || 0
     const mesesNum = parseInt(idadeMeses) || 0
+    const totalMeses = anosNum * 12 + mesesNum
 
     let idadeTexto = ""
     if (anosNum === 0 && mesesNum === 0) {
       idadeTexto = ""
       setFaixaEtaria("")
-    } else if (anosNum === 0 && mesesNum < 1) {
-      idadeTexto = ""
-      setFaixaEtaria("")
-    } else if (anosNum === 0 && mesesNum < 30) {
+      setLabelClinico("")
+    } else if (anosNum === 0) {
       idadeTexto = `${mesesNum} ${mesesNum === 1 ? 'mês' : 'meses'}`
-      setFaixaEtaria("1-12m")
+      setFaixaEtaria(resolveFaixaEtaria(totalMeses))
+      setLabelClinico(resolveLabelClinico(999, totalMeses))
     } else {
       const anosTexto = anosNum === 1 ? 'ano' : 'anos'
       const mesesTexto = mesesNum === 1 ? 'mês' : 'meses'
       idadeTexto = `${anosNum} ${anosTexto}${mesesNum > 0 ? `, ${mesesNum} ${mesesTexto}` : ''}`
-      setFaixaEtaria("1-5y")
+      setFaixaEtaria(resolveFaixaEtaria(totalMeses))
+      setLabelClinico(resolveLabelClinico(999, totalMeses))
     }
 
     setIdadeCalculada(idadeTexto)
@@ -504,12 +434,14 @@ export default function PuericulturaUI({ style }: Props) {
       return
     }
 
-    const formConfig = AGE_GROUP_FORMS.find(f => f.ageRange === faixaEtaria)
+    const formConfig = ageGroupForms.find((f) => f.ageRange === faixaEtaria)
     if (formConfig) {
-      setFormFields(formConfig.fields.map(field => ({ ...field })))
+      setFormFields(formConfig.fields.map((field) => ({ ...field })))
     }
-  }, [faixaEtaria])
+  }, [faixaEtaria, ageGroupForms])
 
+    
+  
   // Gerar markdown agrupado por seções com suporte a placeholders estruturados
   const generateMarkdown = useCallback(() => {
     if (!idadeCalculada || formFields.length === 0) return ""
@@ -518,17 +450,15 @@ export default function PuericulturaUI({ style }: Props) {
 
     const getLabelMd = (field: FormField) => field.labelMd || field.label
 
-    const getValueMd = (field: FormField): string => {
+    const getValueMd = (field: FormField): string | null => {
       const value = field.value
-      if (!value || (Array.isArray(value) && value.length === 0)) return " "
-
-      const optionsUi = field.options || []
-      const optionsMd = field.optionsMd || optionsUi // sem optionsMd definido, usa o mesmo texto da UI
-
-      const mapValue = (v: string) => {
-        const idx = optionsUi.indexOf(v)
-        return idx >= 0 && optionsMd[idx] ? optionsMd[idx] : v
+      // Campos opcionais vazios são omitidos do markdown
+      if (!value || (Array.isArray(value) && value.length === 0)) {
+        if (field.type === "text_optional" || field.type === "multiple_choice") return null
+        return " "
       }
+
+      const mapValue = (v: string) => v
 
       return Array.isArray(value)
         ? value.map(mapValue).join(", ")
@@ -536,15 +466,18 @@ export default function PuericulturaUI({ style }: Props) {
     }
 
     secoes.forEach(secao => {
-      // Filtrar campos que pertencem a essa seção
-      const camposDaSecao = formFields.filter(f => (f.section || "geral") === secao.id)
+      // Filtrar campos que pertencem a essa seção, excluindo dividers
+      const camposDaSecao = formFields.filter(f => (f.section || "geral") === secao.id && f.type !== "divider")
 
       // Só renderiza o bloco da seção se ela possuir campos configurados para a idade atual
       if (camposDaSecao.length > 0) {
         md += `- ${secao.label}\n`
 
         camposDaSecao.forEach(field => {
-          md += `  - ${getLabelMd(field)}: ${getValueMd(field)}\n`
+          const valueMd = getValueMd(field)
+          // Pula campos opcionais sem valor
+          if (valueMd === null) return
+          md += `  - ${getLabelMd(field)}: ${valueMd}\n`
         })
       }
     })
@@ -628,14 +561,57 @@ export default function PuericulturaUI({ style }: Props) {
 
   const renderField = (field: FormField) => {
     switch (field.type) {
-      case "single_choice":
+      case "divider":
         return (
-          <div key={field.id} style={styles.inputGroup}>
-            <label style={styles.label}>{field.label}</label>
+          <div key={field.id} style={{
+            gridColumn: "1 / -1",
+            borderTop: "1px solid var(--puericultura-border)",
+            margin: "4px 0",
+            opacity: 0.6,
+          }} />
+        )
+      case "single_choice": {
+        const isLong = (field.label?.length ?? 0) > 22
+        const isDevPaNv =
+          field.section === "desenvolvimento" &&
+          field.options?.every(o => ["P", "A", "NV"].includes(o))
+        const val = field.value as string | undefined
+        const severityBg =
+          !isDevPaNv ? undefined
+          : val === "P" ? "rgba(0, 184, 73, 0.10)"
+          : val === "A" ? "rgba(224, 36, 36, 0.10)"
+          : val === "NV" ? "rgba(234, 179, 8, 0.10)"
+          : undefined
+        const severityBorder =
+          !isDevPaNv ? undefined
+          : val === "P" ? "rgba(0, 184, 73, 0.40)"
+          : val === "A" ? "rgba(224, 36, 36, 0.40)"
+          : val === "NV" ? "rgba(234, 179, 8, 0.40)"
+          : undefined
+        const severityColor =
+          !isDevPaNv ? undefined
+          : val === "P" ? "#00cc52"
+          : val === "A" ? "#e02424"
+          : val === "NV" ? "#ca8a04"
+          : undefined
+        return (
+          <div
+            key={field.id}
+            style={{
+              ...styles.inputGroup,
+              ...(isLong ? { gridColumn: "1 / -1" } : {}),
+            }}
+          >
+            <label style={{ ...styles.label, ...(severityColor ? { color: severityColor } : {}) }}>
+              {field.label}
+            </label>
             <select
-              value={field.value as string || ""}
+              value={val || ""}
               onChange={(e) => updateFieldValue(field.id, e.target.value)}
-              style={styles.select()}
+              style={{
+                ...styles.select(severityBg, severityBorder),
+                ...(severityColor ? { color: severityColor, fontWeight: 600 } : {}),
+              }}
             >
               <option value="">Selecione</option>
               {field.options?.map(opt => (
@@ -644,6 +620,7 @@ export default function PuericulturaUI({ style }: Props) {
             </select>
           </div>
         )
+      }
 
       case "multiple_choice":
         return (
@@ -667,9 +644,13 @@ export default function PuericulturaUI({ style }: Props) {
         )
 
       case "text_required":
-      case "text_optional":
+      case "text_optional": {
+        const isLong = (field.label?.length ?? 0) > 28
         return (
-          <div key={field.id} style={styles.inputGroup}>
+          <div
+            key={field.id}
+            style={{ ...styles.inputGroup, ...(isLong ? { gridColumn: "1 / -1" } : {}) }}
+          >
             <label style={styles.label}>
               {field.label}
               {field.type === "text_required" && " *"}
@@ -683,6 +664,7 @@ export default function PuericulturaUI({ style }: Props) {
             />
           </div>
         )
+      }
 
       default:
         return null
@@ -706,13 +688,13 @@ export default function PuericulturaUI({ style }: Props) {
     <div style={{ ...styles.container, ...style }}>
       <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
-      <div style={styles.title}>Puericultura</div>
-      <div style={styles.subtitle}>Acompanhamento do desenvolvimento infantil</div>
+      <div style={styles.title}>checklist da puericultura</div>
+      <div style={styles.subtitle}>baseado na caderneta da criança</div>
 
       <div className="puericultura-root">
         <div className="puericultura-fields-grid">
 
-          <div style={styles.sectionLabel}>Data de Nascimento / Idade</div>
+          <div style={styles.sectionLabel}>dados iniciais</div>
 
           {/* Grid principal dividido igualmente (50% / 50%) para Data e Idade Manual */}
           <div style={{
@@ -725,7 +707,7 @@ export default function PuericulturaUI({ style }: Props) {
 
             {/* Coluna da Esquerda: Data de Nascimento */}
             <div style={styles.inputGroup}>
-              <label style={{ ...styles.label, fontSize: "10px" }}>Por Data de Nascimento</label>
+              <label style={{ ...styles.label, fontSize: "10px" }}>data de nascimento</label>
               <input
                 type="date"
                 value={dataNascimento}
@@ -740,7 +722,7 @@ export default function PuericulturaUI({ style }: Props) {
 
             {/* Coluna da Direita: Campos de Idade Manual divididos igualmente internamente */}
             <div style={styles.inputGroup}>
-              <label style={{ ...styles.label, fontSize: "10px" }}>Ou por Idade Manual</label>
+              <label style={{ ...styles.label, fontSize: "10px" }}>idade</label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
@@ -776,23 +758,6 @@ export default function PuericulturaUI({ style }: Props) {
 
           {idadeCalculada && (
             <>
-              <div style={styles.sectionLabel}>Idade Calculada</div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <div style={styles.ageDisplay}>
-                  {idadeCalculada}
-                  {faixaEtaria && (
-                    <div style={{
-                      fontSize: "12px",
-                      fontWeight: 500,
-                      color: "var(--puericultura-text-muted)",
-                      marginTop: "4px"
-                    }}>
-                      {faixaEtaria === "0-28d" ? "Recém-nascido (0-28 dias)" : faixaEtaria === "1-12m" ? "Lactente (1-12 meses)" : "Pré-escolar (1-5 anos)"}
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {formFields.length > 0 && (
                 <>
                   {groupFieldsBySection(formFields).map(({ id, label, fields }) => (
@@ -810,77 +775,160 @@ export default function PuericulturaUI({ style }: Props) {
 
         </div>
 
-        {formFields.length > 0 && (
-          <div
-            className="puericultura-result-card"
-            style={{
-              background: "var(--puericultura-card-bg)",
-              border: "1px solid var(--puericultura-border)",
-            }}
-          >
-            <div
-              className="puericultura-card-header"
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: "12px",
-                marginBottom: "4px"
-              }}
-            >
-              <div
-                className="puericultura-badge"
-                style={{
-                  background: "rgba(0, 184, 73, 0.12)",
-                  color: "#00cc52",
-                }}
-              >
-                Resumo
-              </div>
-              <button
-                onClick={copyToClipboard}
-                style={{
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "8px",
-                  border: "1px solid var(--puericultura-border)",
-                  background: copiado ? "rgba(0, 184, 73, 0.08)" : "rgba(255,255,255,0.5)",
-                  color: copiado ? "#007a30" : "var(--puericultura-text-muted)",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                  padding: "0",
-                  borderColor: copiado ? "rgba(0, 184, 73, 0.35)" : undefined
-                }}
-                title={copiado ? "Copiado!" : "Copiar markdown"}
-              >
-                {copiado ? <IconeCheck /> : <IconeCopiar />}
-              </button>
-            </div>
-            {markdownOutput && (
-              <div style={styles.markdownOutput}>
-                {markdownOutput}
+        {/* Coluna direita: card de idade + card de resultado */}
+        {(idadeCalculada || formFields.length > 0) && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+
+            {idadeCalculada && (
+              <div style={styles.ageDisplay}>
+                {idadeCalculada}
+                {faixaEtaria && (
+                  <div style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "var(--puericultura-text-muted)",
+                    marginTop: "4px"
+                  }}>
+                    {labelClinico}
+                  </div>
+                )}
               </div>
             )}
 
-            <div style={{ marginTop: "16px" }}>
-              <div style={styles.sectionLabel}>Gráfico de Crescimento</div>
-              <div className="puericultura-graph-container">
-                <div style={{
-                  fontSize: "13px",
-                  color: "var(--puericultura-text-muted)",
-                  textAlign: "center" as const,
-                  padding: "20px 0",
-                }}>
-                  Gráfico de crescimento (idade x valor) será implementado aqui.
-                  <br />
-                  Suporte preparado para sobreposição de curvas de crescimento.
+            {formFields.length > 0 && (
+              <div
+                className="puericultura-result-card"
+                style={{
+                  background: "var(--puericultura-card-bg)",
+                  border: "1px solid var(--puericultura-border)",
+                }}
+              >
+                <div
+                  className="puericultura-card-header"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    marginBottom: "4px"
+                  }}
+                >
+                  <div
+                    className="puericultura-badge"
+                    style={{
+                      background: "rgba(0, 184, 73, 0.12)",
+                      color: "#00cc52",
+                    }}
+                  >
+                    Resultado
+                  </div>
+                  <button
+                    onClick={copyToClipboard}
+                    style={{
+                      flexShrink: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "34px",
+                      height: "34px",
+                      borderRadius: "8px",
+                      border: "1px solid var(--puericultura-border)",
+                      background: copiado ? "rgba(0, 184, 73, 0.08)" : "rgba(255,255,255,0.5)",
+                      color: copiado ? "#007a30" : "var(--puericultura-text-muted)",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      padding: "0",
+                      borderColor: copiado ? "rgba(0, 184, 73, 0.35)" : undefined
+                    }}
+                    title={copiado ? "Copiado!" : "Copiar markdown"}
+                  >
+                    {copiado ? <IconeCheck /> : <IconeCopiar />}
+                  </button>
+                </div>
+                {markdownOutput && (
+                  <textarea
+                    ref={mdTextareaRef}
+                    value={markdownOutput}
+                    onChange={(e) => setMarkdownOutput(e.target.value)}
+                    style={{
+                      ...styles.markdownOutput,
+                      resize: "none",
+                      overflow: "hidden",
+                      display: "block",
+                      width: "100%",
+                      minHeight: "unset",
+                      maxHeight: "unset",
+                      height: "auto",
+                      boxSizing: "border-box",
+                      marginTop: "12px",
+                    }}
+                    spellCheck={false}
+                  />
+                )}
+              </div>
+            )}
+
+            {formFields.length > 0 && formFields.some(f => f.section === "desenvolvimento" && f.value === "A") && (
+              <div
+                className="puericultura-result-card"
+                style={{
+                  background: "rgba(234, 179, 8, 0.06)",
+                  border: "1px solid rgba(234, 179, 8, 0.35)",
+                }}
+              >
+                <div
+                  className="puericultura-badge"
+                  style={{
+                    background: "rgba(234, 179, 8, 0.15)",
+                    color: "#ca8a04",
+                  }}
+                >
+                  Alerta
+                </div>
+                <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                  <span style={{ fontSize: "16px", lineHeight: 1 }}>⚠️</span>
+                  <div>
+                    <div style={{
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "#ca8a04",
+                      marginBottom: "2px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                    }}>Alerta para o desenvolvimento</div>
+                    <div style={{
+                      fontSize: "13px",
+                      color: "var(--puericultura-text)",
+                    }}>Marcar consulta de retorno em 30 dias e orientar cuidador sobre estimulação da criança e sinais de alerta para retorno.</div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {formFields.length > 0 && (
+              <div
+                className="puericultura-result-card"
+                style={{
+                  background: "var(--puericultura-card-bg)",
+                  border: "1px solid var(--puericultura-border)",
+                }}
+              >
+                <div style={styles.sectionLabel}>Crescimento</div>
+                <div className="puericultura-graph-container">
+                  <div style={{
+                    fontSize: "13px",
+                    color: "var(--puericultura-text-muted)",
+                    textAlign: "center" as const,
+                    padding: "20px 0",
+                  }}>
+                    Gráfico de crescimento (idade x valor) será implementado aqui.
+                    <br />
+                    Suporte preparado para sobreposição de curvas de crescimento.
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
         )}
       </div>

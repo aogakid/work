@@ -1,0 +1,4373 @@
+[
+  {
+    "ageRange": "0-28d",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "local",
+        "label": "local de parto",
+        "labelMd": "Parto em",
+        "type": "single_choice",
+        "options": [
+          "hospital",
+          "casa",
+          "outro"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "parto",
+        "label": "tipo de parto",
+        "labelMd": "Parto",
+        "type": "single_choice",
+        "options": [
+          "vaginal",
+          "cesárea"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "contato",
+        "label": "pele a pele",
+        "labelMd": "Pele a pele",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "clamp",
+        "label": "clamp oportuno",
+        "labelMd": "Clamp oportuno",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "mamou",
+        "label": "mamou na 1ª hora",
+        "labelMd": "Mamou na 1ª hora",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "prevencao",
+        "label": "prevenção",
+        "labelMd": "Prevenção",
+        "type": "multiple_choice",
+        "options": [
+          "oftálmica",
+          "vit. K"
+        ],
+        "value": []
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "apgar1",
+        "label": "apgar 1 min",
+        "labelMd": "APGAR 1º min",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "apgar5",
+        "label": "apgar 5 min",
+        "labelMd": "APGAR 5º min",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "reanimacao",
+        "label": "reanimação",
+        "labelMd": "Reanimação",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "internacao",
+        "label": "internação (motivo, local e duração)",
+        "labelMd": "Internação",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso_nascimento",
+        "label": "peso ao nascer",
+        "labelMd": "Peso ao nascer",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "comp_nascimento",
+        "label": "comprimento ao nascer",
+        "labelMd": "Comp. ao nascer",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc_nascimento",
+        "label": "PC ao nascer",
+        "labelMd": "PC ao nascer",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "div_01",
+        "label": null,
+        "labelMd": null,
+        "type": "divider",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso atual",
+        "labelMd": "Peso atual",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento atual",
+        "labelMd": "Comp. atual",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico atual",
+        "labelMd": "PC atual",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "1m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "pezinho",
+        "label": "teste do pezinho",
+        "labelMd": "Pezinho",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "coracaozinho",
+        "label": "teste do coraçaozinho",
+        "labelMd": "Coraçaozinho",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "orelhinha",
+        "label": "teste da orelhinha",
+        "labelMd": "Orelhinha",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "olhinho",
+        "label": "teste do olhinho",
+        "labelMd": "Olhinho",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "linguinha",
+        "label": "teste da linguinha",
+        "labelMd": "Linguinha",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "div_02",
+        "label": null,
+        "labelMd": null,
+        "type": "divider",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "coriza",
+          "cólica",
+          "engasgos",
+          "diarreia",
+          "constipação",
+          "vômitos",
+          "golfadas",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "hipotermia",
+          "convulsões",
+          "movimentos anormais"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "abertura",
+        "label": "abertura ocular",
+        "labelMd": "Abertura ocular",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "pupilas",
+        "label": "pupilas",
+        "labelMd": "Pupilas",
+        "type": "single_choice",
+        "options": [
+          "normais",
+          "anormais"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "estrabismo",
+        "label": "estrabismo",
+        "labelMd": "Estrabismo",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "posicao",
+        "label": "posição de sono no berço",
+        "labelMd": "Posição de sono",
+        "type": "single_choice",
+        "options": [
+          "barriga pra cima",
+          "barriga pra baixo",
+          "lateralizado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "sono",
+        "label": "tempo de sono",
+        "labelMd": "Tempo de sono",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "higiene",
+        "label": "higiene",
+        "labelMd": "Higiene",
+        "type": "single_choice",
+        "options": [
+          "adequada",
+          "inadequada"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "postura - pernas e braços fletidos, cabeça lateralizada",
+        "labelMd": "Postura: pernas e braços fletidos, cabeça lateralizada",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "observa um som",
+        "labelMd": "Observa um rosto",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "reage ao som",
+        "labelMd": "Reage ao som",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "eleva a cabeça",
+        "labelMd": "Eleva a cabeça",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "2m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "coriza",
+          "cólica",
+          "engasgos",
+          "diarreia",
+          "constipação",
+          "vômitos",
+          "golfadas",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "hipotermia",
+          "convulsões",
+          "movimentos anormais",
+          "criptoquirdia"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "tamanho",
+        "label": "tamanho do globo ocular",
+        "labelMd": "Globo ocular",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "pupilas",
+        "label": "pupilas",
+        "labelMd": "Pupilas",
+        "type": "single_choice",
+        "options": [
+          "normais",
+          "anormais"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "estrabismo",
+        "label": "estrabismo",
+        "labelMd": "Estrabismo",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "secrecao",
+        "label": "secreção",
+        "labelMd": "Secreção",
+        "type": "single_choice",
+        "options": [
+          "ausente",
+          "presente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "posicao",
+        "label": "posição de sono no berço",
+        "labelMd": "Posição de sono",
+        "type": "single_choice",
+        "options": [
+          "barriga pra cima",
+          "barriga pra baixo",
+          "lateralizado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "sono",
+        "label": "tempo de sono",
+        "labelMd": "Tempo de sono",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "troca",
+        "label": "troca de posição durante o dia",
+        "labelMd": "Troca de posição",
+        "type": "single_choice",
+        "options": [
+          "realizada",
+          "inadequada"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "higiene",
+        "label": "higiene",
+        "labelMd": "Higiene",
+        "type": "single_choice",
+        "options": [
+          "adequada",
+          "inadequada"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "chupeta",
+        "label": "uso de chupetas ou bicos",
+        "labelMd": "Chupetas ou bicos",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "sorri quando estimulado",
+        "labelMd": "Sorri quando estimulado",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "abre as mãos",
+        "labelMd": "Abre as mãos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "emite sons",
+        "labelMd": "Emite sons",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "movimenta os membros",
+        "labelMd": "Movimenta os membros",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "3-4m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "coriza",
+          "cólica",
+          "engasgos",
+          "diarreia",
+          "constipação",
+          "vômitos",
+          "golfadas",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "hipotermia",
+          "convulsões",
+          "movimentos anormais",
+          "hernia inguinal",
+          "hernia umbilical"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "tamanho",
+        "label": "tamanho do globo ocular",
+        "labelMd": "Globo ocular",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "pupilas",
+        "label": "pupilas",
+        "labelMd": "Pupilas",
+        "type": "single_choice",
+        "options": [
+          "normais",
+          "anormais"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "estrabismo",
+        "label": "estrabismo",
+        "labelMd": "Estrabismo",
+        "type": "single_choice",
+        "options": [
+          "normal",
+          "anormal"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "secrecao",
+        "label": "secreção",
+        "labelMd": "Secreção",
+        "type": "single_choice",
+        "options": [
+          "ausente",
+          "presente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "higiene",
+        "label": "higiene",
+        "labelMd": "Higiene",
+        "type": "single_choice",
+        "options": [
+          "adequada",
+          "inadequada"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "nasal",
+        "label": "lavagem nasal",
+        "labelMd": "Lavagem nasal",
+        "type": "single_choice",
+        "options": [
+          "realizada",
+          "não realizada"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "chupeta",
+        "label": "uso de chupetas ou bicos",
+        "labelMd": "Chupetas ou bicos",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "dentes",
+        "label": "nascimento de dentes",
+        "labelMd": "Nascimento de dentes",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "responde ativamente ao contato social",
+        "labelMd": "Responde ativamente ao contato social",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "segura objetos",
+        "labelMd": "Segura objetos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "emite sons, ri alto",
+        "labelMd": "Emite sons, ri alto",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "levanta a cabeça e apoia-se nos antebraços de bruços",
+        "labelMd": "Levanta a cabeça e apoia-se nos antebraços de bruços",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "5-6m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Busca ativa de objetos",
+        "labelMd": "Busca ativa de objetos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Leva objetos a boca",
+        "labelMd": "Leva objetos a boca",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Localiza o som",
+        "labelMd": "Localiza o som",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Muda de posição (rola)",
+        "labelMd": "Muda de posição (rola)",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "7-9m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Brinca de esconde-achou",
+        "labelMd": "Brinca de esconde-achou",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Transfere objetos de uma mão para outra",
+        "labelMd": "Transfere objetos de uma mão para outra",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Duplica sílabas",
+        "labelMd": "Duplica sílabas",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Senta-se sem apoio",
+        "labelMd": "Senta-se sem apoio",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "10-12m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Imita gestos",
+        "labelMd": "Imita gestos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Faz pinça",
+        "labelMd": "Faz pinça",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Produz jargão",
+        "labelMd": "Produz jargão",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Anda com apoio",
+        "labelMd": "Anda com apoio",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "13-15m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Mostra o que quer",
+        "labelMd": "Mostra o que quer",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Coloca blocos na caneca",
+        "labelMd": "Coloca blocos na caneca",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Diz uma palavra",
+        "labelMd": "Diz uma palavra",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Anda sem apoio",
+        "labelMd": "Anda sem apoio",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "16-18m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Usa colher ou garfo",
+        "labelMd": "Usa colher ou garfo",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Constrói torre de 2 cubos",
+        "labelMd": "Constrói torre de 2 cubos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Fala 3 palavras",
+        "labelMd": "Fala 3 palavras",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Anda para trás",
+        "labelMd": "Anda para trás",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "19-24m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Tira roupa",
+        "labelMd": "Tira roupa",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Constrói torre de 3 cubos",
+        "labelMd": "Constrói torre de 3 cubos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Aponta 2 figuras",
+        "labelMd": "Aponta 2 figuras",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Chuta bola",
+        "labelMd": "Chuta bola",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "comprimento",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "pc",
+        "label": "perímetro cefálico",
+        "labelMd": "PC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "25-30m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Veste-se com supervisão",
+        "labelMd": "Veste-se com supervisão",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Constrói torre de 6 cubos",
+        "labelMd": "Constrói torre de 6 cubos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Frases com 2 palavras",
+        "labelMd": "Frases com 2 palavras",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Pula com ambos os pés",
+        "labelMd": "Pula com ambos os pés",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "31-36m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "aleitamento",
+        "label": "aleitamento",
+        "labelMd": "Aleitamento",
+        "type": "single_choice",
+        "options": [
+          "exclusivo",
+          "complementado",
+          "artificial"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentos introduzidos",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "frutas",
+        "label": "frutas por dia",
+        "labelMd": "Frutas por dia",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "observacoes",
+        "label": "observações",
+        "labelMd": "Obs.",
+        "type": "multiple_choice",
+        "options": [
+          "dificuldade para amamentar",
+          "parou de amamentar"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "suplementacao",
+        "label": "suplementação",
+        "labelMd": "Suplementação",
+        "type": "multiple_choice",
+        "options": [
+          "ferro",
+          "vitamina A"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "acidentes",
+        "label": "acidentes",
+        "labelMd": "Acidentes",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "relatado"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Brinca com outras crianças",
+        "labelMd": "Brinca com outras crianças",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Imita o desenho de uma linha",
+        "labelMd": "Imita o desenho de uma linha",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Reconhece 2 ações",
+        "labelMd": "Reconhece 2 ações",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Arremessa bola",
+        "labelMd": "Arremessa bola",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "37-42m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Veste uma camiseta",
+        "labelMd": "Veste uma camiseta",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Move o polegar com a mão fechada",
+        "labelMd": "Move o polegar com a mão fechada",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Compreende 2 adjetivos",
+        "labelMd": "Compreende 2 adjetivos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Equilibra-se em cada pé 1 segundo",
+        "labelMd": "Equilibra-se em cada pé 1 segundo",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "43-48m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Emparelha cores",
+        "labelMd": "Emparelha cores",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Copia círculos",
+        "labelMd": "Copia círculos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Fala clara e compreensível",
+        "labelMd": "Fala clara e compreensível",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Pula em um pé só",
+        "labelMd": "Pula em um pé só",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "49-54m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Veste-se sem ajuda",
+        "labelMd": "Veste-se sem ajuda",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Copia cruz",
+        "labelMd": "Copia cruz",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Compreende 4 preposições",
+        "labelMd": "Compreende 4 preposições",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Equilibra-se em cada pé por 3 segundos",
+        "labelMd": "Equilibra-se em cada pé por 3 segundos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "55-60m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Escova dentes sem ajuda",
+        "labelMd": "Escova dentes sem ajuda",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Aponta a linha mais comprida",
+        "labelMd": "Aponta a linha mais comprida",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Define 5 palavras",
+        "labelMd": "Define 5 palavras",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Equilibra-se em um pé 5 segundos",
+        "labelMd": "Equilibra-se em um pé 5 segundos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "61-66m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Brinca de fazer de conta com outras crianças",
+        "labelMd": "Brinca de fazer de conta com outras crianças",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Desenha pessoa com 6 partes",
+        "labelMd": "Desenha pessoa com 6 partes",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Faz analogia",
+        "labelMd": "Faz analogia",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Marcha ponta-calcanhar",
+        "labelMd": "Marcha ponta-calcanhar",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "67-72m",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "industrializados",
+        "label": "industrializados oferecidos",
+        "labelMd": "Industrializados",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/negligência",
+        "labelMd": "Violência/negligência",
+        "type": "single_choice",
+        "options": [
+          "nega",
+          "sinais presentes"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoa",
+        "label": "Aceita e segue regras nos jogos de mesa",
+        "labelMd": "Aceita e segue regras nos jogos de mesa",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcob",
+        "label": "Copia um quadrado",
+        "labelMd": "Copia um quadrado",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcoc",
+        "label": "Define 7 palavras",
+        "labelMd": "Define 7 palavras",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "marcod",
+        "label": "Equilibra-se em cada pé por 7 segundos",
+        "labelMd": "Equilibra-se em cada pé por 7 segundos",
+        "type": "single_choice",
+        "options": [
+          "P",
+          "A",
+          "NV"
+        ],
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "6-10y",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/bullying",
+        "labelMd": "Violência/bullying",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "sono",
+        "label": "Sono",
+        "labelMd": "Sono",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "atividade",
+        "label": "atividade física",
+        "labelMd": "Atividade física",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "telas",
+        "label": "Uso de telas",
+        "labelMd": "Uso de telas",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "rendimento",
+        "label": "Rendimento escolar",
+        "labelMd": "Rendimento escolar",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "interacao",
+        "label": "interação social",
+        "labelMd": "Interação social",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "11-14y",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/bullying",
+        "labelMd": "Violência/bullying",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "sono",
+        "label": "Sono",
+        "labelMd": "Sono",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "atividade",
+        "label": "atividade física",
+        "labelMd": "Atividade física",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "tanner",
+        "label": "Estadiamento de Tanner",
+        "labelMd": "Tanner",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "menarca",
+        "label": "Menarca",
+        "labelMd": "Menarca",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "rendimento",
+        "label": "Rendimento escolar",
+        "labelMd": "Rendimento escolar",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "ansiedade",
+        "label": "sintomas ansiosos",
+        "labelMd": "Sintomas ansiosos",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "depressão",
+        "label": "sintomas depressivos",
+        "labelMd": "Sintomas depressivos",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "ideacao",
+        "label": "ideação suicida",
+        "labelMd": "Ideação Suicida",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "etilismo",
+        "label": "etilismo",
+        "labelMd": "Etilismo",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "tabagismo",
+        "label": "tabagismo",
+        "labelMd": "Tabagismo",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "autoestima",
+        "label": "autoestima",
+        "labelMd": "Autoestima",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "interacao",
+        "label": "interação social",
+        "labelMd": "Interação social",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  },
+  {
+    "ageRange": "15-20y",
+    "fields": [
+      {
+        "section": "geral",
+        "id": "vacina",
+        "label": "vacinação",
+        "labelMd": "Vacinação",
+        "type": "single_choice",
+        "options": [
+          "atualizada",
+          "pendente"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alimentacao",
+        "label": "alimentação",
+        "labelMd": "Alimentação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "alertas",
+        "label": "alertas presentes",
+        "labelMd": "Alertas presentes",
+        "type": "multiple_choice",
+        "options": [
+          "diarreia",
+          "vômitos",
+          "taquipneia",
+          "bradipneia",
+          "febre",
+          "sibilâncias",
+          "convulsões"
+        ],
+        "value": []
+      },
+      {
+        "section": "geral",
+        "id": "odonto",
+        "label": "acompanhamento odontológico",
+        "labelMd": "Odonto",
+        "type": "single_choice",
+        "options": [
+          "sim",
+          "não"
+        ],
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "violência",
+        "label": "violência/bullying",
+        "labelMd": "Violência/bullying",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "sono",
+        "label": "Sono",
+        "labelMd": "Sono",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "geral",
+        "id": "atividade",
+        "label": "atividade física",
+        "labelMd": "Atividade física",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "tanner",
+        "label": "Estadiamento de Tanner",
+        "labelMd": "Tanner",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "menarca",
+        "label": "Menarca",
+        "labelMd": "Menarca",
+        "type": "text_optional",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "rendimento",
+        "label": "Rendimento escolar",
+        "labelMd": "Rendimento escolar",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "vocacao",
+        "label": "Vocação",
+        "labelMd": "Vocação",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "ansiedade",
+        "label": "sintomas ansiosos",
+        "labelMd": "Sintomas ansiosos",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "depressão",
+        "label": "sintomas depressivos",
+        "labelMd": "Sintomas depressivos",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "ideacao",
+        "label": "ideação suicida",
+        "labelMd": "Ideação Suicida",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "etilismo",
+        "label": "etilismo",
+        "labelMd": "Etilismo",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "tabagismo",
+        "label": "tabagismo",
+        "labelMd": "Tabagismo",
+        "type": "single_choice",
+        "options": [
+          "não",
+          "sim"
+        ],
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "autoestima",
+        "label": "autoestima",
+        "labelMd": "Autoestima",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "sexo",
+        "label": "atividade sexual",
+        "labelMd": "Atividade sexual",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "contracepcao",
+        "label": "contracepção",
+        "labelMd": "Contracepção",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "interacao",
+        "label": "interação social",
+        "labelMd": "Interação social",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "peso",
+        "label": "peso",
+        "labelMd": "Peso",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "altura",
+        "label": "altura",
+        "labelMd": "Comp.",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "crescimento",
+        "id": "imc",
+        "label": "IMC",
+        "labelMd": "IMC",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      }
+    ]
+  }
+]
