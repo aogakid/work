@@ -1,5 +1,20 @@
 import * as React from "react"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import {
+  Indicator,
+  Sex,
+  INDICATOR_LABEL,
+  MIN_AGE_DAYS,
+  MAX_AGE_DAYS,
+  STANDARD_Z_LINES,
+  buildCurve,
+  evaluate,
+  monthsToDays,
+  lengthOrHeightLabel,
+} from "../../lib/who-growth"
+
+// Embedded fallback data for preview environment
+const PUERICULTURA_FALLBACK_DATA = [{"ageRange":"0-28d","fields":[{"section":"geral","id":"local","label":"local de parto","labelMd":"Parto em","type":"single_choice","options":["hospital","casa","outro"],"value":""},{"section":"geral","id":"parto","label":"tipo de parto","labelMd":"Parto","type":"single_choice","options":["vaginal","cesárea"],"value":""},{"section":"geral","id":"contato","label":"pele a pele","labelMd":"Pele a pele","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"clamp","label":"clamp oportuno","labelMd":"Clamp oportuno","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"mamou","label":"mamou na 1ª hora","labelMd":"Mamou na 1ª hora","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"aleitamento","label":"aleitamento","labelMd":"Aleitamento","type":"single_choice","options":["exclusivo","complementado","artificial"],"value":""},{"section":"geral","id":"prevencao","label":"prevenção","labelMd":"Prevenção","type":"multiple_choice","options":["oftálmica","vit. K"],"value":[]},{"section":"desenvolvimento","id":"apgar1","label":"apgar 1 min","labelMd":"APGAR 1º min","type":"text_required","options":null,"value":""},{"section":"desenvolvimento","id":"apgar5","label":"apgar 5 min","labelMd":"APGAR 5º min","type":"text_required","options":null,"value":""},{"section":"desenvolvimento","id":"reanimacao","label":"reanimação","labelMd":"Reanimação","type":"single_choice","options":["sim","não"],"value":""},{"section":"desenvolvimento","id":"internacao","label":"internação (motivo, local e duração)","labelMd":"Internação","type":"text_optional","options":null,"value":""},{"section":"crescimento","id":"peso_nascimento","label":"peso ao nascer","labelMd":"Peso ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"comp_nascimento","label":"comprimento ao nascer","labelMd":"Comp. ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc_nascimento","label":"PC ao nascer","labelMd":"PC ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"div_01","label":null,"labelMd":null,"type":"divider","options":null,"value":""},{"section":"crescimento","id":"peso","label":"peso atual","labelMd":"Peso atual","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"altura","label":"comprimento atual","labelMd":"Comp. atual","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"imc","label":"IMC","labelMd":"IMC","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc","label":"perímetro cefálico atual","labelMd":"PC atual","type":"text_required","options":null,"value":""}]},{"ageRange":"1m","fields":[{"section":"geral","id":"pezinho","label":"teste do pezinho","labelMd":"Pezinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"coracaozinho","label":"teste do coraçaozinho","labelMd":"Coraçaozinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"orelhinha","label":"teste da orelhinha","labelMd":"Orelhinha","type":"text_optional","options":null,"value":""},{"section":"geral","id":"olhinho","label":"teste do olhinho","labelMd":"Olhinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"linguinha","label":"teste da linguinha","labelMd":"Linguinha","type":"text_optional","options":null,"value":""},{"section":"geral","id":"div_02","label":null,"labelMd":null,"type":"divider","options":null,"value":""},{"section":"geral","id":"vacina","label":"vacinação","labelMd":"Vacinação","type":"single_choice","options":["atualizada","pendente"],"value":""},{"section":"geral","id":"aleitamento","label":"aleitamento","labelMd":"Aleitamento","type":"single_choice","options":["exclusivo","complementado","artificial"],"value":""},{"section":"geral","id":"observacoes","label":"observações","labelMd":"Obs.","type":"multiple_choice","options":["dificuldade para amamentar","parou de amamentar"],"value":[]},{"section":"geral","id":"alertas","label":"alertas presentes","labelMd":"Alertas presentes","type":"multiple_choice","options":["coriza","cólica","engasgos","diarreia","constipação","vômitos","golfadas","taquipneia","bradipneia","febre","hipotermia","convulsões","movimentos anormais"],"value":[]},{"section":"geral","id":"abertura","label":"abertura ocular","labelMd":"Abertura ocular","type":"single_choice","options":["normal","anormal"],"value":""},{"section":"geral","id":"pupilas","label":"pupilas","labelMd":"Pupilas","type":"single_choice","options":["normais","anormais"],"value":""},{"section":"geral","id":"estrabismo","label":"estrabismo","labelMd":"Estrabismo","type":"single_choice","options":["normal","anormal"],"value":""},{"section":"geral","id":"posicao","label":"posição de sono no berço","labelMd":"Posição de sono","type":"single_choice","options":["barriga pra cima","barriga pra baixo","lateralizado"],"value":""},{"section":"geral","id":"sono","label":"tempo de sono","labelMd":"Tempo de sono","type":"text_optional","options":null,"value":""},{"section":"geral","id":"higiene","label":"higiene","labelMd":"Higiene","type":"single_choice","options":["adequada","inadequada"],"value":""},{"section":"geral","id":"acidentes","label":"acidentes","labelMd":"Acidentes","type":"single_choice","options":["nega","relatado"],"value":""},{"section":"geral","id":"violência","label":"violência/negligência","labelMd":"Violência/negligência","type":"single_choice","options":["nega","sinais presentes"],"value":""},{"section":"desenvolvimento","id":"marcoa","label":"postura - pernas e braços fletidos, cabeça lateralizada","labelMd":"Postura: pernas e braços fletidos, cabeça lateralizada","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcob","label":"observa um som","labelMd":"Observa um rosto","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcoc","label":"reage ao som","labelMd":"Reage ao som","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcod","label":"eleva a cabeça","labelMd":"Eleva a cabeça","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"crescimento","id":"peso","label":"peso","labelMd":"Peso","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"altura","label":"comprimento","labelMd":"Comp.","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"imc","label":"IMC","labelMd":"IMC","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc","label":"perímetro cefálico","labelMd":"PC","type":"text_required","options":null,"value":""}]}]
 
 const injectStyles = `
   :root {
@@ -235,7 +250,7 @@ const styles = {
   },
 }
 
-type FieldType = "single_choice" | "multiple_choice" | "text_required" | "text_optional" | "divider"
+type FieldType = "single_choice" | "multiple_choice" | "text_required" | "text_optional" | "divider";
 
 interface FormField {
   id: string
@@ -253,61 +268,314 @@ interface AgeGroupForm {
   fields: FormField[]
 }
 
-// Definimos as três seções obrigatórias estruturadas
-const secoes = [
-  { id: "geral", label: "Geral" },
-  { id: "desenvolvimento", label: "Desenvolvimento" },
-  { id: "crescimento", label: "Crescimento" }
-]
-
 interface AgeBracket {
   ageRange: string
   maxMonths: number
 }
 
-const AGE_BRACKETS: AgeBracket[] = [
-  { ageRange: "1m",     maxMonths: 1 },
-  { ageRange: "2m",     maxMonths: 2 },
-  { ageRange: "3-4m",   maxMonths: 4 },
-  { ageRange: "5-6m",   maxMonths: 6 },
-  { ageRange: "7-9m",   maxMonths: 9 },
-  { ageRange: "10-12m", maxMonths: 12 },
-  { ageRange: "13-15m", maxMonths: 15 },
-  { ageRange: "16-18m", maxMonths: 18 },
-  { ageRange: "19-24m", maxMonths: 24 },
-  { ageRange: "25-30m", maxMonths: 30 },
-  { ageRange: "31-36m", maxMonths: 36 },
-  { ageRange: "37-42m", maxMonths: 42 },
-  { ageRange: "43-48m", maxMonths: 48 },
-  { ageRange: "49-54m", maxMonths: 54 },
-  { ageRange: "55-60m", maxMonths: 60 },
-  { ageRange: "61-66m", maxMonths: 66 },
-  { ageRange: "67-72m", maxMonths: 72 },
-  { ageRange: "6-10y",  maxMonths: 120 },
-  { ageRange: "11-14y",  maxMonths: 168 },
-  { ageRange: "15-20y",  maxMonths: 240 }, 
-]
 
-// Recebe idade total em meses (decimal) e devolve a faixa correspondente.
-function resolveFaixaEtaria(totalMeses: number): string {
-  const bracket = AGE_BRACKETS.find(b => totalMeses <= b.maxMonths)
-  return bracket?.ageRange ?? AGE_BRACKETS[AGE_BRACKETS.length - 1].ageRange
-}
-
-// Rótulo clínico amplo, independente da faixa fina usada para carregar o formulário.
-function resolveLabelClinico(diffDays: number, totalMeses: number): string {
-  if (diffDays <= 28) return "neonato"
-  if (totalMeses <= 24) return "lactente"
-  if (totalMeses <= 84) return "pré-escolar"
-  if (totalMeses <= 120) return "escolar"
-  return "adolescente"
-}
 
 interface Props {
   style?: React.CSSProperties
 }
 
+// Inlined GrowthChart component
+interface GrowthChartProps {
+  indicator?: Indicator;
+  sex?: Sex;
+  ageMonths?: number;
+  value?: number;
+  heightCm?: number;
+  className?: string;
+  style?: React.CSSProperties;
+  maxMonths?: number;
+  dotColor?: string;
+}
+
+const GrowthChart: React.FC<GrowthChartProps> = ({
+  indicator = "weight",
+  sex = "M",
+  ageMonths = 12,
+  value,
+  heightCm,
+  className,
+  style,
+  maxMonths = 60,
+  dotColor = "var(--growth-point, #2454ff)",
+}) => {
+  const Z_COLORS: Record<number, string> = {
+    "-3": "#c1121f",
+    "-2": "#e07a3e",
+    "-1": "#d4a72c",
+    "0": "#2e7d5b",
+    "1": "#d4a72c",
+    "2": "#e07a3e",
+    "3": "#c1121f",
+  }
+
+  const W = 720
+  const H = 420
+  const PAD_L = 56
+  const PAD_R = 20
+  const PAD_T = 20
+  const PAD_B = 44
+
+  const ageDays = Math.min(
+    Math.max(monthsToDays(ageMonths), MIN_AGE_DAYS),
+    MAX_AGE_DAYS
+  );
+
+  const effectiveValue =
+    indicator === "bmi" && value != null && heightCm
+      ? value
+      : value;
+
+  const bmiValue =
+    indicator === "bmi" && heightCm && value != null
+      ? value / Math.pow(heightCm / 100, 2)
+      : undefined;
+
+  const finalValue = indicator === "bmi" && bmiValue != null ? bmiValue : effectiveValue;
+
+  const dataMinDays = 0
+  const dataMaxDays = monthsToDays(maxMonths)
+
+  const curves = React.useMemo(
+    () =>
+      STANDARD_Z_LINES.map((z) => ({
+        z,
+        points: buildCurve(indicator, sex, z, dataMinDays, dataMaxDays, 500),
+      })),
+    [indicator, sex, dataMinDays, dataMaxDays]
+  )
+
+  // 24-month zoom window, centered on the patient's age
+  const ZOOM_MONTHS = 24
+  const viewCenterMonths = Math.max(12, ageMonths)
+  const viewMinMonths = Math.max(0, viewCenterMonths - 12)
+  const viewMaxMonths = viewMinMonths + ZOOM_MONTHS
+  const viewMinDays = Math.floor(monthsToDays(viewMinMonths))
+  const viewMaxDays = Math.ceil(monthsToDays(viewMaxMonths))
+
+  const allValues = curves.flatMap((c) => c.points.map((p) => p.value))
+  const yMin = Math.min(...allValues)
+  const yMax = Math.max(...allValues)
+  const yPad = (yMax - yMin) * 0.06
+  const yLo = Math.max(0, yMin - yPad)
+  const yHi = yMax + yPad
+
+  const xScale = (days: number) =>
+    PAD_L + ((days - viewMinDays) / (viewMaxDays - viewMinDays)) * (W - PAD_L - PAD_R)
+  const yScale = (v: number) =>
+    H - PAD_B - ((v - yLo) / (yHi - yLo)) * (H - PAD_T - PAD_B)
+
+  const pathFor = (points: { ageDays: number; value: number }[]) =>
+    points
+      .map((p, i) => `${i === 0 ? "M" : "L"}${xScale(p.ageDays).toFixed(2)},${yScale(p.value).toFixed(2)}`)
+      .join(" ")
+
+  const result =
+    finalValue != null ? evaluate(indicator, sex, ageDays, finalValue) : null
+
+  const monthTicks = React.useMemo(() => {
+    const step = 3
+    const ticks: number[] = []
+    for (let m = viewMinMonths; m <= viewMaxMonths; m += step) ticks.push(m)
+    return ticks
+  }, [viewMinMonths, viewMaxMonths])
+
+  const unitLabel =
+    indicator === "length_height" ? lengthOrHeightLabel(ageDays) : null;
+
+  return (
+    <div
+      className={className}
+      style={{
+        fontFamily:
+          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        color: "var(--growth-fg, #1f2430)",
+        background: "var(--growth-bg, transparent)",
+        ...style,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          marginBottom: 8,
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <div style={{ fontWeight: 600, fontSize: 15 }}>
+          {INDICATOR_LABEL[indicator]}
+          {unitLabel ? ` (${unitLabel})` : ""} — {sex === "M" ? "Masculino" : "Feminino"}
+        </div>
+        {result && (
+          <div style={{ fontSize: 13, display: "flex", gap: 14 }}>
+            <span>
+              <strong>Z:</strong> {result.z.toFixed(2)}
+            </span>
+            <span>
+              <strong>Percentil:</strong> {result.percentile.toFixed(1)}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" style={{ borderRadius: "10px", display: "block" }}>
+        <rect width={W} height={H} fill="white" />
+        <defs>
+          <clipPath id={`plot-clip-${indicator}`}>
+            <rect x={PAD_L} y={PAD_T} width={W - PAD_L - PAD_R} height={H - PAD_T - PAD_B} />
+          </clipPath>
+        </defs>
+        <line
+          x1={PAD_L}
+          y1={H - PAD_B}
+          x2={W - PAD_R}
+          y2={H - PAD_B}
+          stroke="var(--growth-axis, #b8bec9)"
+        />
+        <line
+          x1={PAD_L}
+          y1={PAD_T}
+          x2={PAD_L}
+          y2={H - PAD_B}
+          stroke="var(--growth-axis, #b8bec9)"
+        />
+
+        {Array.from({ length: 5 }, (_, i) => {
+          const v = yLo + ((yHi - yLo) * i) / 4;
+          const y = yScale(v);
+          return (
+            <g key={i}>
+              <line
+                x1={PAD_L}
+                y1={y}
+                x2={W - PAD_R}
+                y2={y}
+                stroke="var(--growth-grid, #e7e9ee)"
+              />
+              <text x={PAD_L - 8} y={y + 4} fontSize={10} textAnchor="end" fill="var(--growth-fg-muted, #6b7280)">
+                {v.toFixed(indicator === "bmi" ? 1 : indicator === "weight" ? 1 : 0)}
+              </text>
+            </g>
+          );
+        })}
+
+        {monthTicks.map((m) => {
+          const x = xScale(monthsToDays(m));
+          return (
+            <g key={m}>
+              <line x1={x} y1={PAD_T} x2={x} y2={H - PAD_B} stroke="var(--growth-grid, #f0f1f4)" />
+              <text x={x} y={H - PAD_B + 16} fontSize={10} textAnchor="middle" fill="var(--growth-fg-muted, #6b7280)">
+                {m}
+              </text>
+            </g>
+          );
+        })}
+        <text x={(W + PAD_L - PAD_R) / 2} y={H - 4} fontSize={11} textAnchor="middle" fill="var(--growth-fg-muted, #6b7280)">
+          Idade (meses)
+        </text>
+
+        {curves.map(({ z, points }) => (
+          <g key={z} clipPath="none">
+            <path
+              d={pathFor(points)}
+              fill="none"
+              stroke={Z_COLORS[z]}
+              strokeWidth={z === 0 ? 2 : 1.1}
+              strokeDasharray={z === 0 ? undefined : "4 3"}
+              opacity={z === 0 ? 1 : 0.75}
+              clipPath={`url(#plot-clip-${indicator})`}
+            />
+            <text
+              x={W - PAD_R + 2}
+              y={
+                (() => {
+                  const p = [...points].reverse().find(p => p.ageDays <= viewMaxDays)
+                  return yScale(p ? p.value : points[points.length - 1].value) + 3
+                })()
+              }
+              fontSize={9.5}
+              fill={Z_COLORS[z]}
+            >
+              {z > 0 ? `+${z}` : z}
+            </text>
+          </g>
+        ))}
+
+        {result && finalValue != null && (
+          <g>
+            <circle
+              cx={xScale(ageDays)}
+              cy={yScale(finalValue)}
+              r={5.5}
+              fill={dotColor}
+              stroke="white"
+              strokeWidth={1.5}
+            />
+            <line
+              x1={xScale(ageDays)}
+              y1={PAD_T}
+              x2={xScale(ageDays)}
+              y2={H - PAD_B}
+              stroke={dotColor}
+              strokeDasharray="2 3"
+              opacity={0.35}
+            />
+          </g>
+        )}
+      </svg>
+    </div>
+  );
+};
+
 export default function PuericulturaUI({ style }: Props) {
+  const AGE_BRACKETS: AgeBracket[] = useMemo(() => [
+    { ageRange: "1m",     maxMonths: 1 },
+    { ageRange: "2m",     maxMonths: 2 },
+    { ageRange: "3-4m",   maxMonths: 4 },
+    { ageRange: "5-6m",   maxMonths: 6 },
+    { ageRange: "7-9m",   maxMonths: 9 },
+    { ageRange: "10-12m", maxMonths: 12 },
+    { ageRange: "13-15m", maxMonths: 15 },
+    { ageRange: "16-18m", maxMonths: 18 },
+    { ageRange: "19-24m", maxMonths: 24 },
+    { ageRange: "25-30m", maxMonths: 30 },
+    { ageRange: "31-36m", maxMonths: 36 },
+    { ageRange: "37-42m", maxMonths: 42 },
+    { ageRange: "43-48m", maxMonths: 48 },
+    { ageRange: "49-54m", maxMonths: 54 },
+    { ageRange: "55-60m", maxMonths: 60 },
+    { ageRange: "61-66m", maxMonths: 66 },
+    { ageRange: "67-72m", maxMonths: 72 },
+    { ageRange: "6-10y",  maxMonths: 120 },
+    { ageRange: "11-14y",  maxMonths: 168 },
+    { ageRange: "15-20y",  maxMonths: 240 },
+  ], [])
+
+  const resolveFaixaEtaria = useCallback((totalMeses: number): string => {
+    const bracket = AGE_BRACKETS.find(b => totalMeses <= b.maxMonths)
+    return bracket?.ageRange ?? AGE_BRACKETS[AGE_BRACKETS.length - 1].ageRange
+  }, [AGE_BRACKETS])
+
+  const resolveLabelClinico = useCallback((diffDays: number, totalMeses: number): string => {
+    if (diffDays <= 28) return "neonato"
+    if (totalMeses <= 24) return "lactente"
+    if (totalMeses <= 84) return "pré-escolar"
+    if (totalMeses <= 120) return "escolar"
+    return "adolescente"
+  }, [])
+
+  const secoes = useMemo(() => [
+    { id: "geral", label: "Geral" },
+    { id: "desenvolvimento", label: "Desenvolvimento" },
+    { id: "crescimento", label: "Crescimento" }
+  ], [])
+
   const [ageGroupForms, setAgeGroupForms] = useState<AgeGroupForm[]>([])
   const [dataNascimento, setDataNascimento] = useState<string>("")
   const [idadeAnos, setIdadeAnos] = useState<string>("")
@@ -318,6 +586,7 @@ export default function PuericulturaUI({ style }: Props) {
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
   const [labelClinico, setLabelClinico] = useState<string>("")
+  const [sexo, setSexo] = useState<"M" | "F">("M")
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-resize textarea ao conteúdo
@@ -333,6 +602,10 @@ export default function PuericulturaUI({ style }: Props) {
       .then((res) => res.json())
       .then((data) => {
         setAgeGroupForms(Array.isArray(data) ? (data as AgeGroupForm[]) : [])
+      })
+      .catch(() => {
+        // Fallback to embedded data for preview environment
+        setAgeGroupForms(PUERICULTURA_FALLBACK_DATA as AgeGroupForm[])
       })
   }, [])
 
@@ -393,7 +666,7 @@ export default function PuericulturaUI({ style }: Props) {
     }
 
     setIdadeCalculada(idadeTexto)
-  }, [dataNascimento, idadeAnos, idadeMeses])
+  }, [dataNascimento, idadeAnos, idadeMeses, resolveFaixaEtaria, resolveLabelClinico])
 
   useEffect(() => {
     if (!idadeAnos && !idadeMeses) {
@@ -428,7 +701,7 @@ export default function PuericulturaUI({ style }: Props) {
     }
 
     setIdadeCalculada(idadeTexto)
-  }, [idadeAnos, idadeMeses, dataNascimento])
+  }, [idadeAnos, idadeMeses, dataNascimento, resolveFaixaEtaria, resolveLabelClinico])
 
   useEffect(() => {
     if (!faixaEtaria) {
@@ -485,7 +758,7 @@ export default function PuericulturaUI({ style }: Props) {
     })
 
     return md
-  }, [idadeCalculada, formFields])
+  }, [idadeCalculada, formFields, secoes])
 
   // Auto-generate markdown on field changes (com todas as dependências do hook arrumadas)
   useEffect(() => {
@@ -756,6 +1029,19 @@ export default function PuericulturaUI({ style }: Props) {
               </div>
             </div>
 
+            {/* Sexo */}
+            <div style={styles.inputGroup}>
+              <label style={{ ...styles.label, fontSize: "10px" }}>sexo</label>
+              <select
+                value={sexo}
+                onChange={(e) => setSexo(e.target.value as "M" | "F")}
+                style={styles.select()}
+              >
+                <option value="M">Masculino</option>
+                <option value="F">Feminino</option>
+              </select>
+            </div>
+
           </div>
 
           {idadeCalculada && (
@@ -782,18 +1068,19 @@ export default function PuericulturaUI({ style }: Props) {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
 
             {idadeCalculada && (
-              <div style={styles.ageDisplay}>
-                {idadeCalculada}
-                {faixaEtaria && (
-                  <div style={{
-                    fontSize: "12px",
-                    fontWeight: 500,
-                    color: "var(--puericultura-text-muted)",
-                    marginTop: "4px"
-                  }}>
-                    {labelClinico}
-                  </div>
-                )}
+              <div style={{
+                ...styles.ageDisplay,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                textAlign: "initial",
+              }}>
+                <span style={{ fontSize: "16px", fontWeight: 700, color: "var(--puericultura-text)" }}>
+                  {faixaEtaria ? `${labelClinico}` : ""}
+                </span>
+                <span style={{ fontSize: "24px", fontWeight: 800, color: "var(--puericultura-text)" }}>
+                  {idadeCalculada}
+                </span>
               </div>
             )}
 
@@ -870,66 +1157,229 @@ export default function PuericulturaUI({ style }: Props) {
               </div>
             )}
 
-            {formFields.length > 0 && formFields.some(f => f.section === "desenvolvimento" && f.value === "A") && (
-              <div
-                className="puericultura-result-card"
-                style={{
-                  background: "rgba(234, 179, 8, 0.06)",
-                  border: "1px solid rgba(234, 179, 8, 0.35)",
-                }}
-              >
+            {(() => {
+              const devFields = formFields.filter(
+                f => f.section === "desenvolvimento" &&
+                  f.options?.every(o => ["P", "A", "NV"].includes(o))
+              )
+              if (devFields.length === 0) return null
+              const allP = devFields.every(f => f.value === "P")
+              const anyA = devFields.some(f => f.value === "A")
+
+              return (
                 <div
-                  className="puericultura-badge"
+                  className="puericultura-result-card"
                   style={{
-                    background: "rgba(234, 179, 8, 0.15)",
-                    color: "#ca8a04",
+                    background: "var(--puericultura-card-bg)",
+                    border: "1px solid var(--puericultura-border)",
                   }}
                 >
-                  Alerta
-                </div>
-                <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-                  <span style={{ fontSize: "16px", lineHeight: 1 }}>⚠️</span>
-                  <div>
-                    <div style={{
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      color: "#ca8a04",
-                      marginBottom: "2px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                    }}>Alerta para o desenvolvimento</div>
-                    <div style={{
-                      fontSize: "13px",
-                      color: "var(--puericultura-text)",
-                    }}>Marcar consulta de retorno em 30 dias e orientar cuidador sobre estimulação da criança e sinais de alerta para retorno.</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {formFields.length > 0 && (
-              <div
-                className="puericultura-result-card"
-                style={{
-                  background: "var(--puericultura-card-bg)",
-                  border: "1px solid var(--puericultura-border)",
-                }}
-              >
-                <div style={styles.sectionLabel}>Crescimento</div>
-                <div className="puericultura-graph-container">
+                  <div style={styles.sectionLabel}>Desenvolvimento</div>
                   <div style={{
-                    fontSize: "13px",
-                    color: "var(--puericultura-text-muted)",
-                    textAlign: "center" as const,
-                    padding: "20px 0",
+                    background: allP ? "rgba(0, 184, 73, 0.10)" : anyA ? "rgba(234, 179, 8, 0.06)" : "var(--puericultura-card-bg)",
+                    border: allP ? "1px solid rgba(0, 184, 73, 0.40)" : anyA ? "1px solid rgba(234, 179, 8, 0.35)" : "1px solid var(--puericultura-border)",
+                    borderRadius: "12px",
+                    padding: allP || anyA ? "12px 16px" : "12px",
+                    marginTop: "12px",
                   }}>
-                    Gráfico de crescimento (idade x valor) será implementado aqui.
-                    <br />
-                    Suporte preparado para sobreposição de curvas de crescimento.
+                    {allP ? (
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: 2, color: "#00cc52" }}>
+                          Marcos
+                        </div>
+                        <div style={{ fontSize: 13, color: "var(--puericultura-text-muted)" }}>
+                          Adequados para idade
+                        </div>
+                      </div>
+                    ) : anyA ? (
+                      <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                        <span style={{ fontSize: "16px", lineHeight: 1 }}>⚠️</span>
+                        <div>
+                          <div style={{
+                            fontSize: "12px",
+                            fontWeight: 700,
+                            color: "#ca8a04",
+                            marginBottom: "2px",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.04em",
+                          }}>Alerta para o desenvolvimento</div>
+                          <div style={{
+                            fontSize: "13px",
+                            color: "var(--puericultura-text)",
+                          }}>Marcar consulta de retorno em 30 dias e orientar cuidador sobre estimulação da criança e sinais de alerta para retorno.</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{
+                        fontSize: "13px",
+                        color: "var(--puericultura-text-muted)",
+                        textAlign: "center" as const,
+                        padding: "20px 0",
+                      }}>
+                        Preencha os dados de desenvolvimento para visualizar a avaliação.
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            )}
+              )
+            })()}
+
+            {formFields.length > 0 && (() => {
+              const pesoField = formFields.find(f => f.id === "peso")
+              const alturaField = formFields.find(f => f.id === "altura")
+              const imcField = formFields.find(f => f.id === "imc")
+              const pcField = formFields.find(f => f.id === "pc")
+
+              const peso = parseFloat((pesoField?.value as string) || "0")
+              const alturaCm = parseFloat((alturaField?.value as string) || "0")
+              const imc = parseFloat((imcField?.value as string) || "0")
+              const pc = parseFloat((pcField?.value as string) || "0")
+              const anyGrowth = peso > 0 || alturaCm > 0 || imc > 0 || pc > 0
+
+              let ageMonths = 0
+              if (idadeAnos || idadeMeses) {
+                const anosNum = parseInt(idadeAnos) || 0
+                const mesesNum = parseInt(idadeMeses) || 0
+                ageMonths = anosNum * 12 + mesesNum
+              } else if (dataNascimento) {
+                const nasc = new Date(dataNascimento.split('/').reverse().join('-'))
+                const hoje = new Date()
+                const diffDays = Math.floor((hoje.getTime() - nasc.getTime()) / (1000 * 60 * 60 * 24))
+                ageMonths = Math.max(0, diffDays) / 30.4375
+              }
+
+              const ageDays = monthsToDays(ageMonths)
+              const bmiValue = peso > 0 && alturaCm > 0 ? peso / Math.pow(alturaCm / 100, 2) : 0
+
+              const results: { indicator: string; value: number; z: number; percentile: number; classification: string }[] = []
+              const addResult = (ind: Indicator, val: number) => {
+                const r = val > 0 ? evaluate(ind, sexo, ageDays, val) : null
+                if (r) results.push({ indicator: ind, value: val, ...r })
+              }
+              addResult("weight", peso)
+              addResult("length_height", alturaCm)
+              addResult("bmi", bmiValue)
+              addResult("head_circ", pc)
+
+              const { abs } = Math
+              const zColor = (z: number): string => {
+                const a = abs(z)
+                if (a <= 1) return "#00b849"
+                if (a <= 2) return "#d4a72c"
+                if (a <= 3) return "#c1121f"
+                return "#7c3aed"
+              }
+              const resultMap: Record<string, typeof results[0]> = {}
+              results.forEach(r => { resultMap[r.indicator] = r })
+              const rc = (ind: Indicator) => {
+                const r = resultMap[ind]
+                return r ? zColor(r.z) : "var(--growth-point, #2454ff)"
+              }
+              const cardContainer: React.CSSProperties = {
+                background: "var(--puericultura-card-bg)",
+                border: "1px solid var(--puericultura-border)",
+                borderRadius: "10px",
+                padding: "12px",
+                marginTop: "12px",
+              }
+
+              return (
+                <div
+                  className="puericultura-result-card"
+                  style={{
+                    background: "var(--puericultura-card-bg)",
+                    border: "1px solid var(--puericultura-border)",
+                  }}
+                >
+                  <div style={styles.sectionLabel}>Crescimento</div>
+                  {results.length > 0 && (
+                    <div style={cardContainer}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                        {results.map(r => {
+                          const accent = zColor(r.z)
+                          return (
+                            <div key={r.indicator} style={{
+                              background: accent + "12",
+                              border: `1px solid ${accent}44`,
+                              borderRadius: "12px",
+                              padding: "12px 16px",
+                            }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: 2, color: accent }}>
+                                {INDICATOR_LABEL[r.indicator as Indicator]}
+                              </div>
+                              <div style={{ fontSize: 13, color: "var(--puericultura-text-muted)" }}>
+                                {r.classification}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {peso > 0 && (
+                    <div style={cardContainer}>
+                      <GrowthChart
+                        indicator="weight"
+                        sex={sexo}
+                        ageMonths={ageMonths}
+                        value={peso}
+                        maxMonths={ageMonths > 60 ? ageMonths + 12 : 60}
+                        dotColor={rc("weight")}
+                      />
+                    </div>
+                  )}
+                  {alturaCm > 0 && (
+                    <div style={cardContainer}>
+                      <GrowthChart
+                        indicator="length_height"
+                        sex={sexo}
+                        ageMonths={ageMonths}
+                        value={alturaCm}
+                        maxMonths={ageMonths > 60 ? ageMonths + 12 : 60}
+                        dotColor={rc("length_height")}
+                      />
+                    </div>
+                  )}
+                  {imc > 0 && (
+                    <div style={cardContainer}>
+                      <GrowthChart
+                        indicator="bmi"
+                        sex={sexo}
+                        ageMonths={ageMonths}
+                        value={peso}
+                        heightCm={alturaCm}
+                        maxMonths={ageMonths > 60 ? ageMonths + 12 : 60}
+                        dotColor={rc("bmi")}
+                      />
+                    </div>
+                  )}
+                  {pc > 0 && (
+                    <div style={cardContainer}>
+                      <GrowthChart
+                        indicator="head_circ"
+                        sex={sexo}
+                        ageMonths={ageMonths}
+                        value={pc}
+                        maxMonths={ageMonths > 60 ? ageMonths + 12 : 60}
+                        dotColor={rc("head_circ")}
+                      />
+                    </div>
+                  )}
+                  {!anyGrowth && (
+                    <div style={cardContainer}>
+                      <div style={{
+                        fontSize: "13px",
+                        color: "var(--puericultura-text-muted)",
+                        textAlign: "center" as const,
+                        padding: "20px 0",
+                      }}>
+                        Preencha os dados de crescimento para visualizar os gráficos.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
           </div>
         )}

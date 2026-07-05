@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@babel/standalone": "^8.0.3",
     "@plasmicapp/loader-nextjs": "^2.0.8",
     "@supabase/supabase-js": "^2.108.2",
     "next": "14.2.35",
