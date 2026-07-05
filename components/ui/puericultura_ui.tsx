@@ -284,6 +284,8 @@ const AGE_BRACKETS: AgeBracket[] = [
   { ageRange: "61-66m", maxMonths: 66 },
   { ageRange: "67-72m", maxMonths: 72 },
   { ageRange: "6-10y",  maxMonths: 120 },
+  { ageRange: "11-14y",  maxMonths: 168 },
+  { ageRange: "15-20y",  maxMonths: 240 }, 
 ]
 
 // Recebe idade total em meses (decimal) e devolve a faixa correspondente.
@@ -327,7 +329,7 @@ export default function PuericulturaUI({ style }: Props) {
   }, [markdownOutput])
 
     useEffect(() => {
-    fetch("puericultura.json")
+    fetch("/contents/puericultura.json")
       .then((res) => res.json())
       .then((data) => {
         setAgeGroupForms(Array.isArray(data) ? (data as AgeGroupForm[]) : [])
