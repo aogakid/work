@@ -112,7 +112,14 @@ const injectStyles = `
     border: 1px solid var(--puericultura-border);
     margin-top: 12px;
   }
+
+  @media (max-width: 600px) {
+    .puericultura-form-section {
+      grid-template-columns: 1fr;
+    }
+  }
 `
+
 
 const styles = {
   container: {
@@ -142,6 +149,7 @@ const styles = {
     flexDirection: "column" as const,
     gap: "6px",
     minWidth: 0,
+    overflow: "hidden",
   },
   label: {
     fontSize: "11px",
@@ -190,6 +198,7 @@ const styles = {
     height: "42px",
     boxSizing: "border-box" as const,
     width: "100%",
+    appearance: "none" as const,
     transition: "all 0.2s ease",
   }),
   textarea: (severityBg?: string, severityBorder?: string) => ({
@@ -595,7 +604,15 @@ export default function PuericulturaUI({ style }: Props) {
   const [copiado, setCopiado] = useState(false)
   const [labelClinico, setLabelClinico] = useState<string>("")
   const [sexo, setSexo] = useState<"M" | "F">("M")
+  const [mobile, setMobile] = useState(true)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    const check = () => setMobile(window.innerWidth <= 600)
+    check()
+    window.addEventListener("resize", check)
+    return () => window.removeEventListener("resize", check)
+  }, [])
 
   // Auto-resize textarea ao conteúdo
   useEffect(() => {
@@ -983,11 +1000,24 @@ export default function PuericulturaUI({ style }: Props) {
           <div style={{
             gridColumn: "1 / -1",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "16px",
+            gridTemplateColumns: mobile ? "1fr" : "auto minmax(140px, 1fr) minmax(0, 1fr)",
+            gap: "10px",
             alignItems: "end",
             minWidth: 0,
           }}>
+
+            {/* Sexo */}
+            <div style={styles.inputGroup}>
+              <label style={{ ...styles.label, fontSize: "10px" }}>sexo</label>
+              <select
+                value={sexo}
+                onChange={(e) => setSexo(e.target.value as "M" | "F")}
+                style={styles.select()}
+              >
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+            </div>
 
             {/* Coluna da Esquerda: Data de Nascimento */}
             <div style={styles.inputGroup}>
@@ -1000,7 +1030,7 @@ export default function PuericulturaUI({ style }: Props) {
                   setIdadeAnos("")
                   setIdadeMeses("")
                 }}
-                style={styles.input()}
+                style={{ ...styles.input(), minWidth: 0, width: "100%" }}
               />
             </div>
 
@@ -1036,19 +1066,6 @@ export default function PuericulturaUI({ style }: Props) {
                   <span style={{ fontSize: "12px", color: "var(--puericultura-text-muted)" }}>meses</span>
                 </div>
               </div>
-            </div>
-
-            {/* Sexo */}
-            <div style={styles.inputGroup}>
-              <label style={{ ...styles.label, fontSize: "10px" }}>sexo</label>
-              <select
-                value={sexo}
-                onChange={(e) => setSexo(e.target.value as "M" | "F")}
-                style={styles.select()}
-              >
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-              </select>
             </div>
 
           </div>
