@@ -55,6 +55,7 @@ const injectStyles = `
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
     width: 100%;
+    min-width: 0;
   }
 
   .puericultura-result-card {
@@ -62,6 +63,8 @@ const injectStyles = `
     padding: 20px;
     box-sizing: border-box;
     transition: background 0.3s ease, border 0.3s ease;
+    min-width: 0;
+    overflow: hidden;
   }
 
   .puericultura-badge {
@@ -92,6 +95,7 @@ const injectStyles = `
     border-radius: 12px;
     border: 1px dashed var(--puericultura-border);
     margin-top: 12px;
+    min-width: 0;
   }
 
   @media (min-width: 600px) {
@@ -119,6 +123,8 @@ const styles = {
     borderRadius: "16px",
     width: "100%",
     boxSizing: "border-box" as const,
+    overflowX: "hidden" as const,
+    maxWidth: "100%",
   },
   title: {
     fontSize: "20px",
@@ -135,6 +141,7 @@ const styles = {
     display: "flex",
     flexDirection: "column" as const,
     gap: "6px",
+    minWidth: 0,
   },
   label: {
     fontSize: "11px",
@@ -145,6 +152,7 @@ const styles = {
     whiteSpace: "nowrap" as const,
     overflow: "hidden",
     textOverflow: "ellipsis",
+    maxWidth: "100%",
   },
   sectionLabel: {
     fontSize: "10px",
@@ -424,7 +432,7 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
         )}
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" style={{ borderRadius: "10px", display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" style={{ borderRadius: "10px", display: "block", maxWidth: "100%", overflow: "hidden" }}>
         <rect width={W} height={H} fill="white" />
         <defs>
           <clipPath id={`plot-clip-${indicator}`}>
@@ -975,9 +983,10 @@ export default function PuericulturaUI({ style }: Props) {
           <div style={{
             gridColumn: "1 / -1",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))",
             gap: "16px",
-            alignItems: "end"
+            alignItems: "end",
+            minWidth: 0,
           }}>
 
             {/* Coluna da Esquerda: Data de Nascimento */}
