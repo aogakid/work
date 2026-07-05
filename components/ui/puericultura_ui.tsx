@@ -983,7 +983,7 @@ export default function PuericulturaUI({ style }: Props) {
           <div style={{
             gridColumn: "1 / -1",
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
             gap: "16px",
             alignItems: "end",
             minWidth: 0,
