@@ -47,10 +47,10 @@ export const INDICATOR_UNIT: Record<Indicator, string> = {
   head_circ: "cm",
 };
 
-// Comprimento é medido em decúbito até 731 dias (2 anos); estatura em pé depois disso.
+// Comprimento é medido em decúbito até 731 dias (2 anos); altura em pé depois disso.
 // Isso segue a convenção oficial da OMS (não afeta o cálculo, apenas o rótulo exibido).
-export function lengthOrHeightLabel(ageDays: number): "Comprimento" | "Estatura" {
-  return ageDays < 731 ? "Comprimento" : "Estatura";
+export function lengthOrHeightLabel(ageDays: number): "Comprimento" | "Altura" {
+  return ageDays < 731 ? "Comprimento" : "Altura";
 }
 
 interface LMSArrays {
@@ -165,18 +165,19 @@ export interface GrowthResult {
 // Faixas de classificação clínica padrão da OMS por indicador (referência: Manual AIDPI /
 // WHO Training Course on Child Growth Assessment). Peso-idade não tem categoria de "risco
 // de sobrepeso" oficial isolada — segue as mesmas faixas de IMC-idade na prática clínica.
-function classify(indicator: Indicator, z: number): string {
+function classify(indicator: Indicator, z: number, ageDays?: number): string {
   if (indicator === "head_circ") {
     if (z < -2) return "Microcefalia";
     if (z > 2) return "Macrocefalia";
     return "Adequado";
   }
   if (indicator === "length_height") {
-    if (z < -3) return "Muito baixa";
-    if (z < -2) return "Baixa";
-    if (z > 3) return "Muito alta";
-    if (z > 2) return "Alta";
-    return "Adequada";
+    const s = ageDays !== undefined && ageDays < 731 ? "o" : "a";
+    if (z < -3) return "Muito baix" + s;
+    if (z < -2) return "Baix" + s;
+    if (z > 3) return "Muito alt" + s;
+    if (z > 2) return "Alt" + s;
+    return "Adequad" + s;
   }
   if (indicator === "bmi") {
     if (z < -3) return "Magreza acentuada";
@@ -205,7 +206,7 @@ export function evaluate(
     ageMonths: daysToMonths(ageDays),
     z,
     percentile: percentileFromZ(z),
-    classification: classify(indicator, z),
+    classification: classify(indicator, z, ageDays),
   };
 }
 

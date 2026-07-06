@@ -426,8 +426,7 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
         }}
       >
         <div style={{ fontWeight: 600, fontSize: 15 }}>
-          {INDICATOR_LABEL[indicator]}
-          {unitLabel ? ` (${unitLabel})` : ""} — {sex === "M" ? "Masculino" : "Feminino"}
+          {unitLabel || INDICATOR_LABEL[indicator]} — {sex === "M" ? "Masculino" : "Feminino"}
         </div>
         {result && (
           <div style={{ fontSize: 13, display: "flex", gap: 14 }}>
@@ -1331,7 +1330,7 @@ export default function PuericulturaUI({ style }: Props) {
                               padding: "12px 16px",
                             }}>
                               <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.5px", marginBottom: 2, color: accent }}>
-                                {INDICATOR_LABEL[r.indicator as Indicator]}
+                                {r.indicator === "length_height" ? lengthOrHeightLabel(ageDays) : INDICATOR_LABEL[r.indicator as Indicator]}
                               </div>
                               <div style={{ fontSize: 13, color: "var(--puericultura-text-muted)" }}>
                                 {r.classification}
