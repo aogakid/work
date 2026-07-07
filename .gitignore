@@ -2,6 +2,8 @@
 
 # AI change summaries (resets after each commit)
 /CHANGES.md
+/.opencode/
+opencode.json
 
 # dependencies
 /node_modules

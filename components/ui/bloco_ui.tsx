@@ -1388,13 +1388,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             backdropFilter: "blur(12px)",
                             border: "1px solid rgba(239, 68, 68, 0.25)",
                             borderRadius: "12px",
-                            padding: "14px",
+                        padding: "14px 6px",
                             zIndex: 20,
                             fontFamily: '"Google Sans Flex", sans-serif',
                             display: "flex",
                             flexDirection: "column",
                             boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                            width: "200px",
                             boxSizing: "border-box",
                         }}
                     >
