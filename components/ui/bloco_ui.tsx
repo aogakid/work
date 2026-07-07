@@ -28,6 +28,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [showUsernameInput, setShowUsernameInput] = React.useState(true)
     const [inputUsername, setInputUsername] = React.useState("")
     const usernameInputRef = React.useRef<HTMLInputElement>(null)
+    const [mostrarPopupSugestao, setMostrarPopupSugestao] =
+        React.useState(false)
+    const [popupDispensado, setPopupDispensado] = React.useState(false)
+    const [edicaoIniciada, setEdicaoIniciada] = React.useState(false)
+    const edicaoIniciadaRef = React.useRef<number | null>(null)
 
     // --- ESTADOS DO CRONÔMETRO ---
     const [tempoLimite, setTempoLimite] = React.useState<number>(15)
@@ -146,6 +151,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 typeof customEvent.detail.texto === "string"
             ) {
                 atualizarConteudoEditor(customEvent.detail.texto)
+                setPopupDispensado(false)
+                setEdicaoIniciada(true)
+                edicaoIniciadaRef.current = Date.now()
             }
         }
 
@@ -186,12 +194,23 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             try {
                 const text = await navigator.clipboard.readText()
                 atualizarConteudoEditor(text)
+                setPopupDispensado(false)
+                setEdicaoIniciada(true)
+                edicaoIniciadaRef.current = Date.now()
             } catch (err) {
                 console.error(err)
             }
         }
         editor.substituir = (novoTexto) => {
             atualizarConteudoEditor(novoTexto || "")
+            setPopupDispensado(false)
+            if (novoTexto) {
+                setEdicaoIniciada(true)
+                edicaoIniciadaRef.current = Date.now()
+            } else {
+                setEdicaoIniciada(false)
+                edicaoIniciadaRef.current = null
+            }
         }
 
         timer.ativarCronometro = () => {
@@ -268,6 +287,24 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         return () => clearTimeout(popupTimeout)
     }, [saveTime, markdownContent])
 
+    React.useEffect(() => {
+        if (
+            !username ||
+            popupDispensado ||
+            cronometroAtivo ||
+            mostrarSetupRelogio ||
+            !edicaoIniciada
+        )
+            return
+
+        const timeout = setTimeout(() => {
+            setMostrarPopupSugestao(true)
+        }, 60000)
+
+        return () => clearTimeout(timeout)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [username, popupDispensado, cronometroAtivo, mostrarSetupRelogio, edicaoIniciada])
+
     // Expose actions via useImperativeHandle
     useImperativeHandle(ref, () => ({
         copiar: () => {
@@ -282,15 +319,29 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             try {
                 const text = await navigator.clipboard.readText()
                 atualizarConteudoEditor(text)
+                setPopupDispensado(false)
+                setEdicaoIniciada(true)
+                edicaoIniciadaRef.current = Date.now()
             } catch (err) {
                 console.error(err)
             }
         },
         substituir: (texto: string) => {
             atualizarConteudoEditor(texto || "")
+            setPopupDispensado(false)
+            if (texto) {
+                setEdicaoIniciada(true)
+                edicaoIniciadaRef.current = Date.now()
+            } else {
+                setEdicaoIniciada(false)
+                edicaoIniciadaRef.current = null
+            }
         },
         limpar: () => {
             atualizarConteudoEditor("")
+            setPopupDispensado(false)
+            setEdicaoIniciada(false)
+            edicaoIniciadaRef.current = null
         },
         cronometro: () => {
             fecharCronometroCompleto()
@@ -299,9 +350,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     })) // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleInput = () => {
-        setMarkdownContent(
-            limparTextoInvisivel(editorRef.current?.innerText || "")
+        const text = limparTextoInvisivel(
+            editorRef.current?.innerText || ""
         )
+        setMarkdownContent(text)
+        if (text && edicaoIniciadaRef.current === null) {
+            edicaoIniciadaRef.current = Date.now()
+            setEdicaoIniciada(true)
+        }
         executarRenderStyles()
     }
 
@@ -958,7 +1014,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             background: "transparent",
                             pointerEvents: "auto",
                         }}
-                        onClick={() => setRelogioExiting(true)}
+                        onClick={() => {
+                            setRelogioExiting(true)
+                            setPopupDispensado(true)
+                        }}
                     />
                     <div
                         className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`}
@@ -1297,6 +1356,110 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         <span>▶</span> iniciar
                     </button>
                 </div>
+                </>
+            )}
+
+            {/* POPUP DE SUGESTÃO DE CRONÔMETRO */}
+            {mostrarPopupSugestao && (
+                <>
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 19,
+                            background: "transparent",
+                            pointerEvents: "auto",
+                        }}
+                        onClick={() => {
+                            setMostrarPopupSugestao(false)
+                            setPopupDispensado(true)
+                        }}
+                    />
+                    <div
+                        className="framer-timer-entrance gas-ui-blockout"
+                        style={{
+                            position: "absolute",
+                            bottom: "16px",
+                            left: "16px",
+                            background: "rgba(239, 68, 68, 0.12)",
+                            backdropFilter: "blur(12px)",
+                            border: "1px solid rgba(239, 68, 68, 0.25)",
+                            borderRadius: "12px",
+                            padding: "14px",
+                            zIndex: 20,
+                            fontFamily: '"Google Sans Flex", sans-serif',
+                            display: "flex",
+                            flexDirection: "column",
+                            boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
+                            width: "200px",
+                            boxSizing: "border-box",
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: "11px",
+                                fontWeight: 600,
+                                color: "#ef4444",
+                                lineHeight: "1.4",
+                                marginBottom: "12px",
+                                textAlign: "center",
+                            }}
+                        >
+                            Você deseja iniciar o cronômetro para este
+                            atendimento?
+                        </div>
+                        <div
+                            style={{
+                                display: "flex",
+                                gap: "8px",
+                                justifyContent: "center",
+                            }}
+                        >
+                            <button
+                                className="gas-scale-hover"
+                                onClick={() => {
+                                    setMostrarPopupSugestao(false)
+                                    timer.ativarCronometro()
+                                }}
+                                style={{
+                                    background: "#ef4444",
+                                    color: "#ffffff",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    padding: "6px 16px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    fontFamily: '"Google Sans Flex", sans-serif',
+                                }}
+                            >
+                                Sim
+                            </button>
+                            <button
+                                className="gas-scale-hover"
+                                onClick={() => {
+                                    setMostrarPopupSugestao(false)
+                                    setPopupDispensado(true)
+                                }}
+                                style={{
+                                    background: "rgba(120,113,108,0.12)",
+                                    color: "#ef4444",
+                                    border: "none",
+                                    borderRadius: "6px",
+                                    padding: "6px 16px",
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                    fontFamily: '"Google Sans Flex", sans-serif',
+                                }}
+                            >
+                                Não
+                            </button>
+                        </div>
+                    </div>
                 </>
             )}
 
@@ -1752,6 +1915,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     const textoLimpo = limparTextoInvisivel(clipboardText)
                     document.execCommand("insertText", false, textoLimpo)
                     handleInput()
+                    setPopupDispensado(false)
+                    setEdicaoIniciada(true)
+                    edicaoIniciadaRef.current = Date.now()
                 }}
                 suppressContentEditableWarning
                 data-placeholder="digite aqui"
