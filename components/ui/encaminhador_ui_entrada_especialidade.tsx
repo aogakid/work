@@ -109,7 +109,7 @@ const EncaminhaEspecialidade = forwardRef<EncaminhaEspecialidadeActions>(functio
             <input
                 className="framer-specialty-input"
                 type="text"
-                placeholder="cirurgia, oftalmologia, psicologia…"
+                placeholder="psicologia, cardio, tc de crânio…"
                 value={specialty}
                 onChange={(e) => setSpecialty(e.target.value)}
                 onKeyDown={handleKeyDown}

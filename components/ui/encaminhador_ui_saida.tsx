@@ -4,13 +4,14 @@ import { useEncaminha } from "../contexts/AppContext"
 
 const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
 
-const SYSTEM_PROMPT = `Você é um médico de família gerando um resumo clínico para encaminhamento a uma especialidade.
+const SYSTEM_PROMPT = `Você é um médico de família gerando um resumo clínico para encaminhamento.
 
 Regras:
 - Output: um único parágrafo corrido, sem listas, sem formatação.
-- Incluir apenas informações relevantes para a especialidade solicitada.
+- Incluir apenas informações relevantes para a especialidade/exame solicitado.
 - Linguagem técnica, objetiva, norma culta do português.
-- A primeira linha deve ser "ENCAMINHAMENTO" e só na próxima iniciar o parágrafo.
+- A primeira linha deve ser "ENCAMINHAMENTO" ou "SOLICITAÇÃO" e só na próxima iniciar o parágrafo.
+- A última linha deve conter o CID-10 mais próximo da hipótese diagnóstica.
 - Não inventar informações. Usar apenas o que está no prontuário.
 - Não repetir informações já presentes.
 - A ordem do output deve ser o modelo.
@@ -18,7 +19,8 @@ Regras:
 
 Modelo de output:
 
-Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento], encaminho para avaliação da[especialidade].`
+Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes] há [tempo]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento/exame], encaminho para avaliação da [especialidade]/solicito [exame].
+CID-10: [CID]`
 
 export interface EncaminhaOutputActions {
     executarEncaminhamento(): void

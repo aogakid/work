@@ -13,9 +13,6 @@ import {
   lengthOrHeightLabel,
 } from "../../lib/who-growth"
 
-// Embedded fallback data for preview environment
-const PUERICULTURA_FALLBACK_DATA = [{"ageRange":"0-28d","fields":[{"section":"geral","id":"local","label":"local de parto","labelMd":"Parto em","type":"single_choice","options":["hospital","casa","outro"],"value":""},{"section":"geral","id":"parto","label":"tipo de parto","labelMd":"Parto","type":"single_choice","options":["vaginal","cesárea"],"value":""},{"section":"geral","id":"contato","label":"pele a pele","labelMd":"Pele a pele","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"clamp","label":"clamp oportuno","labelMd":"Clamp oportuno","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"mamou","label":"mamou na 1ª hora","labelMd":"Mamou na 1ª hora","type":"single_choice","options":["sim","não"],"value":""},{"section":"geral","id":"aleitamento","label":"aleitamento","labelMd":"Aleitamento","type":"single_choice","options":["exclusivo","complementado","artificial"],"value":""},{"section":"geral","id":"prevencao","label":"prevenção","labelMd":"Prevenção","type":"multiple_choice","options":["oftálmica","vit. K"],"value":[]},{"section":"desenvolvimento","id":"apgar1","label":"apgar 1 min","labelMd":"APGAR 1º min","type":"text_required","options":null,"value":""},{"section":"desenvolvimento","id":"apgar5","label":"apgar 5 min","labelMd":"APGAR 5º min","type":"text_required","options":null,"value":""},{"section":"desenvolvimento","id":"reanimacao","label":"reanimação","labelMd":"Reanimação","type":"single_choice","options":["sim","não"],"value":""},{"section":"desenvolvimento","id":"internacao","label":"internação (motivo, local e duração)","labelMd":"Internação","type":"text_optional","options":null,"value":""},{"section":"crescimento","id":"peso_nascimento","label":"peso ao nascer","labelMd":"Peso ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"comp_nascimento","label":"comprimento ao nascer","labelMd":"Comp. ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc_nascimento","label":"PC ao nascer","labelMd":"PC ao nascer","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"div_01","label":null,"labelMd":null,"type":"divider","options":null,"value":""},{"section":"crescimento","id":"peso","label":"peso atual","labelMd":"Peso atual","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"altura","label":"comprimento atual","labelMd":"Comp. atual","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"imc","label":"IMC","labelMd":"IMC","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc","label":"perímetro cefálico atual","labelMd":"PC atual","type":"text_required","options":null,"value":""}]},{"ageRange":"1m","fields":[{"section":"geral","id":"pezinho","label":"teste do pezinho","labelMd":"Pezinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"coracaozinho","label":"teste do coraçaozinho","labelMd":"Coraçaozinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"orelhinha","label":"teste da orelhinha","labelMd":"Orelhinha","type":"text_optional","options":null,"value":""},{"section":"geral","id":"olhinho","label":"teste do olhinho","labelMd":"Olhinho","type":"text_optional","options":null,"value":""},{"section":"geral","id":"linguinha","label":"teste da linguinha","labelMd":"Linguinha","type":"text_optional","options":null,"value":""},{"section":"geral","id":"div_02","label":null,"labelMd":null,"type":"divider","options":null,"value":""},{"section":"geral","id":"vacina","label":"vacinação","labelMd":"Vacinação","type":"single_choice","options":["atualizada","pendente"],"value":""},{"section":"geral","id":"aleitamento","label":"aleitamento","labelMd":"Aleitamento","type":"single_choice","options":["exclusivo","complementado","artificial"],"value":""},{"section":"geral","id":"observacoes","label":"observações","labelMd":"Obs.","type":"multiple_choice","options":["dificuldade para amamentar","parou de amamentar"],"value":[]},{"section":"geral","id":"alertas","label":"alertas presentes","labelMd":"Alertas presentes","type":"multiple_choice","options":["coriza","cólica","engasgos","diarreia","constipação","vômitos","golfadas","taquipneia","bradipneia","febre","hipotermia","convulsões","movimentos anormais"],"value":[]},{"section":"geral","id":"abertura","label":"abertura ocular","labelMd":"Abertura ocular","type":"single_choice","options":["normal","anormal"],"value":""},{"section":"geral","id":"pupilas","label":"pupilas","labelMd":"Pupilas","type":"single_choice","options":["normais","anormais"],"value":""},{"section":"geral","id":"estrabismo","label":"estrabismo","labelMd":"Estrabismo","type":"single_choice","options":["normal","anormal"],"value":""},{"section":"geral","id":"posicao","label":"posição de sono no berço","labelMd":"Posição de sono","type":"single_choice","options":["barriga pra cima","barriga pra baixo","lateralizado"],"value":""},{"section":"geral","id":"sono","label":"tempo de sono","labelMd":"Tempo de sono","type":"text_optional","options":null,"value":""},{"section":"geral","id":"higiene","label":"higiene","labelMd":"Higiene","type":"single_choice","options":["adequada","inadequada"],"value":""},{"section":"geral","id":"acidentes","label":"acidentes","labelMd":"Acidentes","type":"single_choice","options":["nega","relatado"],"value":""},{"section":"geral","id":"violência","label":"violência/negligência","labelMd":"Violência/negligência","type":"single_choice","options":["nega","sinais presentes"],"value":""},{"section":"desenvolvimento","id":"marcoa","label":"postura - pernas e braços fletidos, cabeça lateralizada","labelMd":"Postura: pernas e braços fletidos, cabeça lateralizada","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcob","label":"observa um som","labelMd":"Observa um rosto","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcoc","label":"reage ao som","labelMd":"Reage ao som","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"desenvolvimento","id":"marcod","label":"eleva a cabeça","labelMd":"Eleva a cabeça","type":"single_choice","options":["P","A","NV"],"value":""},{"section":"crescimento","id":"peso","label":"peso","labelMd":"Peso","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"altura","label":"comprimento","labelMd":"Comp.","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"imc","label":"IMC","labelMd":"IMC","type":"text_required","options":null,"value":""},{"section":"crescimento","id":"pc","label":"perímetro cefálico","labelMd":"PC","type":"text_required","options":null,"value":""}]}]
-
 const injectStyles = `
   :root {
     --puericultura-bg: #ffffff;
@@ -34,6 +31,11 @@ const injectStyles = `
       --puericultura-input-bg: rgba(255,255,255,0.08);
       --puericultura-border: rgba(255,255,255,0.15);
       --puericultura-card-bg: rgba(255,255,255,0.06);
+      --growth-fg: #f5f5f4;
+      --growth-fg-muted: #a8a29e;
+      --growth-bg: #1c1917;
+      --growth-axis: #57534e;
+      --growth-grid: #44403c;
     }
   }
 
@@ -441,7 +443,7 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
       </div>
 
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="auto" role="img" style={{ borderRadius: "10px", display: "block", maxWidth: "100%", overflow: "hidden" }}>
-        <rect width={W} height={H} fill="white" />
+        <rect width={W} height={H} fill="var(--growth-bg, white)" />
         <defs>
           <clipPath id={`plot-clip-${indicator}`}>
             <rect x={PAD_L} y={PAD_T} width={W - PAD_L - PAD_R} height={H - PAD_T - PAD_B} />
@@ -627,10 +629,7 @@ export default function PuericulturaUI({ style }: Props) {
       .then((data) => {
         setAgeGroupForms(Array.isArray(data) ? (data as AgeGroupForm[]) : [])
       })
-      .catch(() => {
-        // Fallback to embedded data for preview environment
-        setAgeGroupForms(PUERICULTURA_FALLBACK_DATA as AgeGroupForm[])
-      })
+      .catch(() => { setAgeGroupForms([]) })
   }, [])
 
   useEffect(() => {
@@ -743,7 +742,7 @@ export default function PuericulturaUI({ style }: Props) {
   
   // Gerar markdown agrupado por seções com suporte a placeholders estruturados
   const generateMarkdown = useCallback(() => {
-    if (!idadeCalculada || formFields.length === 0) return ""
+    if (formFields.length === 0) return ""
 
     let md = ``
 
@@ -764,6 +763,27 @@ export default function PuericulturaUI({ style }: Props) {
         : mapValue(value)
     }
 
+    const zFieldMap: Record<string, Indicator> = {
+      peso: "weight",
+      altura: "length_height",
+      imc: "bmi",
+      pc: "head_circ",
+    }
+
+    let ageDays = 0
+    if (idadeAnos || idadeMeses) {
+      const anosNum = parseInt(idadeAnos) || 0
+      const mesesNum = parseInt(idadeMeses) || 0
+      ageDays = monthsToDays(anosNum * 12 + mesesNum)
+    } else if (dataNascimento) {
+      const [ano, mes, dia] = dataNascimento.split("-").map(Number)
+      const nasc = new Date(ano, mes - 1, dia)
+      const hoje = new Date()
+      hoje.setHours(0, 0, 0, 0)
+      const diffDays = Math.round((hoje.getTime() - nasc.getTime()) / (1000 * 60 * 60 * 24))
+      ageDays = Math.max(0, diffDays)
+    }
+
     secoes.forEach(secao => {
       // Filtrar campos que pertencem a essa seção, excluindo dividers
       const camposDaSecao = formFields.filter(f => (f.section || "geral") === secao.id && f.type !== "divider")
@@ -776,13 +796,22 @@ export default function PuericulturaUI({ style }: Props) {
           const valueMd = getValueMd(field)
           // Pula campos opcionais sem valor
           if (valueMd === null) return
-          md += `  - ${getLabelMd(field)}: ${valueMd}\n`
+          let line = `  - ${getLabelMd(field)}: ${valueMd}`
+          const ind = zFieldMap[field.id]
+          if (ind && ageDays > 0) {
+            const numVal = parseFloat(valueMd as string)
+            if (!isNaN(numVal) && numVal > 0) {
+              const r = evaluate(ind, sexo, ageDays, numVal)
+              if (r) line += ` (Z ${r.z > 0 ? "+" : ""}${r.z.toFixed(1)})`
+            }
+          }
+          md += line + "\n"
         })
       }
     })
 
     return md
-  }, [idadeCalculada, formFields, secoes])
+  }, [formFields, secoes, sexo, idadeAnos, idadeMeses, dataNascimento])
 
   // Auto-generate markdown on field changes (com todas as dependências do hook arrumadas)
   useEffect(() => {
@@ -1147,7 +1176,7 @@ export default function PuericulturaUI({ style }: Props) {
                       height: "34px",
                       borderRadius: "8px",
                       border: "1px solid var(--puericultura-border)",
-                      background: copiado ? "rgba(0, 184, 73, 0.08)" : "rgba(255,255,255,0.5)",
+                      background: copiado ? "rgba(0, 184, 73, 0.08)" : "var(--puericultura-input-bg)",
                       color: copiado ? "#007a30" : "var(--puericultura-text-muted)",
                       cursor: "pointer",
                       transition: "all 0.15s ease",

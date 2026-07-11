@@ -985,7 +985,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         border: "1px solid rgba(34, 197, 94, 0.25)",
                         borderRadius: "8px",
                         padding: "6px 12px",
-                        zIndex: 20,
+                        zIndex: 5,
                         fontFamily: '"Google Sans Flex", sans-serif',
                         fontSize: "11px",
                         fontWeight: 600,
