@@ -109,7 +109,8 @@ const injectStyles = `
   }
 `
 
-const FIELD_WIDTH = "72px"
+const FIELD_WIDTH = "96px"
+const TFG_WIDTH = "140px"
 
 function buildStyles() {
   return {
@@ -160,7 +161,7 @@ function buildStyles() {
       color: `var(--${EXAMES_PREFIX}-text)`,
       fontSize: "14px",
       outline: "none",
-      height: "42px",
+      height: "46px",
       boxSizing: "border-box" as const,
       width: "100%",
       textAlign: "center" as const,
@@ -175,7 +176,7 @@ function buildStyles() {
       fontSize: "14px",
       fontWeight: 600,
       outline: "none",
-      height: "42px",
+      height: "46px",
       boxSizing: "border-box" as const,
       width: "100%",
       textAlign: "center" as const,
@@ -348,6 +349,15 @@ function IconeCheck() {
   )
 }
 
+function IconeLixeira() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  )
+}
+
 export default function ExamesUI({ style }: Props) {
   const [date, setDate] = useState(() => {
     const now = new Date()
@@ -361,9 +371,10 @@ export default function ExamesUI({ style }: Props) {
     return init
   })
   const [copied, setCopied] = useState(false)
+  const [outros, setOutros] = useState("")
 
   const handleChange = useCallback((id: string, val: string) => {
-    setValues((prev) => ({ ...prev, [id]: val }))
+    setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
   }, [])
 
   useEffect(() => {
@@ -395,9 +406,11 @@ export default function ExamesUI({ style }: Props) {
         if (!v || v.trim() === "") return null
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
-    if (parts.length === 0) return ""
-    return `(${dateBr}): ${parts.join(" // ")}`
-  }, [date, values])
+    if (parts.length === 0 && !outros.trim()) return ""
+    const outrosPart = outros.trim() ? outros.trim() : ""
+    const allParts = outrosPart ? [...parts, outrosPart] : parts
+    return `(${dateBr}): ${allParts.join(" // ")}`
+  }, [date, values, outros])
 
   const handleCopy = useCallback(() => {
     if (!markdown) return
@@ -406,6 +419,15 @@ export default function ExamesUI({ style }: Props) {
       setTimeout(() => setCopied(false), 1500)
     })
   }, [markdown])
+
+  const handleClearAll = useCallback(() => {
+    const init: Record<string, string> = {}
+    for (const f of FIELDS) {
+      if (isField(f)) init[fieldId(f.label)] = ""
+    }
+    setValues(init)
+    setOutros("")
+  }, [])
 
   const s = useMemo(buildStyles, [])
 
@@ -416,9 +438,43 @@ export default function ExamesUI({ style }: Props) {
         className={`${EXAMES_PREFIX}-root`}
         style={{ ...s.container, ...style }}
       >
-        <div style={{ gridColumn: "1 / -1" }}>
-          <div style={s.title}>Exames laboratoriais</div>
-          <div style={s.subtitle}>converta facilmente em texto</div>
+        <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
+          <div>
+            <div style={s.title}>Exames laboratoriais</div>
+            <div style={s.subtitle}>converta facilmente em texto</div>
+          </div>
+          <button
+            onClick={handleClearAll}
+            title="Limpar tudo"
+            style={{
+              background: "var(--exames-input-bg)",
+              border: "1px solid var(--exames-border)",
+              borderRadius: "8px",
+              padding: "8px 12px",
+              cursor: "pointer",
+              color: "var(--exames-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: 600,
+              flexShrink: 0,
+              transition: "all 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "#ef4444"
+              e.currentTarget.style.borderColor = "rgba(239,68,68,0.3)"
+              e.currentTarget.style.background = "rgba(239,68,68,0.06)"
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--exames-text-muted)"
+              e.currentTarget.style.borderColor = "var(--exames-border)"
+              e.currentTarget.style.background = "var(--exames-input-bg)"
+            }}
+          >
+            <IconeLixeira />
+            Limpar
+          </button>
         </div>
 
         <div className={`${EXAMES_PREFIX}-left`}>
@@ -429,10 +485,10 @@ export default function ExamesUI({ style }: Props) {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                style={{ ...s.input, width: "160px" }}
+                style={{ ...s.input, width: "170px" }}
               />
             </div>
-            <div style={{ ...s.inputGroup, width: "60px", flex: "0 0 60px" }}>
+            <div style={{ ...s.inputGroup, width: "70px", flex: "0 0 70px" }}>
               <span style={s.label}>Sexo</span>
               <select
                 value={values["sexo"] || ""}
@@ -444,7 +500,7 @@ export default function ExamesUI({ style }: Props) {
                 <option value="F">F</option>
               </select>
             </div>
-            <div style={{ ...s.inputGroup, width: "70px", flex: "0 0 70px" }}>
+            <div style={{ ...s.inputGroup, width: "80px", flex: "0 0 80px" }}>
               <span style={s.label}>Idade</span>
               <input
                 type="text"
@@ -473,7 +529,7 @@ export default function ExamesUI({ style }: Props) {
                 const v = parseInt(values[id] || "")
                 const kdigo = !isNaN(v) && v > 0 ? kdigoTfg(v) : null
                 return (
-                  <div key={id} style={{ ...s.inputGroup, width: FIELD_WIDTH, flex: "0 0 auto" }}>
+                  <div key={id} style={{ ...s.inputGroup, width: TFG_WIDTH, flex: "0 0 auto" }}>
                     <span style={s.label}>TFG</span>
                     <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                       <input
@@ -527,6 +583,18 @@ export default function ExamesUI({ style }: Props) {
         </div>
 
         <div className={`${EXAMES_PREFIX}-right`}>
+          {Object.entries(values).some(([k, v]) => k !== "idade" && k !== "sexo" && v.trim() !== "") && (
+            <div style={{ ...s.inputGroup, width: "100%" }}>
+              <span style={s.label}>Outros</span>
+              <input
+                type="text"
+                placeholder="ex: EAS NDN // HIV negativo // TS O+"
+                value={outros}
+                onChange={(e) => setOutros(e.target.value)}
+                style={{ ...s.input, textAlign: "left" }}
+              />
+            </div>
+          )}
           <div className={`${EXAMES_PREFIX}-md-wrap`}>
             <div style={{
               ...s.markdownOutput,
