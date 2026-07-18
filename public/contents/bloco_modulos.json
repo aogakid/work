@@ -1,0 +1,139 @@
+{
+  "modulos": {
+    "subjetivo": [
+      {
+        "id": "cabecalho",
+        "label": "cabeçalho",
+        "text": "- Id: \n- QP: \n- HDA\n  - "
+      },
+      {
+        "id": "qa",
+        "label": "queixas adicionais",
+        "text": "- Queixas adicionais\n  - "
+      },
+      {
+        "id": "antecedentes_pessoais",
+        "label": "antecedentes pessoais",
+        "text": "- Antecedentes pessoais\n  - Condições\n    - \n  - Cirurgias\n    - \n  - Medicamentos\n    - \n  - Alergias\n    - \n  - Vacinação\n    - "
+      },
+      {
+        "id": "af",
+        "label": "antecedentes familiares",
+        "text": "- AF:"
+      },
+      {
+        "id": "hv",
+        "label": "hábitos de vida",
+        "text": "- HV\n  - Etilismo:\n  - Tabagismo:\n  - Drogas:\n  - Exercício:\n  - Dieta:\n  - Hidratação:\n  - Evacuações:\n  - Diurese:\n  - Sono:\n  - Humor:\n  - Lazer:"
+      },
+      {
+        "id": "hvp",
+        "label": "hábitos puericultura",
+        "text": "- HV\n    - Dieta: \n    - Hidratação: \n    - Evacuações: \n    - Diurese: \n    - Sono: \n    - Escola: \n    - Lazer: \n    - Relações:"
+      },
+      {
+        "id": "gest",
+        "label": "gestação",
+        "text": "- Gestação atual\n  - DUM: \n  - Planejada: \n  - Edema: \n  - MF: \n  - Contrações: \n  - Vacinação: \n- História obstétrica\n  - G:  (última em )\n  - P:  (c + v)\n  - A: \n  - Vivos: \n  - Intercorrências: "
+      }
+    ],
+    "objetivo": [
+      {
+        "id": "fisico",
+        "label": "exame físico",
+        "text": "- Exame físico\n  - SSVV\n    - PA: \n    - Peso: \n    - Alt: \n    - IMC: \n  - Ect: \n  - AC: \n  - AR: \n  - Ext: "
+      },
+      {
+        "id": "egest",
+        "label": "exame gestacional",
+        "text": "- Exame físico\n  - PA: \n  - Peso: \n  - Alt: \n  - IMC: \n  - IG: \n  - DPP: \n  - AU: \n  - BCF: \n  - Apresentação: \n  - MF: \n  - Edema: "
+      },
+      {
+        "id": "complementar",
+        "label": "exames complementares",
+        "text": "- Complementar\n  - Laboratório\n    - \n  - Imagem\n    - \n  - Escores\n    -"
+      }
+    ],
+    "avaliacao": [
+      {
+        "id": "qp",
+        "label": "queixa principal",
+        "text": "- QP\n  - "
+      },
+      {
+        "id": "aqa",
+        "label": "queixas adicionais",
+        "text": "- Queixas adicionais\n  - "
+      },
+      {
+        "id": "condicoes",
+        "label": "condições crônicas",
+        "text": "- Condições crônicas\n  - "
+      },
+      {
+        "id": "riscos",
+        "label": "riscos",
+        "text": "- Riscos\n  - "
+      },
+      {
+        "id": "agest",
+        "label": "gestacional",
+        "text": "- Risco: \n- IG:  | DPP: "
+      },
+      {
+        "id": "cd",
+        "label": "cresc. e desen.",
+        "text": "- Crescimento\n  - \n- Desenvolvimento\n  -"
+      }
+    ],
+    "plano": [
+      {
+        "id": "pqp",
+        "label": "queixa principal",
+        "text": "- QP\n  - "
+      },
+      {
+        "id": "pqa",
+        "label": "queixas adicionais",
+        "text": "- Queixas adicionais\n  - "
+      },
+      {
+        "id": "pcondicoes",
+        "label": "condições crônicas",
+        "text": "- Condições crônicas\n  - "
+      },
+      {
+        "id": "priscos",
+        "label": "riscos",
+        "text": "- Riscos\n  - "
+      },
+      {
+        "id": "seguimento",
+        "label": "seguimento",
+        "text": "- Seguimento\n  - "
+      }
+    ]
+  },
+  "templates": [
+    {
+      "id": "consulta_agendada",
+      "label": "Consulta Agendada",
+      "file": "/contents/templates/consulta_agendada.md"
+    },
+    {
+      "id": "demanda_espontanea",
+      "label": "Demanda Espontânea",
+      "file": "/contents/templates/demanda_espontanea.md"
+    },
+    {
+      "id": "pre_natal",
+      "label": "Pré-natal",
+      "file": "/contents/templates/pre_natal.md"
+    },
+    {
+      "id": "puericultura",
+      "label": "Puericultura",
+      "file": "/contents/templates/puericultura.md"
+    }
+  ]
+}

@@ -26,12 +26,6 @@ import {
   comBotaoLimpar,
   comBotaoColar as comBotaoColarArrumador,
 } from "./components/actions/arrumador_acoes";
-import { comTriggerCronometro } from "./components/actions/bloco_cronometro";
-import {
-  comBotaoCopiar as comBotaoCopiarEditor,
-  comBotaoColar as comBotaoColarEditor,
-  comBotaoLimparEditor,
-} from "./components/actions/bloco_editor";
 import {
   comBotaoGerar,
   comBotaoColarEncaminha,
@@ -221,16 +215,6 @@ export {
   comBotaoLimpar,
   comBotaoColarArrumador,
 };
-
-// Bloco Editor
-export {
-  comBotaoCopiarEditor,
-  comBotaoColarEditor,
-  comBotaoLimparEditor,
-};
-
-// Bloco Cronômetro
-export { comTriggerCronometro };
 
 // Encaminhador
 export {

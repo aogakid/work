@@ -984,10 +984,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             <span style={{ color: "#dc2626" }}>*</span>
                         </label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 58"
                             value={idade}
-                            onChange={(e) => setIdade(e.target.value)}
+                            onChange={(e) => setIdade(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1019,11 +1020,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Peso (kg)</label>
                         <input
-                            type="number"
-                            step="0.1"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 82.5"
                             value={peso}
-                            onChange={(e) => setPeso(e.target.value)}
+                            onChange={(e) => setPeso(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1040,10 +1041,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Altura (cm)</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 175"
                             value={altura}
-                            onChange={(e) => setAltura(e.target.value)}
+                            onChange={(e) => setAltura(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1061,11 +1063,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                         <label style={styles.label}>IMC (kg/m²)</label>
                         <div style={{ position: "relative", width: "100%" }}>
                             <input
-                                type="number"
-                                step="0.1"
+                                type="text"
+                                inputMode="decimal"
                                 placeholder="Calculado"
                                 value={imc}
-                                onChange={(e) => setImc(e.target.value)}
+                                onChange={(e) => setImc(e.target.value.replace(/,/g, "."))}
                                 onBlur={() =>
                                     setCamposTocados({
                                         ...camposTocados,
@@ -1114,11 +1116,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Creatinina (mg/dL)</label>
                         <input
-                            type="number"
-                            step="0.01"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 0.95"
                             value={creatinina}
-                            onChange={(e) => setCreatinina(e.target.value)}
+                            onChange={(e) => setCreatinina(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1140,10 +1142,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                         </label>
                         <div style={{ position: "relative", width: "100%" }}>
                             <input
-                                type="number"
+                                type="text"
+                                inputMode="decimal"
                                 placeholder="Calculado"
                                 value={tfg}
-                                onChange={(e) => setTfg(e.target.value)}
+                                onChange={(e) => setTfg(e.target.value.replace(/,/g, "."))}
                                 style={obterEstiloTfg()}
                             />
                             {tfg && (
@@ -1172,10 +1175,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             <span style={{ color: "#dc2626" }}>*</span>
                         </label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 138"
                             value={pas}
-                            onChange={(e) => setPas(e.target.value)}
+                            onChange={(e) => setPas(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1192,10 +1196,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>RAC (mg/g)</label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 10"
                             value={rac}
-                            onChange={(e) => setRac(e.target.value)}
+                            onChange={(e) => setRac(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1218,10 +1223,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             <span style={{ color: "#dc2626" }}>*</span>
                         </label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 230"
                             value={colTotal}
-                            onChange={(e) => setColTotal(e.target.value)}
+                            onChange={(e) => setColTotal(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1241,10 +1247,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             <span style={{ color: "#dc2626" }}>*</span>
                         </label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 42"
                             value={hdl}
-                            onChange={(e) => setHdl(e.target.value)}
+                            onChange={(e) => setHdl(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1263,10 +1270,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                             Triglicerídeos (mg/dL)
                         </label>
                         <input
-                            type="number"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 150"
                             value={triglicerideos}
-                            onChange={(e) => setTriglicerideos(e.target.value)}
+                            onChange={(e) => setTriglicerideos(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -1300,11 +1308,11 @@ export default function CalculadoraPREVENT({ style }: Props) {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>HbA1c (%)</label>
                         <input
-                            type="number"
-                            step="0.1"
+                            type="text"
+                            inputMode="decimal"
                             placeholder="Ex: 5.4"
                             value={hba1c}
-                            onChange={(e) => setHba1c(e.target.value)}
+                            onChange={(e) => setHba1c(e.target.value.replace(/,/g, "."))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,

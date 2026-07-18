@@ -834,17 +834,19 @@ export default function PuericulturaUI({ style }: Props) {
   )
 
   const updateFieldValue = (fieldId: string, newValue: string | string[]) => {
+    const normalized = typeof newValue === "string" ? newValue.replace(/,/g, ".") : newValue
+
     setFormFields(prev => {
       let updated = prev.map(field =>
-        field.id === fieldId ? { ...field, value: newValue } : field
+        field.id === fieldId ? { ...field, value: normalized } : field
       )
 
       if (fieldId === "peso" || fieldId === "altura") {
         const pesoField = updated.find(f => f.id === "peso")
         const alturaField = updated.find(f => f.id === "altura")
 
-        const peso = parseFloat((pesoField?.value as string) || "0")
-        const alturaCm = parseFloat((alturaField?.value as string) || "0")
+        const peso = parseFloat(((pesoField?.value as string) || "0").replace(/,/g, "."))
+        const alturaCm = parseFloat(((alturaField?.value as string) || "0").replace(/,/g, "."))
 
         if (peso > 0 && alturaCm > 0) {
           const alturaM = alturaCm / 100
