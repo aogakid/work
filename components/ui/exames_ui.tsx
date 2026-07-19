@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { forwardRef, useImperativeHandle, useRef, useState, useCallback, useMemo, useEffect } from "react"
+import type { CompanionActions } from "../companions/registry"
 
 const EXAMES_PREFIX = "exames"
 
@@ -319,7 +320,9 @@ function formatDateBR(dateStr: string): string {
   return `${d}/${m}/${y.slice(2)}`
 }
 
-function kdigoTfg(v: number): { estagio: string; cor: string; bg: string; border: string } {
+interface EstagioDrc { estagio: string; cor: string; bg: string; border: string }
+
+function kdigoTfg(v: number): EstagioDrc {
   if (v >= 90) return { estagio: "G1", cor: "#007a30", bg: "rgba(0,184,73,0.06)", border: "rgba(0,184,73,0.3)" }
   if (v >= 60) return { estagio: "G2", cor: "#007a30", bg: "rgba(0,184,73,0.06)", border: "rgba(0,184,73,0.3)" }
   if (v >= 45) return { estagio: "G3a", cor: "#b56100", bg: "rgba(242,143,0,0.06)", border: "rgba(242,143,0,0.35)" }
@@ -358,7 +361,7 @@ function IconeLixeira() {
   )
 }
 
-export default function ExamesUI({ style }: Props) {
+export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: Props, ref) {
   const [date, setDate] = useState(() => {
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
@@ -370,8 +373,27 @@ export default function ExamesUI({ style }: Props) {
     }
     return init
   })
-  const [copied, setCopied] = useState(false)
   const [outros, setOutros] = useState("")
+  const [copied, setCopied] = useState(false)
+
+  const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
+  getOutputRef.current = (groupId: string): string | null => {
+    if (groupId !== "todos") return null
+    const dateBr = formatDateBR(date)
+    const parts = FIELDS.filter(isField)
+      .filter((f) => !META_FIELDS.includes(fieldId(f.label)))
+      .map((f) => {
+        const v = values[fieldId(f.label)]
+        if (!v || v.trim() === "") return null
+        return `${f.label} ${v.trim()}`
+      }).filter(Boolean)
+    if (parts.length === 0) return null
+    return `(${dateBr}): ${parts.join(" // ")}`
+  }
+
+  useImperativeHandle(ref, () => ({
+    getOutput: (groupId: string) => getOutputRef.current(groupId),
+  }), [])
 
   const handleChange = useCallback((id: string, val: string) => {
     setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
@@ -616,4 +638,4 @@ export default function ExamesUI({ style }: Props) {
       </div>
     </>
   )
-}
+})

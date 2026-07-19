@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useMemo, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
+import { COMPANIONS, type CompanionRef } from "../companions/registry"
 
 const supabase = createClient(
     "https://odqdzyqjpufitvahrhiq.supabase.co",
@@ -163,6 +164,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [modulos, setModulos] = React.useState<ModulosData>({ modulos: { subjetivo: [], objetivo: [], avaliacao: [], plano: [] }, templates: [] })
     const dropdownContainerRefs = React.useRef<Record<string, HTMLDivElement>>({})
 
+    /* ── Companions ── */
+    const companionRefs = React.useRef<Record<string, CompanionRef>>({})
+    const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const [companionToast, setCompanionToast] = React.useState<string | null>(null)
+
     /* ── Auth / save ── */
     const [saveTime, setSaveTime] = React.useState<string | null>(null)
     const [showSavePopup, setShowSavePopup] = React.useState(false)
@@ -177,6 +183,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const edicaoIniciadaRef = React.useRef<number | null>(null)
     const [popupDispensado, setPopupDispensado] = React.useState(false)
     const [mostrarPopupSugestao, setMostrarPopupSugestao] = React.useState(false)
+    const [confirmAction, setConfirmAction] = React.useState<{ message: string; onConfirm: () => void } | null>(null)
     const externalUpdateRef = React.useRef(false)
     const contentVersionRef = React.useRef<Record<string, number>>({})
 
@@ -280,6 +287,38 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             setEdicaoIniciada(true)
         }
     }, [])
+
+    /* ── Companion output append ── */
+    const handleAppendOutput = useCallback((companionId: string, groupId: string, targetSection: string) => {
+        const ref = companionRefs.current[companionId]
+        if (!ref) return
+        const text = ref.getOutput(groupId)
+        if (!text) return
+        externalUpdateRef.current = true
+        contentVersionRef.current[targetSection] = (contentVersionRef.current[targetSection] || 0) + 1
+        setSections(prev => prev.map(s => {
+            if (s.id !== targetSection) return s
+            const sep = s.content && !s.content.endsWith("\n") ? "\n" : ""
+            return { ...s, content: s.content + sep + text }
+        }))
+        if (edicaoIniciadaRef.current === null) {
+            edicaoIniciadaRef.current = Date.now()
+            setEdicaoIniciada(true)
+        }
+        const sectionLabel = SECTION_META.find(m => m.id === targetSection)?.title || targetSection
+        setCompanionToast(`Adicionado a ${sectionLabel}`)
+    }, [])
+
+    const requestConfirm = useCallback((message: string, onConfirm: () => void) => {
+        if (!sections.some(s => s.content.trim())) { onConfirm(); return }
+        setConfirmAction({ message, onConfirm })
+    }, [sections])
+
+    React.useEffect(() => {
+        if (!companionToast) return
+        const t = setTimeout(() => setCompanionToast(null), 2000)
+        return () => clearTimeout(t)
+    }, [companionToast])
 
     /* ── Load / Save ── */
     async function load() {
@@ -551,14 +590,17 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const handleGlobalPaste = useCallback((e: React.ClipboardEvent) => {
         e.preventDefault()
         const text = limparTextoInvisivel(e.clipboardData.getData("text/plain"))
-        const parsed = parseSections(text)
-        externalUpdateRef.current = true; bumpAllVersions()
-        setTitle(parsed.title)
-        setSections(parsed.sections)
-        setPopupDispensado(false)
-        setEdicaoIniciada(true)
-        edicaoIniciadaRef.current = Date.now()
-    }, [bumpAllVersions])
+        const doPaste = () => {
+            const parsed = parseSections(text)
+            externalUpdateRef.current = true; bumpAllVersions()
+            setTitle(parsed.title)
+            setSections(parsed.sections)
+            setPopupDispensado(false)
+            setEdicaoIniciada(true)
+            edicaoIniciadaRef.current = Date.now()
+        }
+        requestConfirm("deseja substituir o conteúdo atual pelo texto copiado?", doPaste)
+    }, [bumpAllVersions, requestConfirm])
 
     /* ── Timer calculations ── */
     const tratarMovimentoPonteiro = (clientX: number, clientY: number) => {
@@ -815,10 +857,23 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 <>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 19, background: "transparent", pointerEvents: "auto" }} onClick={() => { setMostrarPopupSugestao(false); setPopupDispensado(true) }} />
                     <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", bottom: "16px", left: "16px", background: "rgba(239,68,68,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "14px 6px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
-                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", lineHeight: "1.4", marginBottom: "12px", textAlign: "center" }}>Você deseja iniciar o cronômetro para este atendimento?</div>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", lineHeight: "1.4", marginBottom: "12px", textAlign: "center" }}>deseja iniciar o cronômetro para este atendimento?</div>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                             <button className="gas-scale-hover" onClick={() => { setMostrarPopupSugestao(false); timer.ativarCronometro() }} style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Sim</button>
                             <button className="gas-scale-hover" onClick={() => { setMostrarPopupSugestao(false); setPopupDispensado(true) }} style={{ background: "rgba(120,113,108,0.12)", color: "#ef4444", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Não</button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {confirmAction && (
+                <>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 101, background: "transparent" }} onClick={() => setConfirmAction(null)} />
+                    <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(239,68,68,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "14px 6px", zIndex: 102, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", lineHeight: "1.4", marginBottom: "12px", textAlign: "center", padding: "0 12px" }}>{confirmAction.message}</div>
+                        <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                            <button className="gas-scale-hover" onClick={() => { confirmAction.onConfirm(); setConfirmAction(null) }} style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Sim</button>
+                            <button className="gas-scale-hover" onClick={() => setConfirmAction(null)} style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Não</button>
                         </div>
                     </div>
                 </>
@@ -840,10 +895,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <button className="bloco-icon-btn" onClick={() => navigator.clipboard.writeText(limparTextoInvisivel(mergeSections(title, sections)))} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="copiar tudo">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => editor.colar()} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("deseja substituir o conteúdo atual pelo texto copiado?", () => editor.colar())} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setEdicaoIniciada(false); edicaoIniciadaRef.current = null }} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setEdicaoIniciada(false); edicaoIniciadaRef.current = null })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                     </button>
                     {modulos.templates.length > 0 && (
@@ -858,17 +913,21 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                     <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, background: "var(--editor-bg)", border: "1px solid var(--editor-border)", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 100, minWidth: "180px", overflow: "hidden" }}>
                                         {modulos.templates.map(t => (
                                             <button key={t.id} onClick={async () => {
-                                                externalUpdateRef.current = true; bumpAllVersions()
-                                                let text = t.content || ""
-                                                if (!text && t.file) {
-                                                    try { const res = await fetch(t.file); text = await res.text() } catch {}
+                                                const loadAndApply = async () => {
+                                                    externalUpdateRef.current = true; bumpAllVersions()
+                                                    let text = t.content || ""
+                                                    if (!text && t.file) {
+                                                        try { const res = await fetch(t.file); text = await res.text() } catch {}
+                                                    }
+                                                    const parsed = parseSections(text)
+                                                    setTitle(parsed.title)
+                                                    setSections(parsed.sections)
+                                                    setOpenTemplateDropdown(false)
+                                                    setEdicaoIniciada(true)
+                                                    edicaoIniciadaRef.current = Date.now()
                                                 }
-                                                const parsed = parseSections(text)
-                                                setTitle(parsed.title)
-                                                setSections(parsed.sections)
-                                                setOpenTemplateDropdown(false)
-                                                setEdicaoIniciada(true)
-                                                edicaoIniciadaRef.current = Date.now()
+                                                if (!sections.some(s => s.content.trim())) { await loadAndApply(); return }
+                                                setConfirmAction({ message: "deseja substituir o conteúdo atual por este modelo?", onConfirm: loadAndApply })
                                             }} className="bloco-module-item" data-bg="rgba(59,130,246,0.06)" style={{ display: "block", width: "100%", padding: "8px 12px", border: "none", background: "transparent", color: "var(--editor-text)", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', textAlign: "left", cursor: "pointer" }}>
                                                 {t.label}
                                             </button>
@@ -974,6 +1033,37 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </div>
                     )
                 })}
+
+                {/* ════════════════════════════════════════════════════════════ */}
+                {/* COMPANION SECTIONS                                         */}
+                {/* ════════════════════════════════════════════════════════════ */}
+                {COMPANIONS.map(c => {
+                    const isOpen = expandedCompanions[c.id] || false
+                    return (
+                        <div key={c.id} style={{ marginTop: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
+                            <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
+                                <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
+                                <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>+</span>
+                                <span style={{ fontWeight: 600, fontSize: "14px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
+                                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {isOpen && c.outputGroups.map(og => (
+                                        <button key={og.id} onClick={e => { e.stopPropagation(); handleAppendOutput(c.id, og.id, og.targetSection) }} className="gas-scale-hover" style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontSize: "10px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
+                                            + {og.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            </div>
+                            {isOpen && (
+                                <div style={{ padding: "0 12px 12px 12px" }}>
+                                    <React.Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "var(--meta-text)", fontSize: "13px" }}>carregando...</div>}>
+                                        <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                                    </React.Suspense>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
 
             {/* ════════════════════════════════════════════════════════════ */}
@@ -1071,6 +1161,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     {totalCaracteres} caracteres
                 </div>
             </div>
+            {companionToast && (
+                <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(139,92,246,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(139,92,246,0.25)", borderRadius: "8px", padding: "6px 12px", zIndex: 5, fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 600, color: "#8b5cf6", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>✓</span><span>{companionToast}</span>
+                </div>
+            )}
             {openModuleDropdown && dropdownPos && createPortal(
                 <div data-bloco-dropdown onClick={e => e.stopPropagation()} style={{ position: "fixed", top: dropdownPos.y, left: dropdownPos.x, background: "var(--editor-bg)", border: "1px solid var(--editor-border)", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 9999, minWidth: "180px", overflow: "hidden" }}>
                     {(modulos.modulos[openModuleDropdown] || []).map(m => (

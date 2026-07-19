@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect, useCallback, useMemo, useRef } from "react"
+import type { CompanionActions } from "../companions/registry"
 import {
   Indicator,
   Sex,
@@ -551,7 +552,7 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
   );
 };
 
-export default function PuericulturaUI({ style }: Props) {
+export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ style }: Props, ref) {
   const AGE_BRACKETS: AgeBracket[] = useMemo(() => [
     { ageRange: "1m",     maxMonths: 1 },
     { ageRange: "2m",     maxMonths: 2 },
@@ -740,27 +741,18 @@ export default function PuericulturaUI({ style }: Props) {
 
     
   
-  // Gerar markdown agrupado por seções com suporte a placeholders estruturados
-  const generateMarkdown = useCallback(() => {
-    if (formFields.length === 0) return ""
-
-    let md = ``
+  // Gerar markdown de uma seção específica
+  const generateSectionMarkdown = useCallback((sectionId: string, sectionLabel: string): string | null => {
+    if (formFields.length === 0) return null
 
     const getLabelMd = (field: FormField) => field.labelMd || field.label
-
     const getValueMd = (field: FormField): string | null => {
       const value = field.value
-      // Campos opcionais vazios são omitidos do markdown
       if (!value || (Array.isArray(value) && value.length === 0)) {
         if (field.type === "text_optional" || field.type === "multiple_choice") return null
         return " "
       }
-
-      const mapValue = (v: string) => v
-
-      return Array.isArray(value)
-        ? value.map(mapValue).join(", ")
-        : mapValue(value)
+      return Array.isArray(value) ? value.map(v => v).join(", ") : value
     }
 
     const zFieldMap: Record<string, Indicator> = {
@@ -784,34 +776,46 @@ export default function PuericulturaUI({ style }: Props) {
       ageDays = Math.max(0, diffDays)
     }
 
-    secoes.forEach(secao => {
-      // Filtrar campos que pertencem a essa seção, excluindo dividers
-      const camposDaSecao = formFields.filter(f => (f.section || "geral") === secao.id && f.type !== "divider")
+    const campos = formFields.filter(f => (f.section || "geral") === sectionId && f.type !== "divider")
+    if (campos.length === 0) return null
 
-      // Só renderiza o bloco da seção se ela possuir campos configurados para a idade atual
-      if (camposDaSecao.length > 0) {
-        md += `- ${secao.label}\n`
-
-        camposDaSecao.forEach(field => {
-          const valueMd = getValueMd(field)
-          // Pula campos opcionais sem valor
-          if (valueMd === null) return
-          let line = `  - ${getLabelMd(field)}: ${valueMd}`
-          const ind = zFieldMap[field.id]
-          if (ind && ageDays > 0) {
-            const numVal = parseFloat(valueMd as string)
-            if (!isNaN(numVal) && numVal > 0) {
-              const r = evaluate(ind, sexo, ageDays, numVal)
-              if (r) line += ` (Z ${r.z > 0 ? "+" : ""}${r.z.toFixed(1)})`
-            }
-          }
-          md += line + "\n"
-        })
+    let md = `- ${sectionLabel}\n`
+    campos.forEach(field => {
+      const valueMd = getValueMd(field)
+      if (valueMd === null) return
+      let line = `  - ${getLabelMd(field)}: ${valueMd}`
+      const ind = zFieldMap[field.id]
+      if (ind && ageDays > 0) {
+        const numVal = parseFloat(valueMd as string)
+        if (!isNaN(numVal) && numVal > 0) {
+          const r = evaluate(ind, sexo, ageDays, numVal)
+          if (r) line += ` (Z ${r.z > 0 ? "+" : ""}${r.z.toFixed(1)})`
+        }
       }
+      md += line + "\n"
     })
 
-    return md
-  }, [formFields, secoes, sexo, idadeAnos, idadeMeses, dataNascimento])
+    return md.trimEnd()
+  }, [formFields, sexo, idadeAnos, idadeMeses, dataNascimento])
+
+  // Gerar markdown agrupado por seções (para clipboard)
+  const generateMarkdown = useCallback(() => {
+    return secoes
+      .map(s => generateSectionMarkdown(s.id, s.label))
+      .filter(Boolean)
+      .join("\n\n")
+  }, [secoes, generateSectionMarkdown])
+
+  const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
+  getOutputRef.current = (groupId: string): string | null => {
+    const secao = secoes.find(s => s.id === groupId)
+    if (!secao) return null
+    return generateSectionMarkdown(groupId, secao.label)
+  }
+
+  useImperativeHandle(ref, () => ({
+    getOutput: (groupId: string) => getOutputRef.current(groupId),
+  }), [])
 
   // Auto-generate markdown on field changes (com todas as dependências do hook arrumadas)
   useEffect(() => {
@@ -1442,4 +1446,4 @@ export default function PuericulturaUI({ style }: Props) {
       </div>
     </div>
   )
-}
+})

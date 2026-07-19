@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState, useEffect, useRef } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
+import type { CompanionActions } from "../companions/registry"
 
 interface FatoresRisco {
     tabagista: boolean
@@ -643,7 +644,21 @@ const ordemCategorias = [
     "Rotina",
 ]
 
-export default function RastreiosPreventivos() {
+interface Props {
+    style?: React.CSSProperties
+}
+
+const RASTREIO_CATEGORIES: Record<string, string> = {
+    cardiovascular: "Cardiovascular",
+    oncologia: "Oncologia",
+    endocrino: "Endócrino",
+    saude_mental: "Saúde mental",
+    infectologia: "Infectologia",
+    neurologico: "Neurológico",
+    rotina: "Rotina",
+}
+
+export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos({ style }: Props, ref) {
     const [idade, setIdade] = useState<string>("")
     const [sexo, setSexo] = useState<string>("")
     const [tabagista, setTabagista] = useState<boolean>(false)
@@ -653,6 +668,23 @@ export default function RastreiosPreventivos() {
 
     const [indicados, setIndicados] = useState<RastreioItem[]>([])
     const [feitos, setFeitos] = useState<Record<string, boolean>>({})
+
+    const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
+    getOutputRef.current = (groupId: string): string | null => {
+        const catLabel = RASTREIO_CATEGORIES[groupId]
+        if (!catLabel) return null
+        const items = indicados.filter(r => r.cat === catLabel)
+        if (items.length === 0) return null
+        const lines = items.map(r => {
+            const check = feitos[r.id] ? " ✓" : ""
+            return `- ${r.titulo}: ${r.metodo}${check}`
+        })
+        return lines.join("\n")
+    }
+
+    useImperativeHandle(ref, () => ({
+        getOutput: (groupId: string) => getOutputRef.current(groupId),
+    }), [])
 
     useEffect(() => {
         const i = parseInt(idade)
@@ -677,7 +709,7 @@ export default function RastreiosPreventivos() {
     })
 
     return (
-        <div style={styles.container}>
+        <div style={{ ...styles.container, ...style }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={styles.topGrid}>
@@ -783,4 +815,4 @@ export default function RastreiosPreventivos() {
             </div>
         </div>
     )
-}
+})

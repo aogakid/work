@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect } from "react"
+import type { CompanionActions } from "../companions/registry"
 
 
 const injectStyles = `
@@ -274,7 +275,7 @@ interface ResultadoEscore {
     seguimento: string;
 }
 
-export default function CalculadoraPREVENT({ style }: Props) {
+const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function CalculadoraPREVENT({ style }: Props, ref) {
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
     const [creatinina, setCreatinina] = useState("")
@@ -297,6 +298,16 @@ export default function CalculadoraPREVENT({ style }: Props) {
     const [antiHipertensivos, setAntiHipertensivos] = useState(false)
     const [usoEstatinas, setUsoEstatinas] = useState(false)
     const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
+
+    useImperativeHandle(ref, () => ({
+        getOutput(groupId: string): string | null {
+            if (groupId === "risco" && resultado) {
+                const cat = resultado.categoriaRisco.toLowerCase()
+                return `- PREVENT: ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
+            }
+            return null
+        },
+    }))
 
     // Track which fields have been touched (blurred)
     const [camposTocados, setCamposTocados] = useState({
@@ -970,7 +981,7 @@ export default function CalculadoraPREVENT({ style }: Props) {
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={styles.title}>
-                RCV-PREVENT, CKD-EPI + SC, IMC, LDL-c (Martin-Hopkin)
+                PREVENT, CKD-EPI, IMC, LDL
             </div>
             <div style={styles.subtitle} />
 
@@ -1461,5 +1472,6 @@ export default function CalculadoraPREVENT({ style }: Props) {
             </div>
         </div>
     )
-}
+})
 
+export default CalculadoraPREVENT

@@ -1,5 +1,6 @@
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { forwardRef, useImperativeHandle, useRef, useState, useMemo } from "react"
+import type { CompanionActions } from "../companions/registry"
 
 
 const injectStyles = `
@@ -1023,11 +1024,23 @@ function CardMarco({ marco, tipo }: { marco: Marco; tipo: "now" | "soon" }) {
     )
 }
 
-export default function CalculadoraGestacional({ style }: Props) {
+export default forwardRef<CompanionActions, Props>(function CalculadoraGestacional({ style }: Props, ref) {
     const [dum, setDum] = useState("")
     const [tocado, setTocado] = useState(false)
 
     const resultado = useMemo(() => calcularGestacao(dum), [dum])
+
+    const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
+    getOutputRef.current = (groupId: string): string | null => {
+        if (groupId === "ig_dpp" && resultado?.valido) {
+            return `- IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}`
+        }
+        return null
+    }
+
+    useImperativeHandle(ref, () => ({
+        getOutput: (groupId: string) => getOutputRef.current(groupId),
+    }), [])
 
     const cores =
         resultado && TRIMESTRE_CORES[resultado.trimestre]
@@ -1050,7 +1063,7 @@ export default function CalculadoraGestacional({ style }: Props) {
         <div style={{ ...styles.container, ...style }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
-            <div style={styles.title}>Calculadora Gestacional</div>
+            <div style={styles.title}>Calculadora gestacional</div>
             <div style={styles.subtitle}></div>
 
             <div style={styles.inputGroup}>
@@ -1226,5 +1239,5 @@ export default function CalculadoraGestacional({ style }: Props) {
             )}
         </div>
     )
-}
+})
 
