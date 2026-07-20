@@ -27,6 +27,7 @@ import PuericulturaUI from "../ui/puericultura_ui"
 import CalculadoraGestacional from "../ui/prenatal_ui"
 import ExamesUI from "../ui/exames_ui"
 import RastreiosPreventivos from "../ui/rastreios_ui"
+import GeriatriaUI from "../ui/geriatria_ui"
 
 export const COMPANIONS: CompanionConfig[] = [
     {
@@ -68,5 +69,15 @@ export const COMPANIONS: CompanionConfig[] = [
         label: "Rastreios",
         component: RastreiosPreventivos,
         outputGroups: [],
+    },
+    {
+        id: "geriatria",
+        label: "Geriatria",
+        component: GeriatriaUI,
+        outputGroups: [
+            { id: "tudo", label: "avaliação", targetSection: "subjetivo" },
+            { id: "ivcf20", label: "IVCF-20", targetSection: "objetivo" },
+            { id: "cage", label: "CAGE", targetSection: "objetivo" },
+        ],
     },
 ]

@@ -1,0 +1,893 @@
+[
+  {
+    "section": "cuidados",
+    "id": "mora_sozinho",
+    "label": "mora sozinho",
+    "labelMd": "Mora sozinho",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "ilpi_residente",
+    "label": "residente em ILPI, abrigo ou outra moradia coletiva",
+    "labelMd": "ILPI/abrigo",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "companheiro",
+    "label": "tem companheiro(a) ou cônjuge",
+    "labelMd": "Companheiro(a)",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "viuvez_recente",
+    "label": "viuvez recente (último ano)",
+    "labelMd": "Viuvez recente",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "cuidador_disponivel",
+    "label": "alguém disponível para atendê-lo(a) em caso de necessidade",
+    "labelMd": "Cuidador disponível",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "visitas_regulares",
+    "label": "recebe visitas de familiares ou amigos com regularidade",
+    "labelMd": "Visitas regulares",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "responsavel_dependentes",
+    "label": "responsável pelo cuidado de pessoas dependentes na sua casa",
+    "labelMd": "Cuida de dependentes",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "ler_escrever",
+    "label": "capaz de ler e escrever",
+    "labelMd": "Ler e escrever",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "bpc_bolsa_familia",
+    "label": "beneficiário do BPC ou Bolsa Família",
+    "labelMd": "BPC/Bolsa Família",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cuidados",
+    "id": "div_01",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "queda_ano_passado",
+    "label": "quedas no ano passado",
+    "labelMd": "Quedas no último ano",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "bengala_andador",
+    "label": "aconselhado sobre uso de bengala ou andador",
+    "labelMd": "Bengala/andador",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "instabilidade_andar",
+    "label": "instabilidade ao andar",
+    "labelMd": "Instabilidade",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "apoia_moveis",
+    "label": "apoia-se nos móveis para andar",
+    "labelMd": "Apoia em móveis",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "preocupacao_quedas",
+    "label": "preocupação com quedas",
+    "labelMd": "Preocupação com quedas",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "apoio_levantar",
+    "label": "precisa de apoio para levantar de uma cadeira",
+    "labelMd": "Apoio para levantar",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "dificuldade_meio_fio",
+    "label": "dificuldade para subir no meio-fio",
+    "labelMd": "Subir meio-fio",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "urgencia_urinaria",
+    "label": "urgência urinária",
+    "labelMd": "Urgência urinária",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "hipoestesia_pes",
+    "label": "hipoestesia nos pés",
+    "labelMd": "Hipoestesia pés",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "medicamentos_tontura",
+    "label": "uso de medicamentos que o deixam tonto ou cansado",
+    "labelMd": "Medicamentos tontura",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "hipnoticos_ansioliticos",
+    "label": "uso de hipnóticos ou ansiolíticos",
+    "labelMd": "Hipnóticos/ansiolíticos",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "tristeza_depressao",
+    "label": "sentimentos de tristeza ou depressão",
+    "labelMd": "Tristeza/depressão",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "quedas",
+    "id": "div_02",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_abrir_fechar",
+    "label": "dificuldade para abrir ou fechar embalagens",
+    "labelMd": "Abrir/fechar embalagens",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_ler_rotulo",
+    "label": "dificuldade para ler o que está escrito na embalagem",
+    "labelMd": "Ler embalagem",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_lembrar",
+    "label": "dificuldade para lembrar de tomar o medicamento",
+    "labelMd": "Lembrar de tomar",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_varios_comprimidos",
+    "label": "dificuldade para tomar vários comprimidos de uma vez",
+    "labelMd": "Vários comprimidos",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_conseguir",
+    "label": "dificuldade para conseguir os medicamentos no tempo certo",
+    "labelMd": "Conseguir medicamentos",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "med_automudanca",
+    "label": "costuma mudar a forma como usa os medicamentos sem orientação médica",
+    "labelMd": "Automudança sem orientação",
+    "type": "single_choice",
+    "options": ["sim", "não", "às vezes"],
+    "value": ""
+  },
+  {
+    "section": "medicamentos",
+    "id": "div_03",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_idade",
+    "label": "idade",
+    "labelMd": "Idade",
+    "type": "single_choice",
+    "options": ["60 a 74 anos", "75 a 84 anos", "≥ 85 anos"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_autopercepcao_saude",
+    "label": "comparando com outras pessoas de sua idade, sua saúde é",
+    "labelMd": "Autopercepção de saúde",
+    "type": "single_choice",
+    "options": ["excelente/muito boa/boa", "regular/ruim"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf01",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_compras",
+    "label": "por causa da saúde ou condição física, deixou de fazer compras",
+    "labelMd": "Deixou de fazer compras",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_dinheiro",
+    "label": "por causa da saúde, deixou de controlar dinheiro ou pagar contas",
+    "labelMd": "Deixou de controlar dinheiro",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_domesticos",
+    "label": "por causa da saúde, deixou de realizar pequenos trabalhos domésticos",
+    "labelMd": "Deixou de fazer trabalhos domésticos",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf02",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_banho",
+    "label": "por causa da saúde, deixou de tomar banho sozinho",
+    "labelMd": "Deixou de tomar banho",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf03",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_esquecimento_familiar",
+    "label": "alguém falou que você está ficando esquecido",
+    "labelMd": "Esquecimento (família)",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_esquecimento_piorando",
+    "label": "esquecimento que está piorando nos últimos meses",
+    "labelMd": "Esquecimento piorando",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_esquecimento_atividades",
+    "label": "esquecimento impedindo atividades do cotidiano",
+    "labelMd": "Esquecimento impede atividades",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf04",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_desanimo",
+    "label": "no último mês, ficou com desânimo, tristeza ou desesperança",
+    "labelMd": "Desânimo/tristeza",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_an Hedonia",
+    "label": "no último mês, perdeu interesse ou prazer em atividades prazerosas",
+    "labelMd": "Perda de interesse/prazer",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf05",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_elevar_bracos",
+    "label": "incapaz de elevar os braços acima do nível do ombro",
+    "labelMd": "Elevar braços",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_manusear",
+    "label": "incapaz de manusear ou segurar pequenos objetos",
+    "labelMd": "Manusear objetos",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_condicoes_perda",
+    "label": "condições de risco (perda de peso, IMC baixo, panturrilha, marcha)",
+    "labelMd": "Condições de risco",
+    "type": "multiple_choice",
+    "options": [
+      "perda de peso não intencional",
+      "IMC < 22 kg/m²",
+      "circunferência da panturrilha < 31 cm",
+      "velocidade da marcha > 5s para 4m"
+    ],
+    "value": []
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_dificuldade_andar",
+    "label": "dificuldade para caminhar impedindo atividades cotidianas",
+    "labelMd": "Dificuldade para caminhar",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_quedas_duas",
+    "label": "duas ou mais quedas no último ano",
+    "labelMd": "Duas+ quedas",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf06",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_incontinencia",
+    "label": "perde urina ou fezes sem querer",
+    "labelMd": "Incontinência",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf07",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_visao",
+    "label": "problemas de visão impedindo atividades cotidianas",
+    "labelMd": "Problemas de visão",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_audicao",
+    "label": "problemas de audição impedindo atividades cotidianas",
+    "labelMd": "Problemas de audição",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_ivcf08",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_comorbidades",
+    "label": "comorbidades múltiplas",
+    "labelMd": "Comorbidades múltiplas",
+    "type": "multiple_choice",
+    "options": [
+      "5 ou mais doenças crônicas",
+      "5 ou mais medicamentos/dia",
+      "internação nos últimos 6 meses"
+    ],
+    "value": []
+  },
+  {
+    "section": "ivcf20",
+    "id": "ivcf_total",
+    "label": "pontuação total IVCF-20",
+    "labelMd": "Total IVCF-20",
+    "type": "text_required",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ivcf20",
+    "id": "div_04",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "fumante",
+    "label": "fumante",
+    "labelMd": "Fumante",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "alcool",
+    "label": "uso de álcool",
+    "labelMd": "Álcool",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "restrito_leito",
+    "label": "restrito ao leito",
+    "labelMd": "Restrito ao leito",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "restrito_domicilio",
+    "label": "restrito ao domicílio",
+    "labelMd": "Restrito ao domicílio",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "feridas_cronicas",
+    "label": "feridas crônicas ou lesões de pele",
+    "labelMd": "Feridas crônicas",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "desidratacao",
+    "label": "sinais de desidratação",
+    "labelMd": "Desidratação",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "desnutricao",
+    "label": "sinais de desnutrição",
+    "labelMd": "Desnutrição",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "dificuldade_engolir",
+    "label": "dificuldades para engolir",
+    "labelMd": "Dificuldade para engolir",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "div_05",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "sono_horas",
+    "label": "horas de sono por noite",
+    "labelMd": "Horas de sono",
+    "type": "text_optional",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "sono_despertares",
+    "label": "média de despertares por noite",
+    "labelMd": "Despertares/noite",
+    "type": "text_optional",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "sono_reparador",
+    "label": "sono reparador",
+    "labelMd": "Sono reparador",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "cansaço_matinal",
+    "label": "deixa de fazer atividades pela manhã por sensação de cansaço",
+    "labelMd": "Cansaço matinal",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "sono_impacto_outros",
+    "label": "sono impacta no sono de outras pessoas",
+    "labelMd": "Impacto no sono alheio",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "sono",
+    "id": "div_06",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_circulacao_livre",
+    "label": "áreas com circulação livre de obstáculos",
+    "labelMd": "Circulação livre",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_barras_apoio",
+    "label": "presença de barras de apoio",
+    "labelMd": "Barras de apoio",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_pisos_uniformes",
+    "label": "pisos uniformes e tapetes bem fixos",
+    "labelMd": "Pisos/tapetes",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_iluminacao",
+    "label": "iluminação suficiente em todos os cômodos, incluindo degraus",
+    "labelMd": "Iluminação",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_interruptores",
+    "label": "interruptores acessíveis na entrada dos cômodos",
+    "labelMd": "Interruptores",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_antiderrapante",
+    "label": "área do chuveiro com antiderrapante",
+    "labelMd": "Chuveiro antiderrapante",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_box_abertura",
+    "label": "presença de box com abertura fácil",
+    "labelMd": "Box fácil abertura",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_armarios_altura",
+    "label": "armários na altura adequada (ao alcance das mãos)",
+    "labelMd": "Armários na altura",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_escadas",
+    "label": "escadas",
+    "labelMd": "Escadas",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_piso_antiderrapante",
+    "label": "piso antiderrapante",
+    "labelMd": "Piso antiderrapante",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "amb_corrimao",
+    "label": "corrimão bem posicionado, firme e de ambos os lados",
+    "labelMd": "Corrimão",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "ambiental",
+    "id": "div_07",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "moradia_propria",
+    "label": "moradia própria",
+    "labelMd": "Moradia própria",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "moradia_boas_condicoes",
+    "label": "moradia em boas condições de organização e higiene",
+    "labelMd": "Moradia boas condições",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "renda_suficiente",
+    "label": "acesso a renda própria ou familiar suficiente para subsistência",
+    "labelMd": "Renda suficiente",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "atividade_extradomiciliar",
+    "label": "participação em atividade extradomiciliar, comunitária ou rede social",
+    "labelMd": "Atividade extradomiciliar",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "atividade_coletiva_lazer",
+    "label": "participa de atividade coletiva/lazer",
+    "labelMd": "Atividade coletiva/lazer",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "suporte",
+    "id": "div_08",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "cage",
+    "id": "cage_diminuir",
+    "label": "já sentiu que deveria diminuir a quantidade de bebida",
+    "labelMd": "CAGE - Diminuir",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cage",
+    "id": "cage_aborrecido",
+    "label": "alguém comentou sobre seu jeito de beber e isso aborreceu você",
+    "labelMd": "CAGE - Aborrecido",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cage",
+    "id": "cage_culpa",
+    "label": "já se sentiu culpado ou mal por causa do consumo de álcool",
+    "labelMd": "CAGE - Culpa",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cage",
+    "id": "cage_manha",
+    "label": "precisou beber pela manhã para se sentir melhor ou superar ressaca",
+    "labelMd": "CAGE - Manhã",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "cage",
+    "id": "div_09",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  }
+]
