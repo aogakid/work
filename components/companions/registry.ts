@@ -4,6 +4,7 @@ import type { ForwardRefExoticComponent, RefAttributes } from "react"
 
 export interface CompanionActions {
     getOutput(groupId: string): string | null
+    reset(): void
 }
 
 export type CompanionRef = CompanionActions
@@ -39,24 +40,6 @@ export const COMPANIONS: CompanionConfig[] = [
         ],
     },
     {
-        id: "puericultura",
-        label: "Puericultura",
-        component: PuericulturaUI,
-        outputGroups: [
-            { id: "geral", label: "geral", targetSection: "subjetivo" },
-            { id: "crescimento", label: "crescimento", targetSection: "objetivo" },
-            { id: "desenvolvimento", label: "desenvolvimento", targetSection: "objetivo" },
-        ],
-    },
-    {
-        id: "prenatal",
-        label: "Pré-natal",
-        component: CalculadoraGestacional,
-        outputGroups: [
-            { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
-        ],
-    },
-    {
         id: "exames",
         label: "Exames laboratoriais",
         component: ExamesUI,
@@ -78,6 +61,24 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "tudo", label: "avaliação", targetSection: "subjetivo" },
             { id: "ivcf20", label: "IVCF-20", targetSection: "objetivo" },
             { id: "cage", label: "CAGE", targetSection: "objetivo" },
+        ],
+    },
+    {
+        id: "puericultura",
+        label: "Puericultura",
+        component: PuericulturaUI,
+        outputGroups: [
+            { id: "geral", label: "geral", targetSection: "subjetivo" },
+            { id: "crescimento", label: "crescimento", targetSection: "objetivo" },
+            { id: "desenvolvimento", label: "desenvolvimento", targetSection: "objetivo" },
+        ],
+    },
+    {
+        id: "prenatal",
+        label: "Pré-natal",
+        component: CalculadoraGestacional,
+        outputGroups: [
+            { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
         ],
     },
 ]

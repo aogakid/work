@@ -1,6 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 
 interface FatoresRisco {
     tabagista: boolean
@@ -33,7 +34,7 @@ const injectStyles = `
       --rastreio-bg: #1c1917;
       --rastreio-text: #f5f5f4;
       --rastreio-text-muted: #78716c;
-      --rastreio-input-bg: rgba(255,255,255,0.03);
+      --rastreio-input-bg: #2e2b29;
       --rastreio-border: #2e2a24;
     }
   }
@@ -669,6 +670,26 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
     const [indicados, setIndicados] = useState<RastreioItem[]>([])
     const [feitos, setFeitos] = useState<Record<string, boolean>>({})
 
+    const syncRef = useRef(false)
+    const touchedRef = useRef(false)
+
+    useEffect(() => {
+        return listenFieldSync(({ source, values }) => {
+            if (source === "rastreios") return
+            syncRef.current = true
+            touchedRef.current = true
+            if (values.idade !== undefined && values.idade !== idade) setIdade(values.idade)
+            if (values.sexo !== undefined && values.sexo !== sexo) setSexo(values.sexo)
+            setTimeout(() => { syncRef.current = false }, 0)
+        })
+    }, [idade, sexo])
+
+    useEffect(() => {
+        if (syncRef.current) return
+        if (!touchedRef.current) return
+        broadcastFieldSync("rastreios", { idade, sexo })
+    }, [idade, sexo])
+
     const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
     getOutputRef.current = (groupId: string): string | null => {
         const catLabel = RASTREIO_CATEGORIES[groupId]
@@ -684,6 +705,11 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
 
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
+        reset() {
+            setIdade(""); setSexo("")
+            setTabagista(false); setDm(false); setHiv(false); setGestante(false)
+            setIndicados([]); setFeitos({})
+        },
     }), [])
 
     useEffect(() => {
@@ -709,7 +735,7 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
     })
 
     return (
-        <div style={{ ...styles.container, ...style }}>
+        <div style={{ ...styles.container, ...style }} onFocus={() => { touchedRef.current = true }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={styles.topGrid}>

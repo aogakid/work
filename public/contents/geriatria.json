@@ -81,15 +81,6 @@
     "value": ""
   },
   {
-    "section": "cuidados",
-    "id": "div_01",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "quedas",
     "id": "queda_ano_passado",
     "label": "quedas no ano passado",
@@ -198,15 +189,6 @@
     "value": ""
   },
   {
-    "section": "quedas",
-    "id": "div_02",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "medicamentos",
     "id": "med_abrir_fechar",
     "label": "dificuldade para abrir ou fechar embalagens",
@@ -258,15 +240,6 @@
     "labelMd": "Automudança sem orientação",
     "type": "single_choice",
     "options": ["sim", "não", "às vezes"],
-    "value": ""
-  },
-  {
-    "section": "medicamentos",
-    "id": "div_03",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
     "value": ""
   },
   {
@@ -540,15 +513,6 @@
     "value": ""
   },
   {
-    "section": "ivcf20",
-    "id": "div_04",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "riscos",
     "id": "fumante",
     "label": "fumante",
@@ -621,15 +585,6 @@
     "value": ""
   },
   {
-    "section": "riscos",
-    "id": "div_05",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "sono",
     "id": "sono_horas",
     "label": "horas de sono por noite",
@@ -672,15 +627,6 @@
     "labelMd": "Impacto no sono alheio",
     "type": "single_choice",
     "options": ["sim", "não"],
-    "value": ""
-  },
-  {
-    "section": "sono",
-    "id": "div_06",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
     "value": ""
   },
   {
@@ -783,15 +729,6 @@
     "value": ""
   },
   {
-    "section": "ambiental",
-    "id": "div_07",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "suporte",
     "id": "moradia_propria",
     "label": "moradia própria",
@@ -837,15 +774,6 @@
     "value": ""
   },
   {
-    "section": "suporte",
-    "id": "div_08",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
-    "value": ""
-  },
-  {
     "section": "cage",
     "id": "cage_diminuir",
     "label": "já sentiu que deveria diminuir a quantidade de bebida",
@@ -879,15 +807,6 @@
     "labelMd": "CAGE - Manhã",
     "type": "single_choice",
     "options": ["sim", "não"],
-    "value": ""
-  },
-  {
-    "section": "cage",
-    "id": "div_09",
-    "label": null,
-    "labelMd": null,
-    "type": "divider",
-    "options": null,
     "value": ""
   }
 ]

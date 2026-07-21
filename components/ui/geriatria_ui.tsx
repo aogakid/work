@@ -17,7 +17,7 @@ const injectStyles = `
       --geriatria-bg: #1c1917;
       --geriatria-text: #f5f5f4;
       --geriatria-text-muted: #78716c;
-      --geriatria-input-bg: rgba(255,255,255,0.08);
+      --geriatria-input-bg: #2e2b29;
       --geriatria-border: rgba(255,255,255,0.15);
       --geriatria-card-bg: rgba(255,255,255,0.06);
     }
@@ -249,10 +249,10 @@ const secoes = [
 const IVCF_SCORE_MAP: Record<string, (val: string) => number> = {
   ivcf_idade: (v) => v === "≥ 85 anos" ? 3 : v === "75 a 84 anos" ? 1 : 0,
   ivcf_autopercepcao_saude: (v) => v === "regular/ruim" ? 1 : 0,
-  ivcf_compras: (v) => v === "sim" ? 4 : 0,
-  ivcf_dinheiro: (v) => v === "sim" ? 4 : 0,
-  ivcf_domesticos: (v) => v === "sim" ? 4 : 0,
-  ivcf_banho: (v) => v === "sim" ? 6 : 0,
+  ivcf_compras: (v) => v === "sim" ? 2 : 0,
+  ivcf_dinheiro: (v) => v === "sim" ? 2 : 0,
+  ivcf_domesticos: (v) => v === "sim" ? 2 : 0,
+  ivcf_banho: (v) => v === "sim" ? 4 : 0,
   ivcf_esquecimento_familiar: (v) => v === "sim" ? 1 : 0,
   ivcf_esquecimento_piorando: (v) => v === "sim" ? 1 : 0,
   ivcf_esquecimento_atividades: (v) => v === "sim" ? 2 : 0,
@@ -380,6 +380,17 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
 
   useImperativeHandle(ref, () => ({
     getOutput: (groupId: string) => getOutputRef.current(groupId),
+    reset() {
+      setCopiado(false)
+      fetch("/contents/geriatria.json")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
+          }
+        })
+        .catch(() => setFormFields([]))
+    },
   }), [])
 
   useEffect(() => {
@@ -521,7 +532,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
 
   const groupFieldsBySection = (fields: FormField[]) => {
     const groups: Record<string, FormField[]> = {}
-    fields.forEach(field => {
+    fields.filter(f => f.id !== "ivcf_total").forEach(field => {
       const section = field.section || "geral"
       if (!groups[section]) groups[section] = []
       groups[section].push(field)
@@ -534,6 +545,14 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const ivcfTotal = computeIVCFTotal(formFields)
   const cageTotal = computeCAGETotal(formFields)
   const cageFilled = formFields.some(f => f.section === "cage" && f.type === "single_choice" && f.value && f.value !== "")
+
+  const ivcfClassificacao = ivcfTotal === 0
+    ? ""
+    : ivcfTotal <= 6
+      ? "baixa"
+      : ivcfTotal <= 14
+        ? "moderada"
+        : "alta"
 
   return (
     <div style={{ ...styles.container, ...style }}>
@@ -565,13 +584,13 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
               <div style={{ display: "grid", gridTemplateColumns: cageFilled ? "1fr 1fr" : "1fr", gap: "10px" }}>
                 <div style={{
                   background: ivcfTotal === 0 ? "var(--geriatria-card-bg)" : (
-                    ivcfTotal <= 5 ? "rgba(0, 184, 73, 0.08)" :
-                    ivcfTotal <= 10 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)"
+                    ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.08)" :
+                    ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)"
                   ),
                   border: `1px solid ${
                     ivcfTotal === 0 ? "var(--geriatria-border)" :
-                    ivcfTotal <= 5 ? "rgba(0, 184, 73, 0.35)" :
-                    ivcfTotal <= 10 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
+                    ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.35)" :
+                    ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
                   }`,
                   borderRadius: "12px",
                   padding: "12px 16px",
@@ -581,14 +600,14 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                     IVCF-20
                   </div>
                   <div style={{ fontSize: "28px", fontWeight: 800, color: ivcfTotal === 0 ? "var(--geriatria-text-muted)" : (
-                    ivcfTotal <= 5 ? "#00b849" : ivcfTotal <= 10 ? "#ca8a04" : "#e02424"
+                    ivcfTotal <= 6 ? "#00b849" : ivcfTotal <= 14 ? "#ca8a04" : "#e02424"
                   )}}>
                     {ivcfTotal || "—"}
                   </div>
                   <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
                     {ivcfTotal === 0 ? "Preencha o IVCF-20" :
-                     ivcfTotal <= 5 ? "Risco baixo" :
-                     ivcfTotal <= 10 ? "Risco médio" : "Risco alto"}
+                     ivcfClassificacao === "baixa" ? "Risco baixo" :
+                     ivcfClassificacao === "moderada" ? "Risco moderado" : "Risco alto"}
                   </div>
                 </div>
 

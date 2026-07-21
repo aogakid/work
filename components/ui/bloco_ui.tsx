@@ -167,6 +167,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
     const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const resetAllCompanions = React.useCallback(() => {
+        Object.values(companionRefs.current).forEach(ref => ref?.reset())
+    }, [])
     const [companionToast, setCompanionToast] = React.useState<string | null>(null)
 
     /* ── Auth / save ── */
@@ -355,9 +358,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 externalUpdateRef.current = true; bumpAllVersions()
                 setTitle(parsed.title)
                 setSections(parsed.sections)
+                setExpandedCompanions({})
                 setPopupDispensado(false)
                 setEdicaoIniciada(true)
                 edicaoIniciadaRef.current = Date.now()
+                resetAllCompanions()
             } catch (err) {
                 console.error(err)
             }
@@ -368,6 +373,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             externalUpdateRef.current = true; bumpAllVersions()
             setTitle(parsed.title)
             setSections(parsed.sections)
+            setExpandedCompanions({})
             setPopupDispensado(false)
             if (novoTexto) {
                 setEdicaoIniciada(true)
@@ -376,6 +382,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 setEdicaoIniciada(false)
                 edicaoIniciadaRef.current = null
             }
+            resetAllCompanions()
         }
         timer.ativarCronometro = () => {
             fecharCronometroCompleto()
@@ -389,9 +396,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 externalUpdateRef.current = true; bumpAllVersions()
                 setTitle(parsed.title)
                 setSections(parsed.sections)
+                setExpandedCompanions({})
                 setPopupDispensado(false)
                 setEdicaoIniciada(true)
                 edicaoIniciadaRef.current = Date.now()
+                resetAllCompanions()
             }
         }
 
@@ -468,6 +477,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 setPopupDispensado(false)
                 setEdicaoIniciada(true)
                 edicaoIniciadaRef.current = Date.now()
+                resetAllCompanions()
             } catch (err) {
                 console.error(err)
             }
@@ -486,6 +496,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 setEdicaoIniciada(false)
                 edicaoIniciadaRef.current = null
             }
+            resetAllCompanions()
         },
         limpar: () => {
             setTitle("")
@@ -493,6 +504,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             setPopupDispensado(false)
             setEdicaoIniciada(false)
             edicaoIniciadaRef.current = null
+            resetAllCompanions()
         },
         cronometro: () => {
             fecharCronometroCompleto()
@@ -505,8 +517,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         if (!content || !content.trim()) return "<div><br></div>"
         return content.split("\n").map(l => {
             if (l === "") return "<div><br></div>"
-            if (/^- /i.test(l)) return `<div><strong>${l}</strong></div>`
-            return `<div>${l}</div>`
+            const indent = l.match(/^(\s*)/)?.[1]?.length || 0
+            const indentLevel = Math.floor(indent / 2)
+            const paddingLeft = Math.min(indentLevel * 20, 80)
+            if (/^- /i.test(l.trim())) return indentLevel === 0
+                ? `<div style="padding-left:${paddingLeft}px"><strong>${l.trim()}</strong></div>`
+                : `<div style="padding-left:${paddingLeft}px">${l.trim()}</div>`
+            return `<div style="padding-left:${paddingLeft}px">${l.trim()}</div>`
         }).join("")
     }, [])
 
@@ -702,6 +719,20 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const totalCaracteres = sections.reduce((sum, s) => sum + (s.enabled ? s.content.length : 0), 0)
     const limiteAtingido = totalCaracteres > 4000
 
+    /* ── Re-render contentEditable divs on external changes ── */
+    React.useEffect(() => {
+        if (!externalUpdateRef.current) return
+        externalUpdateRef.current = false
+        const ids = ["subjetivo", "objetivo", "avaliacao", "plano"]
+        ids.forEach(id => {
+            const el = sectionEditorRefs.current[id]
+            const section = sections.find(s => s.id === id)
+            if (el && section) {
+                el.innerHTML = renderSectionHtml(section.content)
+            }
+        })
+    }, [contentHash, renderSectionHtml, sections])
+
     /* ── Close dropdown on outside click ── */
     React.useEffect(() => {
         if (!openModuleDropdown) return
@@ -778,6 +809,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .bloco-section-editor div:empty { height: 1em; }
                 .bloco-section-editor blockquote { border-left: 3px solid var(--editor-border); padding-left: 12px; margin: 4px 0; color: var(--meta-text); font-style: italic; }
 
+
                 .bloco-module-item:hover { background: var(--meta-bg) !important; }
                 .bloco-icon-btn { transition: background 0.15s, color 0.15s, opacity 0.15s, transform 0.1s; }
                 .bloco-icon-btn:hover { background: var(--meta-bg) !important; color: var(--editor-text) !important; opacity: 1 !important; }
@@ -797,12 +829,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     </div>
             )}
 
-            {/* ── SAVE CHIP ── */}
-            {showSavePopup && saveTime && (
-                <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(34,197,94,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "8px", padding: "6px 12px", zIndex: 5, fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 600, color: "#22c55e", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span>✓</span><span>salvo às {saveTime}</span>
-                </div>
-            )}
+
 
             {/* ── TIMER SETUP POPUP ── */}
             {mostrarSetupRelogio && (
@@ -898,7 +925,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <button className="bloco-icon-btn" onClick={() => requestConfirm("deseja substituir o conteúdo atual pelo texto copiado?", () => editor.colar())} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setEdicaoIniciada(false); edicaoIniciadaRef.current = null })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setExpandedCompanions({}); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions() })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                     </button>
                     {modulos.templates.length > 0 && (
@@ -922,9 +949,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                                     const parsed = parseSections(text)
                                                     setTitle(parsed.title)
                                                     setSections(parsed.sections)
+                                                    setExpandedCompanions({})
                                                     setOpenTemplateDropdown(false)
                                                     setEdicaoIniciada(true)
                                                     edicaoIniciadaRef.current = Date.now()
+                                                    resetAllCompanions()
                                                 }
                                                 if (!sections.some(s => s.content.trim())) { await loadAndApply(); return }
                                                 setConfirmAction({ message: "deseja substituir o conteúdo atual por este modelo?", onConfirm: loadAndApply })
@@ -1044,7 +1073,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
                                 <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
                                 <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>+</span>
-                                <span style={{ fontWeight: 600, fontSize: "14px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
+                                <span style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
                                 <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
                                     {isOpen && c.outputGroups.map(og => (
                                         <button key={og.id} onClick={e => { e.stopPropagation(); handleAppendOutput(c.id, og.id, og.targetSection) }} className="gas-scale-hover" style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontSize: "10px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
@@ -1054,13 +1083,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 </div>
                             </div>
                             </div>
-                            {isOpen && (
-                                <div style={{ padding: "0 12px 12px 12px" }}>
-                                    <React.Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "var(--meta-text)", fontSize: "13px" }}>carregando...</div>}>
-                                        <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
-                                    </React.Suspense>
-                                </div>
-                            )}
+                            <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
+                                <React.Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "var(--meta-text)", fontSize: "13px" }}>carregando...</div>}>
+                                    <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                                </React.Suspense>
+                            </div>
                         </div>
                     )
                 })}
@@ -1093,7 +1120,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 {cronometroAtivo && !arquivadoManualmente ? (
                     <div key={`progress-shake-${shakeProgressCount}`} className={`framer-timer-entrance gas-ui-blockout gas-order-progress ${shakeProgressCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: secaoExtrapolada ? "rgba(120,113,108,0.08)" : chipBg, backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: secaoExtrapolada ? "1px solid rgba(120,113,108,0.18)" : `1px solid ${chipBorder}`, display: "flex", alignItems: "center", gap: "5px", pointerEvents: "auto" }}>
                         {/* S */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                        <div onClick={() => document.querySelector('[data-section-id="subjetivo"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#3b82f6" }}>S</span>
                             {segundosDecorridos >= limiteSegundosS && <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: "10px" }}>✓</span>}
                         </div>
@@ -1101,7 +1128,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ width: `${progressoVaoS}%`, background: "#3b82f6", height: "100%" }} />
                         </div>
                         {/* O */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosS ? 1 : 0.25 }}>
+                        <div onClick={() => document.querySelector('[data-section-id="objetivo"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosS ? 1 : 0.25, cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#22c55e" }}>O</span>
                             {segundosDecorridos >= limiteSegundosO && <span style={{ color: "#22c55e", fontWeight: 700, fontSize: "10px" }}>✓</span>}
                         </div>
@@ -1109,7 +1136,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ width: `${progressoVaoO}%`, background: "#22c55e", height: "100%" }} />
                         </div>
                         {/* A */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosO ? 1 : 0.25 }}>
+                        <div onClick={() => document.querySelector('[data-section-id="avaliacao"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosO ? 1 : 0.25, cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#d9a707" }}>A</span>
                             {segundosDecorridos >= limiteSegundosA && <span style={{ color: "#eab308", fontWeight: 700, fontSize: "10px" }}>✓</span>}
                         </div>
@@ -1117,7 +1144,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ width: `${progressoVaoA}%`, background: "#eab308", height: "100%" }} />
                         </div>
                         {/* P */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosA ? 1 : 0.25 }}>
+                        <div onClick={() => document.querySelector('[data-section-id="plano"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosA ? 1 : 0.25, cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#f97316" }}>P</span>
                             {segundosDecorridos >= limiteSegundosP && <span style={{ color: "#f97316", fontWeight: 700, fontSize: "10px" }}>✓</span>}
                         </div>
@@ -1126,7 +1153,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </div>
                         {/* B */}
                         {mostrarBurocracia && <>
-                            <div style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosP ? 1 : 0.25 }}>
+                            <div onClick={() => document.querySelector('[data-section-id="plano"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", opacity: segundosDecorridos >= limiteSegundosP ? 1 : 0.25, cursor: "pointer" }}>
                                 <span style={{ fontWeight: 700, color: "#8b5cf6" }}>B</span>
                                 {segundosDecorridos >= limiteSegundosB && <span style={{ color: "#8b5cf6", fontWeight: 700, fontSize: "10px" }}>✓</span>}
                             </div>
@@ -1156,6 +1183,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     </button>
                 )}
 
+                {/* Save chip */}
+                {showSavePopup && saveTime && (
+                    <div className="framer-timer-entrance gas-ui-blockout" style={{ background: "rgba(34,197,94,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(34,197,94,0.25)", borderRadius: "8px", padding: "6px 12px", fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 600, color: "#22c55e", display: "flex", alignItems: "center", gap: "6px", pointerEvents: "auto" }}>
+                        <span>✓</span><span>salvo às {saveTime}</span>
+                    </div>
+                )}
                 {/* Character count */}
                 <div className="gas-ui-blockout gas-order-chars" style={{ background: limiteAtingido ? "rgba(239,68,68,0.15)" : "var(--meta-bg)", backdropFilter: "blur(4px)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: limiteAtingido ? "var(--limite-text)" : "var(--meta-text)", border: limiteAtingido ? "1px solid rgba(239,68,68,0.3)" : "1px solid var(--meta-border)", fontWeight: limiteAtingido ? 600 : 400, pointerEvents: "auto" }}>
                     {totalCaracteres} caracteres

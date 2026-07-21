@@ -29,7 +29,7 @@ const injectStyles = `
       --puericultura-bg: #1c1917;
       --puericultura-text: #f5f5f4;
       --puericultura-text-muted: #78716c;
-      --puericultura-input-bg: rgba(255,255,255,0.08);
+      --puericultura-input-bg: #2e2b29;
       --puericultura-border: rgba(255,255,255,0.15);
       --puericultura-card-bg: rgba(255,255,255,0.06);
       --growth-fg: #f5f5f4;
@@ -815,6 +815,18 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
 
   useImperativeHandle(ref, () => ({
     getOutput: (groupId: string) => getOutputRef.current(groupId),
+    reset() {
+      setDataNascimento(""); setIdadeAnos(""); setIdadeMeses(""); setIdadeCalculada(""); setFaixaEtaria(""); setLabelClinico("")
+      setSexo("M"); setCopiado(false); setMarkdownOutput(""); setAgeGroupForms([])
+      fetch("/contents/puericultura.json")
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
+          }
+        })
+        .catch(() => setFormFields([]))
+    },
   }), [])
 
   // Auto-generate markdown on field changes (com todas as dependências do hook arrumadas)

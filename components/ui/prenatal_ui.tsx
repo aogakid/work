@@ -27,7 +27,7 @@ const injectStyles = `
       --gest-bg: #1c1917;
       --gest-text: #f5f5f4;
       --gest-text-muted: #78716c;
-      --gest-input-bg: rgba(255,255,255,0.08);
+      --gest-input-bg: #2e2b29;
       --gest-border: rgba(255,255,255,0.15);
       --gest-card-bg: rgba(255,255,255,0.06);
       --gest-copy-bg: rgba(28, 25, 23, 0.5);
@@ -1040,6 +1040,9 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
 
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
+        reset() {
+            setDum(""); setTocado(false); setCopiado(false)
+        },
     }), [])
 
     const cores =

@@ -1,6 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useRef, useState, useCallback, useMemo, useEffect } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 
 const EXAMES_PREFIX = "exames"
 
@@ -18,7 +19,7 @@ const injectStyles = `
       --${EXAMES_PREFIX}-bg: #1c1917;
       --${EXAMES_PREFIX}-text: #f5f5f4;
       --${EXAMES_PREFIX}-text-muted: #78716c;
-      --${EXAMES_PREFIX}-input-bg: rgba(255,255,255,0.08);
+      --${EXAMES_PREFIX}-input-bg: #2e2b29;
       --${EXAMES_PREFIX}-border: rgba(255,255,255,0.15);
     }
   }
@@ -375,6 +376,33 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   })
   const [outros, setOutros] = useState("")
   const [copied, setCopied] = useState(false)
+  const syncRef = useRef(false)
+  const touchedRef = useRef(false)
+
+  useEffect(() => {
+    return listenFieldSync(({ source, values }) => {
+      if (source === "exames") return
+      syncRef.current = true
+      touchedRef.current = true
+      setValues(prev => {
+        const next = { ...prev }
+        if (values.idade !== undefined) next["idade"] = values.idade
+        if (values.sexo !== undefined) next["sexo"] = values.sexo
+        if (values.ct !== undefined) next["ct"] = values.ct
+        if (values.hdl !== undefined) next["hdl"] = values.hdl
+        if (values.trig !== undefined) next["trig"] = values.trig
+        if (values.cr !== undefined) next["cr"] = values.cr
+        return next
+      })
+      setTimeout(() => { syncRef.current = false }, 0)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (syncRef.current) return
+    if (!touchedRef.current) return
+    broadcastFieldSync("exames", { idade: values["idade"] || "", sexo: values["sexo"] || "", ct: values["ct"] || "", hdl: values["hdl"] || "", trig: values["trig"] || "", cr: values["cr"] || "" })
+  }, [values["idade"], values["sexo"], values["ct"], values["hdl"], values["trig"], values["cr"]])
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {
@@ -393,6 +421,19 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
 
   useImperativeHandle(ref, () => ({
     getOutput: (groupId: string) => getOutputRef.current(groupId),
+    reset() {
+      const now = new Date()
+      setDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`)
+      setValues(() => {
+        const init: Record<string, string> = {}
+        for (const f of FIELDS) {
+          if (isField(f)) init[fieldId(f.label)] = ""
+        }
+        return init
+      })
+      setOutros("")
+      setCopied(false)
+    },
   }), [])
 
   const handleChange = useCallback((id: string, val: string) => {
@@ -459,6 +500,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       <div
         className={`${EXAMES_PREFIX}-root`}
         style={{ ...s.container, ...style }}
+        onFocus={() => { touchedRef.current = true }}
       >
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
           <div>

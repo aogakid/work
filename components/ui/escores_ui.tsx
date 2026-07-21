@@ -1,6 +1,7 @@
 import * as React from "react"
-import { forwardRef, useImperativeHandle, useState, useEffect } from "react"
+import { forwardRef, useImperativeHandle, useState, useEffect, useRef, useCallback } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 
 
 const injectStyles = `
@@ -19,7 +20,7 @@ const injectStyles = `
       --prevent-bg: #1c1917;
       --prevent-text: #f5f5f4;
       --prevent-text-muted: #78716c;
-      --prevent-input-bg: rgba(255,255,255,0.08);
+      --prevent-input-bg: #2e2b29;
       --prevent-border: rgba(255,255,255,0.15);
       --prevent-card-bg: rgba(255,255,255,0.06);
       --prevent-conduta-border: rgba(255,255,255,0.08);
@@ -299,13 +300,45 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [usoEstatinas, setUsoEstatinas] = useState(false)
     const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
 
+    const syncRef = useRef(false)
+    const touchedRef = useRef(false)
+
+    const broadcast = useCallback(() => {
+        if (syncRef.current) return
+        if (!touchedRef.current) return
+        broadcastFieldSync("escores", { idade, sexo, ct: colTotal, hdl, trig: triglicerideos, cr: creatinina })
+    }, [idade, sexo, colTotal, hdl, triglicerideos, creatinina])
+
+    useEffect(() => broadcast(), [broadcast])
+
+    useEffect(() => {
+        return listenFieldSync(({ source, values }) => {
+            if (source === "escores") return
+            syncRef.current = true
+            touchedRef.current = true
+            if (values.idade !== undefined) setIdade(values.idade)
+            if (values.sexo !== undefined) setSexo(values.sexo)
+            if (values.ct !== undefined) setColTotal(values.ct)
+            if (values.hdl !== undefined) setHdl(values.hdl)
+            if (values.trig !== undefined) setTriglicerideos(values.trig)
+            if (values.cr !== undefined) setCreatinina(values.cr)
+            setTimeout(() => { syncRef.current = false }, 0)
+        })
+    }, [])
+
     useImperativeHandle(ref, () => ({
         getOutput(groupId: string): string | null {
             if (groupId === "risco" && resultado) {
                 const cat = resultado.categoriaRisco.toLowerCase()
-                return `- PREVENT: ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
+                return `  - PREVENT: ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
             }
             return null
+        },
+        reset() {
+            setIdade(""); setSexo(""); setCreatinina(""); setPeso(""); setAltura(""); setImc(""); setAsc(""); setTfg(""); setPas(""); setColTotal(""); setHdl(""); setTriglicerideos(""); setLdl(""); setHba1c(""); setRac("")
+            setPrevSecundaria(false); setHiperFam(false); setDiabetes(false); setFumante(false); setAntiHipertensivos(false); setUsoEstatinas(false)
+            setResultado(null)
+            setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false })
         },
     }))
 
@@ -977,7 +1010,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     ])
 
     return (
-        <div style={{ ...styles.container, ...style }}>
+        <div style={{ ...styles.container, ...style }} onFocus={() => { touchedRef.current = true }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={styles.title}>
