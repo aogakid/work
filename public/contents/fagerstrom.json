@@ -1,0 +1,62 @@
+[
+  {
+    "id": "fag_tempo",
+    "label": "Tempo entre acordar e primeiro cigarro",
+    "labelMd": "1º cigarro",
+    "type": "single_choice",
+    "options": ["> 60 min", "31–60 min", "6–30 min", "≤ 5 min"],
+    "value": "> 60 min",
+    "section": "dependencia",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "fag_proibido",
+    "label": "Dificuldade de não fumar em locais proibidos",
+    "labelMd": "Proibido",
+    "type": "single_choice",
+    "options": ["Nenhuma", "Pouca", "Muita"],
+    "value": "Nenhuma",
+    "section": "dependencia",
+    "pesos": [0, 0, 1]
+  },
+  {
+    "id": "fag_abandonar",
+    "label": "Qual cigarro seria mais difícil de abandonar?",
+    "labelMd": "Mais difícil",
+    "type": "single_choice",
+    "options": ["Qualquer outro", "O primeiro da manhã"],
+    "value": "Qualquer outro",
+    "section": "dependencia",
+    "pesos": [0, 1]
+  },
+  {
+    "id": "fag_quantidade",
+    "label": "Quantos cigarros fuma por dia?",
+    "labelMd": "Cigarros/dia",
+    "type": "single_choice",
+    "options": ["≤ 10", "11–20", "21–30", "≥ 31"],
+    "value": "≤ 10",
+    "section": "dependencia",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "fag_primeiras_horas",
+    "label": "Fuma mais durante as primeiras horas após acordar do que no resto do dia?",
+    "labelMd": "1ª hora",
+    "type": "single_choice",
+    "options": ["Não", "Sim"],
+    "value": "Não",
+    "section": "dependencia",
+    "pesos": [0, 1]
+  },
+  {
+    "id": "fag_doente",
+    "label": "Fuma mesmo quando tão doente que fica quase o dia na cama?",
+    "labelMd": "Doente",
+    "type": "single_choice",
+    "options": ["Não", "Sim"],
+    "value": "Não",
+    "section": "dependencia",
+    "pesos": [0, 1]
+  }
+]

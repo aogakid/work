@@ -33,13 +33,14 @@ import GeriatriaUI from "../ui/geriatria_ui"
 export const COMPANIONS: CompanionConfig[] = [
     {
         id: "escores",
-        label: "Risco cardiovascular",
+        label: "Escores",
         component: CalculadoraPREVENT,
         outputGroups: [
             { id: "risco", label: "PREVENT", targetSection: "objetivo" },
             { id: "ipss", label: "IPSS", targetSection: "objetivo" },
             { id: "gad7", label: "GAD-7", targetSection: "objetivo" },
             { id: "phq9", label: "PHQ-9", targetSection: "objetivo" },
+            { id: "fagerstrom", label: "Fagerström", targetSection: "objetivo" },
         ],
     },
     {

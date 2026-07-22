@@ -360,6 +360,26 @@ function CFSWizard(props: {
     })
   }
 
+  const selectHealth = (opt: string) => {
+    setHealth(opt as "excelente" | "muito_boa" | "boa" | "regular_ruim")
+    setEffort(null)
+    setSports(null)
+  }
+  const selectEffort = (opt: string) => {
+    setEffort(opt as "todo_tempo" | "as_vezes" | "raramente_nunca")
+    setSports(null)
+  }
+
+  const resetCfs = (terminal: "sim" | "não") => {
+    setTerminal(terminal)
+    setAbvd(() => new Set<string>())
+    setAivd(() => new Set<string>())
+    setChronic("")
+    setHealth(null)
+    setEffort(null)
+    setSports(null)
+  }
+
   const chipStyle = (active: boolean, red?: boolean) => ({
     padding: "8px 14px",
     borderRadius: "20px",
@@ -399,8 +419,8 @@ function CFSWizard(props: {
     <>
       {stepCard(1, "Paciente em fase terminal?", (
         <div style={{ display: "flex", gap: "8px" }}>
-          <div style={chipStyle(terminal === "sim")} onClick={() => { setTerminal("sim"); setAbvd(() => new Set<string>()); setAivd(() => new Set<string>()); setChronic(""); setHealth(null); setEffort(null); setSports(null) }}>sim</div>
-          <div style={chipStyle(terminal === "não")} onClick={() => { setTerminal("não"); setAbvd(() => new Set<string>()); setAivd(() => new Set<string>()); setChronic(""); setHealth(null); setEffort(null); setSports(null) }}>não</div>
+          <div style={chipStyle(terminal === "sim")} onClick={() => resetCfs("sim")}>sim</div>
+          <div style={chipStyle(terminal === "não")} onClick={() => resetCfs("não")}>não</div>
         </div>
       ))}
 
@@ -434,7 +454,7 @@ function CFSWizard(props: {
       {showHealth && stepCard(5, "Autopercepção de saúde", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {(["excelente", "muito_boa", "boa", "regular_ruim"] as const).map(opt => (
-            <div key={opt} style={chipStyle(health === opt)} onClick={() => { setHealth(opt); setEffort(null); setSports(null) }}>
+            <div key={opt} style={chipStyle(health === opt)} onClick={() => selectHealth(opt)}>
               {opt === "muito_boa" ? "muito boa" : opt === "regular_ruim" ? "regular/ruim" : opt}
             </div>
           ))}
@@ -444,7 +464,7 @@ function CFSWizard(props: {
       {showEffort && stepCard(6, "\"Tudo exige esforço\"?", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {(["todo_tempo", "as_vezes", "raramente_nunca"] as const).map(opt => (
-            <div key={opt} style={chipStyle(effort === opt)} onClick={() => { setEffort(opt); setSports(null) }}>
+            <div key={opt} style={chipStyle(effort === opt)} onClick={() => selectEffort(opt)}>
               {opt === "todo_tempo" ? "o tempo todo" : opt === "as_vezes" ? "às vezes" : "raramente/nunca"}
             </div>
           ))}
@@ -475,6 +495,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const [cfsHealth, setCfsHealth] = useState<"excelente" | "muito_boa" | "boa" | "regular_ruim" | null>(null)
   const [cfsEffort, setCfsEffort] = useState<"todo_tempo" | "as_vezes" | "raramente_nunca" | null>(null)
   const [cfsSports, setCfsSports] = useState<"sim" | "não" | null>(null)
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     fetch("/contents/geriatria.json")
@@ -609,7 +630,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
             setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
           }
         })
-        .catch(() => setFormFields([]))
+      .catch(() => setFetchError(true))
     },
   }), [])
 
@@ -776,6 +797,56 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
         ? "moderada"
         : "alta"
 
+  const gds15Card = activeTab === "gds15" && gds15Filled ? (() => {
+    const gdsColor = gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424"
+    return (
+    <div style={{
+      background: gds15Total <= 4 ? "rgba(0, 184, 73, 0.08)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
+      border: `1px solid ${
+        gds15Total <= 4 ? "rgba(0, 184, 73, 0.35)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
+      }`,
+      borderRadius: "12px",
+      padding: "12px 16px",
+      textAlign: "center" as const,
+    }}>
+      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+        GDS-15
+      </div>
+      <div style={{ fontSize: "28px", fontWeight: 800, color: gdsColor }}>
+        {gds15Total} / 15
+      </div>
+      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+        {gds15Total <= 4 ? "Normal" : gds15Total <= 9 ? "Depressão leve" : "Depressão moderada a grave"}
+      </div>
+    </div>
+    )
+  })() : null
+
+  const cfsCard = activeTab === "cfs" && cfsScore !== null ? (() => {
+    const cfsColor = cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : cfsScore <= 7 ? "#e02424" : "#7c2d12"
+    return (
+    <div style={{
+      background: cfsScore <= 3 ? "rgba(0, 184, 73, 0.08)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.08)" : cfsScore <= 7 ? "rgba(224, 36, 36, 0.08)" : "rgba(124, 45, 18, 0.08)",
+      border: `1px solid ${
+        cfsScore <= 3 ? "rgba(0, 184, 73, 0.35)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.35)" : cfsScore <= 7 ? "rgba(224, 36, 36, 0.35)" : "rgba(124, 45, 18, 0.35)"
+      }`,
+      borderRadius: "12px",
+      padding: "12px 16px",
+      textAlign: "center" as const,
+    }}>
+      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+        CFS
+      </div>
+      <div style={{ fontSize: "28px", fontWeight: 800, color: cfsColor }}>
+        {cfsScore} / 9
+      </div>
+      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+        {CFS_LABELS[cfsScore]}
+      </div>
+    </div>
+    )
+  })() : null
+
   return (
     <div style={{ ...styles.container, ...style }}>
       <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
@@ -805,6 +876,12 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           </div>
         ))}
       </div>
+
+      {fetchError && (
+        <div style={{ marginBottom: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12.5px", color: "#b91c1c", lineHeight: 1.4 }}>
+          Falha ao carregar dados da geriatria. Verifique a conexão e recarregue a página.
+        </div>
+      )}
 
       <div className="geriatria-root">
         <div className="geriatria-fields-grid">
@@ -894,54 +971,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                     </div>
                   </div>
                 )}
-                {activeTab === "gds15" && gds15Filled && (() => {
-                  const gdsColor = gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424"
-                  return (
-                  <div style={{
-                    background: gds15Total <= 4 ? "rgba(0, 184, 73, 0.08)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
-                    border: `1px solid ${
-                      gds15Total <= 4 ? "rgba(0, 184, 73, 0.35)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
-                    }`,
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    textAlign: "center" as const,
-                  }}>
-                    <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-                      GDS-15
-                    </div>
-                    <div style={{ fontSize: "28px", fontWeight: 800, color: gdsColor }}>
-                      {gds15Total} / 15
-                    </div>
-                    <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-                      {gds15Total <= 4 ? "Normal" : gds15Total <= 9 ? "Depressão leve" : "Depressão moderada a grave"}
-                    </div>
-                  </div>
-                  )
-                })()}
-                {activeTab === "cfs" && cfsScore !== null && (() => {
-                  const cfsColor = cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : cfsScore <= 7 ? "#e02424" : "#7c2d12"
-                  return (
-                  <div style={{
-                    background: cfsScore <= 3 ? "rgba(0, 184, 73, 0.08)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
-                    border: `1px solid ${
-                      cfsScore <= 3 ? "rgba(0, 184, 73, 0.35)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
-                    }`,
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    textAlign: "center" as const,
-                  }}>
-                    <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-                      CFS
-                    </div>
-                    <div style={{ fontSize: "28px", fontWeight: 800, color: cfsColor }}>
-                      {cfsScore} / 9
-                    </div>
-                    <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-                      {CFS_LABELS[cfsScore]}
-                    </div>
-                  </div>
-                  )
-                })()}
+                {gds15Card}
+                {cfsCard}
               </div>
 
               {activeTab === "avaliacao" ? (

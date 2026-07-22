@@ -339,13 +339,39 @@ interface ScoreQuestion {
     pesos: number[]
 }
 
-type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9"
+interface ScoreOutput {
+    total: number
+    maxScore: number
+}
+
+type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9" | "fagerstrom"
+
+interface ScoreRange {
+    max: number
+    label: string
+    color: string
+}
+
+interface ScoreToolConfig {
+    title: string
+    subtitle: string
+    questions: ScoreQuestion[]
+    total: number
+    maxScore: number
+    severity: string
+    ranges: ScoreRange[]
+    interpretation: (total: number) => string[]
+    update: (id: string, val: string) => void
+    extra?: React.ReactNode
+}
 
 const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function CalculadoraPREVENT({ style }: Props, ref) {
     const [activeTab, setActiveTab] = useState<ScoreTool>("prevent")
     const [ipssQuestions, setIpssQuestions] = useState<ScoreQuestion[]>([])
     const [gad7Questions, setGad7Questions] = useState<ScoreQuestion[]>([])
     const [phq9Questions, setPhq9Questions] = useState<ScoreQuestion[]>([])
+    const [fagerstromQuestions, setFagerstromQuestions] = useState<ScoreQuestion[]>([])
+    const [fetchError, setFetchError] = useState(false)
 
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
@@ -402,7 +428,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             .then(data => {
                 if (Array.isArray(data)) setIpssQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
             })
-            .catch(() => setIpssQuestions([]))
+            .catch(() => setFetchError(true))
     }, [])
 
     useEffect(() => {
@@ -411,7 +437,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             .then(data => {
                 if (Array.isArray(data)) setGad7Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
             })
-            .catch(() => setGad7Questions([]))
+            .catch(() => setFetchError(true))
     }, [])
 
     useEffect(() => {
@@ -420,7 +446,16 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             .then(data => {
                 if (Array.isArray(data)) setPhq9Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
             })
-            .catch(() => setPhq9Questions([]))
+            .catch(() => setFetchError(true))
+    }, [])
+
+    useEffect(() => {
+        fetch("/contents/fagerstrom.json")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setFagerstromQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+            })
+            .catch(() => setFetchError(true))
     }, [])
 
     const scoreTool = useCallback((questions: ScoreQuestion[]) => {
@@ -443,35 +478,47 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const phq9 = scoreTool(phq9Questions)
     const phq9Severity = phq9.total <= 4 ? "Mínimo" : phq9.total <= 9 ? "Leve" : phq9.total <= 14 ? "Moderado" : phq9.total <= 19 ? "Moderadamente grave" : "Grave"
 
+    const fagerstrom = scoreTool(fagerstromQuestions)
+    const fagerstromSeverity = fagerstrom.total <= 2 ? "Muito baixa" : fagerstrom.total <= 4 ? "Baixa" : fagerstrom.total <= 5 ? "Média" : fagerstrom.total <= 7 ? "Alta" : "Muito alta"
+
     const todayBR = new Date().toLocaleDateString("pt-BR")
 
-    const formatScoreOutput = useCallback((name: string, s: { total: number; maxScore: number }) => {
+    const formatScoreOutput = useCallback((name: string, s: ScoreOutput) => {
         return `${name} (${todayBR}): ${s.total}/${s.maxScore}`
     }, [todayBR])
 
+    const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
+    getOutputRef.current = (groupId: string): string | null => {
+        if (groupId === "risco" && resultado) {
+            const cat = resultado.categoriaRisco.toLowerCase()
+            return `PREVENT (${todayBR}): ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
+        }
+        if (groupId === "ipss") return formatScoreOutput("IPSS", ipss)
+        if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7)
+        if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9)
+        if (groupId === "fagerstrom") return formatScoreOutput("Fagerström", fagerstrom)
+        return null
+    }
+
+    const resetAllTools = useCallback(() => {
+        const resetTool = (url: string, setter: (q: ScoreQuestion[]) => void) =>
+            fetch(url).then(r => r.json()).then(d => { if (Array.isArray(d)) setter(d.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" }))) }).catch(() => setter([]))
+        resetTool("/contents/ipss.json", setIpssQuestions)
+        resetTool("/contents/gad7.json", setGad7Questions)
+        resetTool("/contents/phq9.json", setPhq9Questions)
+        resetTool("/contents/fagerstrom.json", setFagerstromQuestions)
+    }, [])
+
     useImperativeHandle(ref, () => ({
-        getOutput(groupId: string): string | null {
-            if (groupId === "risco" && resultado) {
-                const cat = resultado.categoriaRisco.toLowerCase()
-                return `PREVENT (${todayBR}): ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
-            }
-            if (groupId === "ipss") return formatScoreOutput("IPSS", ipss)
-            if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7)
-            if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9)
-            return null
-        },
-        reset() {
-            setIdade(""); setSexo(""); setCreatinina(""); setPeso(""); setAltura(""); setImc(""); setAsc(""); setTfg(""); setPas(""); setColTotal(""); setHdl(""); setTriglicerideos(""); setLdl(""); setHba1c(""); setRac("")
-            setPrevSecundaria(false); setHiperFam(false); setDiabetes(false); setFumante(false); setAntiHipertensivos(false); setUsoEstatinas(false)
-            setResultado(null)
-            setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false, colTotal: false, hdl: false, triglicerideos: false, hba1c: false })
-            const resetTool = (url: string, setter: (q: ScoreQuestion[]) => void) =>
-                fetch(url).then(r => r.json()).then(d => { if (Array.isArray(d)) setter(d.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" }))) }).catch(() => setter([]))
-            resetTool("/contents/ipss.json", setIpssQuestions)
-            resetTool("/contents/gad7.json", setGad7Questions)
-            resetTool("/contents/phq9.json", setPhq9Questions)
-        },
-    }))
+        getOutput: (groupId: string) => getOutputRef.current(groupId),
+        reset: () => (
+            setIdade(""), setSexo(""), setCreatinina(""), setPeso(""), setAltura(""), setImc(""), setAsc(""), setTfg(""), setPas(""), setColTotal(""), setHdl(""), setTriglicerideos(""), setLdl(""), setHba1c(""), setRac(""),
+            setPrevSecundaria(false), setHiperFam(false), setDiabetes(false), setFumante(false), setAntiHipertensivos(false), setUsoEstatinas(false),
+            setResultado(null),
+            setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false, colTotal: false, hdl: false, triglicerideos: false, hba1c: false }),
+            resetAllTools()
+        ),
+    }), [resetAllTools])
 
     // Track which fields have been touched (blurred)
     const [camposTocados, setCamposTocados] = useState({
@@ -1152,12 +1199,207 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         setPhq9Questions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
     }, [])
 
+    const updateFagerstrom = useCallback((questionId: string, value: string) => {
+        setFagerstromQuestions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
+    }, [])
+
+    const scoreToolsContent = (() => {
+        const toolConfig: Record<string, ScoreToolConfig | null> = {
+            ipss: {
+                title: "IPSS (International Prostate Symptom Score)",
+                subtitle: "sobre os últimos 30 dias, quantas vezes teve:",
+                questions: ipssQuestions, total: ipss.total, maxScore: ipss.maxScore,
+                severity: ipssSeverity,
+                ranges: [
+                    { max: 7, label: "Leve", color: "#00b849" },
+                    { max: 19, label: "Moderado", color: "#ff9900" },
+                    { max: 35, label: "Grave", color: "#e62219" },
+                ],
+                interpretation: (t: number) => [
+                    t <= 7 ? "Sintomas leves — observação clínica" : t <= 19 ? "Sintomas moderados — considerar tratamento" : "Sintomas graves — tratamento indicado",
+                ],
+                update: updateIpss,
+                extra: ipssQolIdx >= 0 ? (
+                    <div style={{ marginTop: "12px", padding: "10px 12px", borderRadius: "8px", background: "rgba(120,120,120,0.06)", border: "1px solid var(--prevent-border)" }}>
+                        <div style={styles.condutaTitle}>Qualidade de Vida</div>
+                        <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--prevent-text)" }}>{ipssQolIdx} <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--prevent-text-muted)" }}>/ 6</span></div>
+                        {ipssQolIdx >= 4 && <div style={{ ...styles.condutaTitle, marginTop: "6px", color: "#e62219" }}>Paciente refere alta insatisfação</div>}
+                    </div>
+                ) : undefined,
+            },
+            gad7: {
+                title: "GAD-7 (Generalized Anxiety Disorder)",
+                subtitle: "nas últimas 2 semanas, com que frequência:",
+                questions: gad7Questions, total: gad7.total, maxScore: gad7.maxScore,
+                severity: gad7Severity,
+                ranges: [
+                    { max: 4, label: "Mínimo", color: "#00b849" },
+                    { max: 9, label: "Leve", color: "#7cb342" },
+                    { max: 14, label: "Moderado", color: "#ff9900" },
+                    { max: 21, label: "Grave", color: "#e62219" },
+                ],
+                interpretation: (t: number) => [
+                    t <= 4 ? "Ansiedade mínima — monitoramento" : t <= 9 ? "Ansiedade leve — considerar avaliação" : t <= 14 ? "Ansiedade moderada — tratamento indicado" : "Ansiedade grave — encaminhamento psiquiátrico",
+                ],
+                update: updateGad7,
+            },
+            phq9: {
+                title: "PHQ-9 (Patient Health Questionnaire)",
+                subtitle: "nas últimas 2 semanas, com que frequência:",
+                questions: phq9Questions, total: phq9.total, maxScore: phq9.maxScore,
+                severity: phq9Severity,
+                ranges: [
+                    { max: 4, label: "Mínimo", color: "#00b849" },
+                    { max: 9, label: "Leve", color: "#7cb342" },
+                    { max: 14, label: "Moderado", color: "#ff9900" },
+                    { max: 19, label: "Mod.-grave", color: "#f57c00" },
+                    { max: 27, label: "Grave", color: "#e62219" },
+                ],
+                interpretation: (t: number) => {
+                    const lines = [
+                        t <= 4 ? "Depressão mínima" : t <= 9 ? "Depressão leve" : t <= 14 ? "Depressão moderada" : t <= 19 ? "Depressão moderadamente grave" : "Depressão grave",
+                    ]
+                    if (phq9Questions.find(q => q.id === "phq9_morte" && q.options.indexOf(q.value) >= 1)) {
+                        lines.push("Atenção: avaliar risco suicida (item 9)")
+                    }
+                    return lines
+                },
+                update: updatePhq9,
+            },
+            fagerstrom: {
+                title: "Fagerström (Dependência à Nicotina)",
+                subtitle: "sobre seus hábitos com tabaco:",
+                questions: fagerstromQuestions, total: fagerstrom.total, maxScore: fagerstrom.maxScore,
+                severity: fagerstromSeverity,
+                ranges: [
+                    { max: 2, label: "Muito baixa", color: "#00b849" },
+                    { max: 4, label: "Baixa", color: "#7cb342" },
+                    { max: 5, label: "Média", color: "#ff9900" },
+                    { max: 7, label: "Alta", color: "#f57c00" },
+                    { max: 10, label: "Muito alta", color: "#e62219" },
+                ],
+                interpretation: (t: number) => [
+                    t <= 2 ? "Dependência muito baixa — chance alta de sucesso ao parar" : t <= 4 ? "Dependência baixa — bom prognóstico para cessação" : t <= 5 ? "Dependência moderada — considerar suporte farmacológico" : t <= 7 ? "Dependência alta — intervenção farmacológica recomendada" : "Dependência muito alta — terapia combinada indicada",
+                ],
+                update: updateFagerstrom,
+            },
+        }
+        const cfg = toolConfig[activeTab]
+        if (!cfg) return null
+        const currentRange = cfg.ranges.find((r) => cfg.total <= r.max) || cfg.ranges[cfg.ranges.length - 1]
+        const pct = cfg.maxScore > 0 ? (cfg.total / cfg.maxScore) * 100 : 0
+        return (<>
+            <div style={styles.title}>{cfg.title}</div>
+            <div style={styles.subtitle}>{cfg.subtitle}</div>
+            <div className="prevent-root">
+                <div className="prevent-fields-grid">
+                    {cfg.questions.map((q) => {
+                        const idx = q.value !== "" ? q.options.indexOf(q.value) : -1
+                        const hue = idx >= 0 ? Math.round(120 - (idx / (q.options.length - 1)) * 120) : 0
+                        const accent = idx >= 0 ? `hsl(${hue}, 70%, 42%)` : "var(--prevent-text-muted)"
+                        return (
+                            <React.Fragment key={q.id}>
+                                {q.section === "qualidade_de_vida" && cfg.questions.indexOf(q) === cfg.questions.findIndex((x) => x.section === "qualidade_de_vida") && (
+                                    <div style={styles.sectionLabel}>Qualidade de Vida</div>
+                                )}
+                                <div className="ipss-slider-row">
+                                    <label className="ipss-slider-label">{q.label}</label>
+                                    {q.options.length === 2 ? (
+                                        <div className="prevent-chips-grid">
+                                            {q.options.map((opt, i) => {
+                                                const isSelected = idx === i
+                                                const pontua = q.pesos[i] > 0
+                                                const activeColor = pontua ? "#e02424" : "#00b849"
+                                                const activeBg = pontua ? "rgba(224, 36, 36, 0.18)" : "rgba(0, 184, 73, 0.15)"
+                                                return (
+                                                    <div
+                                                        key={i}
+                                                        style={{
+                                                            padding: "8px 16px",
+                                                            borderRadius: "20px",
+                                                            fontSize: "13px",
+                                                            cursor: "pointer",
+                                                            userSelect: "none",
+                                                            background: isSelected ? activeBg : "var(--prevent-input-bg)",
+                                                            border: `1px solid ${isSelected ? activeColor : "var(--prevent-border)"}`,
+                                                            color: isSelected ? activeColor : "var(--prevent-text-muted)",
+                                                            fontWeight: isSelected ? 600 : 400,
+                                                            transition: "all 0.15s ease",
+                                                        }}
+                                                        onClick={() => cfg.update(q.id, q.value === opt ? "" : opt)}
+                                                    >
+                                                        {opt}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    ) : (<>
+                                    <input
+                                        type="range"
+                                        className="ipss-range"
+                                        min={0}
+                                        max={q.options.length - 1}
+                                        step={1}
+                                        value={idx >= 0 ? idx : 0}
+                                        onChange={(e) => {
+                                            const newIdx = parseInt(e.target.value)
+                                            cfg.update(q.id, q.value === q.options[newIdx] ? "" : q.options[newIdx])
+                                        }}
+                                        style={{
+                                            ["--ipss-accent" as string]: accent,
+                                            background: idx >= 0
+                                                ? `linear-gradient(to right, ${accent} 0%, ${accent} ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) 100%)`
+                                                : `var(--prevent-border)`,
+                                        }}
+                                    />
+                                    <div className="ipss-slider-value" style={{ color: accent }}>
+                                        {idx >= 0 ? q.options[idx] : "—"}
+                                    </div>
+                                    </>)}
+                                </div>
+                            </React.Fragment>
+                        )
+                    })}
+                </div>
+                <div>
+                    <div
+                        className="prevent-result-card"
+                        style={{
+                            background: `${currentRange.color}14`,
+                            border: `1px solid ${currentRange.color}73`,
+                        }}
+                    >
+                        <span className="prevent-badge-risco" style={{ background: "rgba(255,255,255,0.6)", color: currentRange.color, border: `1px solid ${currentRange.color}73` }}>
+                            {currentRange.label}
+                        </span>
+                        <div style={styles.label}>Pontuação</div>
+                        <div style={styles.scoreValue}>{cfg.total}<span style={{ fontSize: "16px", fontWeight: 400, color: "var(--prevent-text-muted)" }}> / {cfg.maxScore}</span></div>
+                        <div style={{ marginTop: "8px", borderRadius: "6px", overflow: "hidden", height: "6px", background: "var(--prevent-border)" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, background: currentRange.color, transition: "width 0.3s ease, background 0.3s ease" }} />
+                        </div>
+                        <div className="conduta-box">
+                            <div style={styles.ldlAlvoBox}>
+                                <div style={{ ...styles.condutaTitle, color: currentRange.color }}>Interpretação</div>
+                                {cfg.interpretation(cfg.total).map((line: string, i: number) => (
+                                    <div key={i} style={{ fontSize: "14px", fontWeight: i === 0 ? 600 : 400, color: "var(--prevent-text)", marginTop: i > 0 ? "4px" : 0 }}>{line}</div>
+                                ))}
+                            </div>
+                            {cfg.extra}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>)
+    })()
+
+    const markTouched = () => { touchedRef.current = true }
+
     return (
-        <div style={{ ...styles.container, ...style }} onFocus={() => { touchedRef.current = true }}>
+        <div style={{ ...styles.container, ...style }} onFocus={markTouched}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={{ display: "flex", gap: "4px", marginBottom: "16px", flexWrap: "wrap" }}>
-                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"]] as const).map(([key, label]) => (
+                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"], ["fagerstrom", "Fagerström"]] as const).map(([key, label]) => (
                     <div
                         key={key}
                         onClick={() => setActiveTab(key)}
@@ -1178,6 +1420,12 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     </div>
                 ))}
             </div>
+
+            {fetchError && (
+                <div style={{ marginBottom: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12.5px", color: "#b91c1c", lineHeight: 1.4 }}>
+                    Falha ao carregar dados de um ou mais escores. Verifique a conexão e recarregue a página.
+                </div>
+            )}
 
             {activeTab === "prevent" ? (<>
             <div style={styles.title}>
@@ -1671,153 +1919,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                 </div>
             </div>
             </>) : (<>
-            {(() => {
-                const toolConfig: Record<string, {
-                    title: string; subtitle: string; questions: ScoreQuestion[];
-                    total: number; maxScore: number; severity: string;
-                    ranges: { max: number; label: string; color: string }[];
-                    interpretation: (total: number) => string[];
-                    update: (id: string, val: string) => void;
-                    extra?: React.ReactNode;
-                } | null> = {
-                    ipss: {
-                        title: "IPSS (International Prostate Symptom Score)",
-                        subtitle: "sobre os últimos 30 dias, quantas vezes teve:",
-                        questions: ipssQuestions, total: ipss.total, maxScore: ipss.maxScore,
-                        severity: ipssSeverity,
-                        ranges: [
-                            { max: 7, label: "Leve", color: "#00b849" },
-                            { max: 19, label: "Moderado", color: "#ff9900" },
-                            { max: 35, label: "Grave", color: "#e62219" },
-                        ],
-                        interpretation: (t) => [
-                            t <= 7 ? "Sintomas leves — observação clínica" : t <= 19 ? "Sintomas moderados — considerar tratamento" : "Sintomas graves — tratamento indicado",
-                        ],
-                        update: updateIpss,
-                        extra: ipssQolIdx >= 0 ? (
-                            <div style={{ marginTop: "12px", padding: "10px 12px", borderRadius: "8px", background: "rgba(120,120,120,0.06)", border: "1px solid var(--prevent-border)" }}>
-                                <div style={styles.condutaTitle}>Qualidade de Vida</div>
-                                <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--prevent-text)" }}>{ipssQolIdx} <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--prevent-text-muted)" }}>/ 6</span></div>
-                                {ipssQolIdx >= 4 && <div style={{ ...styles.condutaTitle, marginTop: "6px", color: "#e62219" }}>Paciente refere alta insatisfação</div>}
-                            </div>
-                        ) : undefined,
-                    },
-                    gad7: {
-                        title: "GAD-7 (Generalized Anxiety Disorder)",
-                        subtitle: "nas últimas 2 semanas, com que frequência:",
-                        questions: gad7Questions, total: gad7.total, maxScore: gad7.maxScore,
-                        severity: gad7Severity,
-                        ranges: [
-                            { max: 4, label: "Mínimo", color: "#00b849" },
-                            { max: 9, label: "Leve", color: "#7cb342" },
-                            { max: 14, label: "Moderado", color: "#ff9900" },
-                            { max: 21, label: "Grave", color: "#e62219" },
-                        ],
-                        interpretation: (t) => [
-                            t <= 4 ? "Ansiedade mínima — monitoramento" : t <= 9 ? "Ansiedade leve — considerar avaliação" : t <= 14 ? "Ansiedade moderada — tratamento indicado" : "Ansiedade grave — encaminhamento psiquiátrico",
-                        ],
-                        update: updateGad7,
-                    },
-                    phq9: {
-                        title: "PHQ-9 (Patient Health Questionnaire)",
-                        subtitle: "nas últimas 2 semanas, com que frequência:",
-                        questions: phq9Questions, total: phq9.total, maxScore: phq9.maxScore,
-                        severity: phq9Severity,
-                        ranges: [
-                            { max: 4, label: "Mínimo", color: "#00b849" },
-                            { max: 9, label: "Leve", color: "#7cb342" },
-                            { max: 14, label: "Moderado", color: "#ff9900" },
-                            { max: 19, label: "Mod.-grave", color: "#f57c00" },
-                            { max: 27, label: "Grave", color: "#e62219" },
-                        ],
-                        interpretation: (t) => {
-                            const lines = [
-                                t <= 4 ? "Depressão mínima" : t <= 9 ? "Depressão leve" : t <= 14 ? "Depressão moderada" : t <= 19 ? "Depressão moderadamente grave" : "Depressão grave",
-                            ]
-                            if (phq9Questions.find(q => q.id === "phq9_morte" && q.options.indexOf(q.value) >= 1)) {
-                                lines.push("Atenção: avaliar risco suicida (item 9)")
-                            }
-                            return lines
-                        },
-                        update: updatePhq9,
-                    },
-                }
-                const cfg = toolConfig[activeTab]
-                if (!cfg) return null
-                const currentRange = cfg.ranges.find(r => cfg.total <= r.max) || cfg.ranges[cfg.ranges.length - 1]
-                const pct = cfg.maxScore > 0 ? (cfg.total / cfg.maxScore) * 100 : 0
-                return (<>
-                    <div style={styles.title}>{cfg.title}</div>
-                    <div style={styles.subtitle}>{cfg.subtitle}</div>
-                    <div className="prevent-root">
-                        <div className="prevent-fields-grid">
-                            {cfg.questions.map(q => {
-                                const idx = q.value !== "" ? q.options.indexOf(q.value) : -1
-                                const hue = idx >= 0 ? Math.round(120 - (idx / (q.options.length - 1)) * 120) : 0
-                                const accent = idx >= 0 ? `hsl(${hue}, 70%, 42%)` : "var(--prevent-text-muted)"
-                                return (
-                                    <React.Fragment key={q.id}>
-                                        {q.section === "qualidade_de_vida" && cfg.questions.indexOf(q) === cfg.questions.findIndex(x => x.section === "qualidade_de_vida") && (
-                                            <div style={styles.sectionLabel}>Qualidade de Vida</div>
-                                        )}
-                                        <div className="ipss-slider-row">
-                                            <label className="ipss-slider-label">{q.label}</label>
-                                            <input
-                                                type="range"
-                                                className="ipss-range"
-                                                min={0}
-                                                max={q.options.length - 1}
-                                                step={1}
-                                                value={idx >= 0 ? idx : 0}
-                                                onChange={e => {
-                                                    const newIdx = parseInt(e.target.value)
-                                                    cfg.update(q.id, q.value === q.options[newIdx] ? "" : q.options[newIdx])
-                                                }}
-                                                style={{
-                                                    ["--ipss-accent" as string]: accent,
-                                                    background: idx >= 0
-                                                        ? `linear-gradient(to right, ${accent} 0%, ${accent} ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) 100%)`
-                                                        : `var(--prevent-border)`,
-                                                }}
-                                            />
-                                            <div className="ipss-slider-value" style={{ color: accent }}>
-                                                {idx >= 0 ? q.options[idx] : "—"}
-                                            </div>
-                                        </div>
-                                    </React.Fragment>
-                                )
-                            })}
-                        </div>
-                        <div>
-                            <div
-                                className="prevent-result-card"
-                                style={{
-                                    background: `${currentRange.color}14`,
-                                    border: `1px solid ${currentRange.color}73`,
-                                }}
-                            >
-                                <span className="prevent-badge-risco" style={{ background: "rgba(255,255,255,0.6)", color: currentRange.color, border: `1px solid ${currentRange.color}73` }}>
-                                    {currentRange.label}
-                                </span>
-                                <div style={styles.label}>Pontuação</div>
-                                <div style={styles.scoreValue}>{cfg.total}<span style={{ fontSize: "16px", fontWeight: 400, color: "var(--prevent-text-muted)" }}> / {cfg.maxScore}</span></div>
-                                <div style={{ marginTop: "8px", borderRadius: "6px", overflow: "hidden", height: "6px", background: "var(--prevent-border)" }}>
-                                    <div style={{ height: "100%", width: `${pct}%`, background: currentRange.color, transition: "width 0.3s ease, background 0.3s ease" }} />
-                                </div>
-                                <div className="conduta-box">
-                                    <div style={styles.ldlAlvoBox}>
-                                        <div style={{ ...styles.condutaTitle, color: currentRange.color }}>Interpretação</div>
-                                        {cfg.interpretation(cfg.total).map((line, i) => (
-                                            <div key={i} style={{ fontSize: "14px", fontWeight: i === 0 ? 600 : 400, color: "var(--prevent-text)", marginTop: i > 0 ? "4px" : 0 }}>{line}</div>
-                                        ))}
-                                    </div>
-                                    {cfg.extra}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>)
-            })()}
+            {scoreToolsContent}
             </>)}
         </div>
     )

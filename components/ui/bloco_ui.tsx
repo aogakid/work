@@ -5,6 +5,30 @@ import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
 import { COMPANIONS, type CompanionRef } from "../companions/registry"
 
+class CompanionErrorBoundary extends React.Component<
+    { children: React.ReactNode; name: string },
+    { hasError: boolean }
+> {
+    constructor(props: { children: React.ReactNode; name: string }) {
+        super(props)
+        this.state = { hasError: false }
+    }
+    static getDerivedStateFromError() {
+        return { hasError: true }
+    }
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div style={{ padding: "16px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "13px", color: "#b91c1c", lineHeight: 1.5 }}>
+                    <strong>Erro ao carregar {this.props.name}.</strong>
+                    <div style={{ marginTop: "4px", fontSize: "12px", color: "var(--meta-text)" }}>Tente recarregar a página.</div>
+                </div>
+            )
+        }
+        return this.props.children
+    }
+}
+
 const supabase = createClient(
     "https://odqdzyqjpufitvahrhiq.supabase.co",
     "sb_publishable_5ftHtUIl4DlyHy9KQ-jvGw_AfnhQn1Q"
@@ -177,6 +201,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
     const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const companionEverOpened = React.useRef<Record<string, boolean>>({})
     const resetAllCompanions = React.useCallback(() => {
         Object.values(companionRefs.current).forEach(ref => ref?.reset())
     }, [])
@@ -1081,6 +1106,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 {/* ════════════════════════════════════════════════════════════ */}
                 {COMPANIONS.map(c => {
                     const isOpen = expandedCompanions[c.id] || false
+                    if (isOpen) companionEverOpened.current[c.id] = true
+                    const shouldMount = isOpen || !!companionEverOpened.current[c.id]
                     return (
                         <div key={c.id} style={{ marginTop: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
                             <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
@@ -1097,9 +1124,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             </div>
                             </div>
                             <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
-                                <React.Suspense fallback={<div style={{ padding: "20px", textAlign: "center", color: "var(--meta-text)", fontSize: "13px" }}>carregando...</div>}>
-                                    <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
-                                </React.Suspense>
+                                {shouldMount && (
+                                    <CompanionErrorBoundary name={c.label}>
+                                        <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                                    </CompanionErrorBoundary>
+                                )}
                             </div>
                         </div>
                     )

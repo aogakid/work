@@ -259,6 +259,134 @@ const injectStyles = `
     line-height: 1.5;
     margin: 0;
   }
+
+  .gest-inputs-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+  }
+
+  .gest-inputs-row .gest-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .gest-inputs-row .gest-field--date {
+    flex: 1.2 1 160px;
+  }
+
+  .gest-inputs-row .gest-field--narrow {
+    flex: 0 1 64px;
+  }
+
+  .gest-inputs-row input {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .gest-inputs-row .gest-field-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gest-text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .gest-ou {
+    font-size: 12px;
+    color: var(--gest-text-muted);
+    font-weight: 600;
+    padding-bottom: 10px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 540px) {
+    .gest-inputs-row .gest-field--date {
+      flex: 1 1 100%;
+    }
+    .gest-inputs-row .gest-field--narrow {
+      flex: 1 1 60px;
+    }
+  }
+
+  .gest-dating-card {
+    margin-top: 16px;
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--gest-card-bg);
+    border: 1px solid var(--gest-border);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .gest-dating-card-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gest-text-muted);
+    margin-bottom: 8px;
+  }
+
+  .gest-dating-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 4px 0;
+  }
+
+  .gest-dating-label {
+    color: var(--gest-text-muted);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .gest-dating-value {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--gest-text);
+  }
+
+  .gest-dating-rule {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--gest-border);
+    font-size: 12px;
+    color: var(--gest-text-muted);
+    line-height: 1.5;
+  }
+
+  .gest-dating-rule strong {
+    color: var(--gest-text);
+  }
+
+  .gest-dating-source {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .gest-dating-source--dum {
+    background: rgba(0, 184, 73, 0.1);
+    color: #007a30;
+    border: 1px solid rgba(0, 184, 73, 0.3);
+  }
+
+  .gest-dating-source--us {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
 `
 
 const styles = {
@@ -305,9 +433,7 @@ const styles = {
         outline: "none",
         height: "42px",
         boxSizing: "border-box" as const,
-        width: "auto",
-        minWidth: "180px",
-        maxWidth: "280px",
+        width: "100%",
         transition: "all 0.2s ease",
     },
     badge: {
@@ -780,6 +906,117 @@ function obterMarcos(semanaAtual: number) {
     return { agora, emBreve }
 }
 
+function calcularDumPartirDeUs(
+    usDate: string,
+    semanas: number,
+    dias: number
+): Date | null {
+    if (!usDate) return null
+    const us = startOfDay(new Date(usDate + "T12:00:00"))
+    if (isNaN(us.getTime())) return null
+    const totalDiasIdade = semanas * 7 + dias
+    if (totalDiasIdade <= 0) return null
+    return addDays(us, -totalDiasIdade)
+}
+
+interface ResolucaoFonte {
+    dumEfetiva: Date
+    fonte: "dum" | "us"
+    diffDias: number | null
+    semanaUsExame: number | null
+    motivo: string
+}
+
+function resolverFonte(
+    dum: string,
+    usDate: string,
+    usSemanas: number,
+    usDias: number
+): ResolucaoFonte | null {
+    const temDum = !!dum
+    const temUs = !!usDate && (usSemanas > 0 || usDias > 0)
+
+    if (!temDum && !temUs) return null
+
+    if (temDum && !temUs) {
+        const lmp = startOfDay(new Date(dum + "T12:00:00"))
+        if (isNaN(lmp.getTime())) return null
+        return {
+            dumEfetiva: lmp,
+            fonte: "dum",
+            diffDias: null,
+            semanaUsExame: null,
+            motivo: "Utilizando apenas a DUM informada.",
+        }
+    }
+
+    if (!temDum && temUs) {
+        const dumCalculada = calcularDumPartirDeUs(usDate, usSemanas, usDias)
+        if (!dumCalculada) return null
+        const semanaUsExame = Math.floor(diasEntre(dumCalculada, startOfDay(new Date(usDate + "T12:00:00"))) / 7)
+        return {
+            dumEfetiva: dumCalculada,
+            fonte: "us",
+            diffDias: null,
+            semanaUsExame,
+            motivo: `DUM calculada a partir do ultrassom (${usSemanas}s${usDias}d).`,
+        }
+    }
+
+    const lmp = startOfDay(new Date(dum + "T12:00:00"))
+    const dumCalculada = calcularDumPartirDeUs(usDate, usSemanas, usDias)
+    if (isNaN(lmp.getTime()) || !dumCalculada) return null
+
+    const diffDias = Math.abs(diasEntre(lmp, dumCalculada))
+    const semanaUsExame = Math.floor(diasEntre(dumCalculada, startOfDay(new Date(usDate + "T12:00:00"))) / 7)
+
+    if (semanaUsExame < 9) {
+        if (diffDias > 5) {
+            return {
+                dumEfetiva: dumCalculada,
+                fonte: "us",
+                diffDias,
+                semanaUsExame,
+                motivo: `Ultrassom antes de 9 semanas com diferença de ${diffDias} dias (>5 dias) → DPP ajustada pelo ultrassom.`,
+            }
+        }
+        return {
+            dumEfetiva: lmp,
+            fonte: "dum",
+            diffDias,
+            semanaUsExame,
+            motivo: `Ultrassom antes de 9 semanas com diferença de ${diffDias} dias (≤5 dias) → DUM mantida.`,
+        }
+    }
+
+    if (semanaUsExame < 14) {
+        if (diffDias > 7) {
+            return {
+                dumEfetiva: dumCalculada,
+                fonte: "us",
+                diffDias,
+                semanaUsExame,
+                motivo: `Ultrassom entre 9 e 13 semanas com diferença de ${diffDias} dias (>7 dias) → DPP ajustada pelo ultrassom.`,
+            }
+        }
+        return {
+            dumEfetiva: lmp,
+            fonte: "dum",
+            diffDias,
+            semanaUsExame,
+            motivo: `Ultrassom entre 9 e 13 semanas com diferença de ${diffDias} dias (≤7 dias) → DUM mantida.`,
+        }
+    }
+
+    return {
+        dumEfetiva: lmp,
+        fonte: "dum",
+        diffDias,
+        semanaUsExame,
+        motivo: `Ultrassom após 14 semanas — não é recomendado redatamento. DUM mantida.`,
+    }
+}
+
 interface ResultadoGestacional {
     semanas: number
     dias: number
@@ -1026,14 +1263,30 @@ function CardMarco({ marco, tipo }: { marco: Marco; tipo: "now" | "soon" }) {
 
 export default forwardRef<CompanionActions, Props>(function CalculadoraGestacional({ style }: Props, ref) {
     const [dum, setDum] = useState("")
-    const [tocado, setTocado] = useState(false)
+    const [usDate, setUsDate] = useState("")
+    const [usSemanas, setUsSemanas] = useState("")
+    const [usDias, setUsDias] = useState("")
 
-    const resultado = useMemo(() => calcularGestacao(dum), [dum])
+    const resolucao = useMemo(
+        () => resolverFonte(dum, usDate, parseInt(usSemanas) || 0, parseInt(usDias) || 0),
+        [dum, usDate, usSemanas, usDias]
+    )
+
+    const dumEfetivaStr = useMemo(() => {
+        if (!resolucao) return ""
+        const y = resolucao.dumEfetiva.getFullYear()
+        const m = String(resolucao.dumEfetiva.getMonth() + 1).padStart(2, "0")
+        const d = String(resolucao.dumEfetiva.getDate()).padStart(2, "0")
+        return `${y}-${m}-${d}`
+    }, [resolucao])
+
+    const resultado = useMemo(() => calcularGestacao(dumEfetivaStr), [dumEfetivaStr])
 
     const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
     getOutputRef.current = (groupId: string): string | null => {
         if (groupId === "ig_dpp" && resultado?.valido) {
-            return `IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}`
+            const src = resolucao?.fonte === "us" ? " (via US)" : ""
+            return `IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}${src}`
         }
         return null
     }
@@ -1041,7 +1294,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset() {
-            setDum(""); setTocado(false)
+            setDum(""); setUsDate(""); setUsSemanas(""); setUsDias("")
         },
     }), [])
 
@@ -1059,45 +1312,75 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
 
     const textoCopia =
         resultado && resultado.valido
-            ? formatIgCopia(resultado.semanas, resultado.dias, resultado.dpp)
+            ? formatIgCopia(resultado.semanas, resultado.dias, resultado.dpp) +
+              (resolucao?.fonte === "us" ? " (via US)" : "")
             : ""
+
+    const temEntrada = !!dum || (!!usDate && (parseInt(usSemanas) > 0 || parseInt(usDias) > 0))
 
     return (
         <div style={{ ...styles.container, ...style }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={styles.title}>Calculadora gestacional</div>
-            <div style={styles.subtitle}></div>
-
-            <div style={styles.inputGroup}>
-                <label style={styles.label}>
-                    Data da Última Menstruação (DUM){" "}
-                    <span style={{ color: "#dc2626" }}>*</span>
-                </label>
-                <input
-                    type="date"
-                    value={dum}
-                    max={new Date().toISOString().split("T")[0]}
-                    onChange={(e) => setDum(e.target.value)}
-                    onBlur={() => setTocado(true)}
-                    style={{
-                        ...styles.input,
-                        ...(tocado && !dum
-                            ? {
-                                  border: "2px solid #dc2626",
-                                  backgroundColor: "rgba(220, 38, 38, 0.05)",
-                              }
-                            : {}),
-                    }}
-                />
+            <div style={styles.subtitle}>
+                para idade gestacional e data provável do parto
             </div>
 
-            {!resultado ? (
+            <div className="gest-inputs-row">
+                <div className="gest-field gest-field--date">
+                    <span className="gest-field-label">DUM</span>
+                    <input
+                        type="date"
+                        value={dum}
+                        max={new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setDum(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+                <span className="gest-ou">ou</span>
+                <div className="gest-field gest-field--date">
+                    <span className="gest-field-label">Data do US</span>
+                    <input
+                        type="date"
+                        value={usDate}
+                        max={new Date().toISOString().split("T")[0]}
+                        onChange={(e) => setUsDate(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+                <div className="gest-field gest-field--narrow">
+                    <span className="gest-field-label">Semanas</span>
+                    <input
+                        type="number"
+                        min={0}
+                        max={41}
+                        placeholder="0"
+                        value={usSemanas}
+                        onChange={(e) => setUsSemanas(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+                <div className="gest-field gest-field--narrow">
+                    <span className="gest-field-label">Dias</span>
+                    <input
+                        type="number"
+                        min={0}
+                        max={6}
+                        placeholder="0"
+                        value={usDias}
+                        onChange={(e) => setUsDias(e.target.value)}
+                        style={styles.input}
+                    />
+                </div>
+            </div>
+
+            {!temEntrada ? (
                 <div style={{ ...styles.empty, marginTop: "20px" }}>
-                    Selecione a data da última menstruação para ver o
+                    Informe a DUM ou os dados do ultrassom para ver o
                     acompanhamento da gestação.
                 </div>
-            ) : !resultado.valido ? (
+            ) : !resultado || !resultado.valido ? (
                 <div
                     style={{
                         ...styles.empty,
@@ -1106,9 +1389,10 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                         color: "#ba120a",
                     }}
                 >
-                    {resultado.mensagemErro}
+                    {resultado?.mensagemErro}
                 </div>
             ) : (
+                <>
                 <div className="gest-main" style={{ marginTop: "20px" }}>
                     {/* Card principal — IG, DPP, progresso */}
                     <div
@@ -1239,6 +1523,40 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                         </div>
                     </div>
                 </div>
+
+                {/* Dating info card below results */}
+                {resolucao && dum && usDate && (parseInt(usSemanas) > 0 || parseInt(usDias) > 0) && (
+                    <div className="gest-dating-card">
+                        <div className="gest-dating-card-title">Resolução da data</div>
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">DUM informada</span>
+                            <span className="gest-dating-value">{formatDateCurta(new Date(dum + "T12:00:00"))}</span>
+                        </div>
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">DUM pelo US</span>
+                            <span className="gest-dating-value">{formatDateCurta(resolucao.dumEfetiva)}</span>
+                        </div>
+                        {resolucao.diffDias !== null && (
+                            <div className="gest-dating-row">
+                                <span className="gest-dating-label">Diferença</span>
+                                <span className="gest-dating-value">{resolucao.diffDias} {resolucao.diffDias === 1 ? "dia" : "dias"}</span>
+                            </div>
+                        )}
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">Fonte utilizada</span>
+                            <span className="gest-dating-value">
+                                {resolucao.fonte === "dum" ? "DUM" : "Ultrassom"}
+                                <span className={`gest-dating-source gest-dating-source--${resolucao.fonte}`}>
+                                    {resolucao.fonte === "dum" ? "DUM" : "US"}
+                                </span>
+                            </span>
+                        </div>
+                        <div className="gest-dating-rule">
+                            {resolucao.motivo}
+                        </div>
+                    </div>
+                )}
+                </>
             )}
         </div>
     )
