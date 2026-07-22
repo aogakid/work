@@ -1,0 +1,58 @@
+[
+  {
+    "id": "gad7_nervoso",
+    "label": "Sentir-se nervoso, ansioso ou no limite",
+    "labelMd": "Nervosismo",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_controle",
+    "label": "Não ser capaz de impedir ou controlar preocupações",
+    "labelMd": "Controle de preocupação",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_muitas",
+    "label": "Preocupar-se demais com diversas coisas",
+    "labelMd": "Muitas preocupações",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_dificuldade",
+    "label": "Dificuldade para relaxar",
+    "labelMd": "Dificuldade para relaxar",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_inquieta",
+    "label": "Ficar tão inquieto que é difícil ficar parado",
+    "labelMd": "Inquietação",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_irritavel",
+    "label": "Ficar facilmente irritado ou aborrecido",
+    "labelMd": "Irritabilidade",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "gad7_medo",
+    "label": "Sentir medo como se algo horrível pudesse acontecer",
+    "labelMd": "Medo",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  }
+]

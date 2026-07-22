@@ -35,7 +35,6 @@ const injectStyles = `
       grid-template-columns: 1.2fr 1fr;
     }
   }
-
   .geriatria-fields-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -50,7 +49,6 @@ const injectStyles = `
     box-sizing: border-box;
     transition: background 0.3s ease, border 0.3s ease;
     min-width: 0;
-    overflow: hidden;
   }
 
   .geriatria-badge {
@@ -244,6 +242,8 @@ const secoes = [
   { id: "ambiental", label: "Avaliação Ambiental" },
   { id: "suporte", label: "Suporte Sociofamiliar" },
   { id: "cage", label: "CAGE" },
+  { id: "gds15", label: "GDS-15" },
+  { id: "cfs", label: "CFS" },
 ]
 
 const IVCF_SCORE_MAP: Record<string, (val: string) => number> = {
@@ -295,11 +295,186 @@ const computeCAGETotal = (fields: FormField[]): number => {
   return total
 }
 
+const GDS_REVERSE = new Set(["gds15_01", "gds15_05", "gds15_07", "gds15_11", "gds15_13"])
+
+const computeGDSTotal = (fields: FormField[]): number => {
+  let total = 0
+  fields.filter(f => f.section === "gds15" && f.type === "single_choice").forEach(f => {
+    const answered = f.value === "sim" || f.value === "não"
+    if (!answered) return
+    if (GDS_REVERSE.has(f.id)) {
+      if (f.value === "não") total += 1
+    } else {
+      if (f.value === "sim") total += 1
+    }
+  })
+  return total
+}
+
+const CFS_ABVD = ["vestir-se", "tomar banho", "alimentar-se", "caminhar", "entrar/sair da cama"]
+const CFS_AIVD = ["usar telefone", "fazer compras", "preparar refeições", "tarefas domésticas", "tomar medicações", "cuidar das finanças"]
+const CFS_LABELS: Record<number, string> = {
+  1: "Muito Ativo", 2: "Ativo", 3: "Bem, sem Fragilidade",
+  4: "Fragilidade Muito Leve", 5: "Fragilidade Leve", 6: "Fragilidade Moderada",
+  7: "Fragilidade Grave", 8: "Fragilidade Muito Grave", 9: "Fase Terminal",
+}
+
+function CFSWizard(props: {
+  terminal: "sim" | "não" | null
+  setTerminal: (v: "sim" | "não" | null) => void
+  abvd: Set<string>
+  setAbvd: (fn: (prev: Set<string>) => Set<string>) => void
+  aivd: Set<string>
+  setAivd: (fn: (prev: Set<string>) => Set<string>) => void
+  chronic: string
+  setChronic: (v: string) => void
+  health: "excelente" | "muito_boa" | "boa" | "regular_ruim" | null
+  setHealth: (v: "excelente" | "muito_boa" | "boa" | "regular_ruim" | null) => void
+  effort: "todo_tempo" | "as_vezes" | "raramente_nunca" | null
+  setEffort: (v: "todo_tempo" | "as_vezes" | "raramente_nunca" | null) => void
+  sports: "sim" | "não" | null
+  setSports: (v: "sim" | "não" | null) => void
+}) {
+  const { terminal, setTerminal, abvd, setAbvd, aivd, setAivd, chronic, setChronic, health, setHealth, effort, setEffort, sports, setSports } = props
+  const showAbvd = terminal !== null
+  const showAivd = terminal === "não" && abvd.size === 0
+  const showChronic = showAivd && aivd.size === 0
+  const showHealth = showChronic && chronic === "0-9"
+  const showEffort = showHealth && health !== null && health !== "regular_ruim"
+  const showSports = showEffort && effort !== null && effort !== "todo_tempo"
+
+  const toggleAbvd = (item: string) => {
+    setAbvd(prev => {
+      const next = new Set(prev)
+      if (next.has(item)) next.delete(item)
+      else next.add(item)
+      return next
+    })
+  }
+  const toggleAivd = (item: string) => {
+    setAivd(prev => {
+      const next = new Set(prev)
+      if (next.has(item)) next.delete(item)
+      else next.add(item)
+      return next
+    })
+  }
+
+  const chipStyle = (active: boolean, red?: boolean) => ({
+    padding: "8px 14px",
+    borderRadius: "20px",
+    fontSize: "13px",
+    cursor: "pointer",
+    userSelect: "none" as const,
+    background: active ? (red ? "rgba(224, 36, 36, 0.12)" : "rgba(0, 184, 73, 0.12)") : "var(--geriatria-input-bg)",
+    border: `1px solid ${active ? (red ? "#e02424" : "#00cc52") : "var(--geriatria-border)"}`,
+    color: active ? (red ? "#e02424" : "#00b849") : "var(--geriatria-text-muted)",
+    fontWeight: active ? 600 : 400,
+    transition: "all 0.15s ease",
+  })
+
+  const stepCard = (num: number, title: string, children: React.ReactNode) => (
+    <div key={num} style={{
+      gridColumn: "1 / -1",
+      background: "rgba(120, 120, 120, 0.04)",
+      padding: "14px",
+      borderRadius: "12px",
+      border: "1px dashed var(--geriatria-border)",
+      marginTop: "8px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+        <span style={{
+          display: "inline-flex", alignItems: "center", justifyContent: "center",
+          width: "22px", height: "22px", borderRadius: "50%",
+          background: "rgba(0, 184, 73, 0.15)", color: "#00b849",
+          fontSize: "11px", fontWeight: 700, flexShrink: 0,
+        }}>{num}</span>
+        <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--geriatria-text)" }}>{title}</span>
+      </div>
+      {children}
+    </div>
+  )
+
+  return (
+    <>
+      {stepCard(1, "Paciente em fase terminal?", (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div style={chipStyle(terminal === "sim")} onClick={() => { setTerminal("sim"); setAbvd(() => new Set<string>()); setAivd(() => new Set<string>()); setChronic(""); setHealth(null); setEffort(null); setSports(null) }}>sim</div>
+          <div style={chipStyle(terminal === "não")} onClick={() => { setTerminal("não"); setAbvd(() => new Set<string>()); setAivd(() => new Set<string>()); setChronic(""); setHealth(null); setEffort(null); setSports(null) }}>não</div>
+        </div>
+      ))}
+
+      {showAbvd && stepCard(2, `ABVDs com ajuda de outra pessoa (${abvd.size}/5)`, (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {CFS_ABVD.map(item => (
+            <div key={item} style={chipStyle(abvd.has(item), true)} onClick={() => toggleAbvd(item)}>
+              {item}{abvd.has(item) ? " ✕" : ""}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {showAivd && stepCard(3, `AIVDs com ajuda de outra pessoa (${aivd.size}/6)`, (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {CFS_AIVD.map(item => (
+            <div key={item} style={chipStyle(aivd.has(item), true)} onClick={() => toggleAivd(item)}>
+              {item}{aivd.has(item) ? " ✕" : ""}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {showChronic && stepCard(4, "Número de condições crônicas", (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div style={chipStyle(chronic === "0-9")} onClick={() => setChronic("0-9")}>0–9</div>
+          <div style={chipStyle(chronic === "10+")} onClick={() => setChronic("10+")}>≥ 10</div>
+        </div>
+      ))}
+
+      {showHealth && stepCard(5, "Autopercepção de saúde", (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {(["excelente", "muito_boa", "boa", "regular_ruim"] as const).map(opt => (
+            <div key={opt} style={chipStyle(health === opt)} onClick={() => { setHealth(opt); setEffort(null); setSports(null) }}>
+              {opt === "muito_boa" ? "muito boa" : opt === "regular_ruim" ? "regular/ruim" : opt}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {showEffort && stepCard(6, "\"Tudo exige esforço\"?", (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {(["todo_tempo", "as_vezes", "raramente_nunca"] as const).map(opt => (
+            <div key={opt} style={chipStyle(effort === opt)} onClick={() => { setEffort(opt); setSports(null) }}>
+              {opt === "todo_tempo" ? "o tempo todo" : opt === "as_vezes" ? "às vezes" : "raramente/nunca"}
+            </div>
+          ))}
+        </div>
+      ))}
+
+      {showSports && stepCard(7, "Pratica atividades esportivas ou recreativas moderadas/intensas?", (
+        <div style={{ display: "flex", gap: "8px" }}>
+          <div style={chipStyle(sports === "sim")} onClick={() => setSports("sim")}>sim</div>
+          <div style={chipStyle(sports === "não")} onClick={() => setSports("não")}>não</div>
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style }: Props, ref) {
   const [formFields, setFormFields] = useState<FormField[]>([])
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
+  const [activeTab, setActiveTab] = useState<"avaliacao" | "cage" | "gds15" | "cfs">("avaliacao")
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [cfsTerminal, setCfsTerminal] = useState<"sim" | "não" | null>(null)
+  const [cfsAbvd, setCfsAbvd] = useState<Set<string>>(new Set())
+  const [cfsAivd, setCfsAivd] = useState<Set<string>>(new Set())
+  const [cfsChronic, setCfsChronic] = useState("")
+  const [cfsHealth, setCfsHealth] = useState<"excelente" | "muito_boa" | "boa" | "regular_ruim" | null>(null)
+  const [cfsEffort, setCfsEffort] = useState<"todo_tempo" | "as_vezes" | "raramente_nunca" | null>(null)
+  const [cfsSports, setCfsSports] = useState<"sim" | "não" | null>(null)
 
   useEffect(() => {
     fetch("/contents/geriatria.json")
@@ -318,6 +493,30 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     el.style.height = "auto"
     el.style.height = `${el.scrollHeight}px`
   }, [markdownOutput])
+
+  const computeCFS = (): number | null => {
+    if (cfsTerminal === null) return null
+    const abvd = cfsAbvd.size
+    if (cfsTerminal === "sim") return abvd <= 2 ? 9 : 8
+    if (abvd >= 3) return 7
+    if (abvd >= 1) return 6
+    const aivd = cfsAivd.size
+    if (aivd >= 5) return 6
+    if (aivd >= 1) return 5
+    if (cfsChronic === "") return null
+    if (cfsChronic === "10+") return 4
+    if (cfsHealth === null) return null
+    if (cfsHealth === "regular_ruim") return 4
+    if (cfsEffort === null) return null
+    if (cfsEffort === "todo_tempo") return 4
+    if (cfsHealth === "excelente") {
+      if (cfsSports === null) return null
+      return cfsSports === "sim" ? 1 : 2
+    }
+    if (cfsSports === null) return null
+    return cfsSports === "sim" ? 2 : 3
+  }
+  const cfsScore = computeCFS()
 
   const generateSectionMarkdown = useCallback((sectionId: string, sectionLabel: string): string | null => {
     const campos = formFields.filter(f => (f.section || "geral") === sectionId && f.type !== "divider")
@@ -354,8 +553,41 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       return `- CAGE: ${total}`
     }
 
+    if (sectionId === "gds15") {
+      const gdsFilled = formFields.some(f => f.section === "gds15" && f.type === "single_choice" && f.value && f.value !== "")
+      if (!gdsFilled) return null
+      const total = computeGDSTotal(formFields)
+      const classif = total <= 4 ? "Normal" : total <= 9 ? "Depressão leve" : "Depressão moderada a grave"
+      return `- GDS-15: ${total} (${classif})`
+    }
+
+    if (sectionId === "cfs") {
+      if (cfsScore === null) return null
+      const parts = [`- CFS: ${cfsScore} — ${CFS_LABELS[cfsScore]}`]
+      parts.push(`  - Terminal: ${cfsTerminal}`)
+      parts.push(`  - ABVDs com ajuda: ${cfsAbvd.size}/5`)
+      if (cfsTerminal === "não") {
+        parts.push(`  - AIVDs com ajuda: ${cfsAivd.size}/6`)
+        if (cfsAivd.size === 0) {
+          parts.push(`  - Condições crônicas: ${cfsChronic === "10+" ? "≥ 10" : "0–9"}`)
+          if (cfsChronic === "0-9") {
+            const healthLabel = cfsHealth === "muito_boa" ? "Muito boa" : cfsHealth === "boa" ? "Boa" : cfsHealth === "excelente" ? "Excelente" : "Regular/ruim"
+            parts.push(`  - Autopercepção: ${healthLabel}`)
+            if (cfsHealth !== "regular_ruim") {
+              const effortLabel = cfsEffort === "todo_tempo" ? "O tempo todo" : cfsEffort === "as_vezes" ? "Às vezes" : "Raramente/nunca"
+              parts.push(`  - Exigência de esforço: ${effortLabel}`)
+              if (cfsEffort !== "todo_tempo") {
+                parts.push(`  - Atividades esportivas: ${cfsSports === "sim" ? "Sim" : "Não"}`)
+              }
+            }
+          }
+        }
+      }
+      return parts.join("\n")
+    }
+
     return md.trimEnd()
-  }, [formFields])
+  }, [formFields, cfsScore, cfsTerminal, cfsAbvd, cfsAivd, cfsChronic, cfsHealth, cfsEffort, cfsSports])
 
   const generateMarkdown = useCallback(() => {
     return secoes
@@ -368,7 +600,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   getOutputRef.current = (groupId: string): string | null => {
     if (groupId === "tudo") {
       return secoes
-        .filter(s => s.id !== "ivcf20" && s.id !== "cage")
+        .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs")
         .map(s => generateSectionMarkdown(s.id, s.label))
         .filter(Boolean)
         .join("\n\n") || null
@@ -382,6 +614,13 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     getOutput: (groupId: string) => getOutputRef.current(groupId),
     reset() {
       setCopiado(false)
+      setCfsTerminal(null)
+      setCfsAbvd(new Set())
+      setCfsAivd(new Set())
+      setCfsChronic("")
+      setCfsHealth(null)
+      setCfsEffort(null)
+      setCfsSports(null)
       fetch("/contents/geriatria.json")
         .then((res) => res.json())
         .then((data) => {
@@ -545,6 +784,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const ivcfTotal = computeIVCFTotal(formFields)
   const cageTotal = computeCAGETotal(formFields)
   const cageFilled = formFields.some(f => f.section === "cage" && f.type === "single_choice" && f.value && f.value !== "")
+  const gds15Total = computeGDSTotal(formFields)
+  const gds15Filled = formFields.some(f => f.section === "gds15" && f.type === "single_choice" && f.value && f.value !== "")
 
   const ivcfClassificacao = ivcfTotal === 0
     ? ""
@@ -561,11 +802,50 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       <div style={styles.title}>checklist da geriatria</div>
       <div style={styles.subtitle}>baseado na caderneta da pessoa idosa</div>
 
+      <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
+        {([["avaliacao", "Avaliação"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
+          <div
+            key={key}
+            onClick={() => setActiveTab(key)}
+            style={{
+              padding: "6px 16px",
+              borderRadius: "20px",
+              fontSize: "13px",
+              fontWeight: activeTab === key ? 600 : 400,
+              cursor: "pointer",
+              userSelect: "none",
+              background: activeTab === key ? "rgba(0, 184, 73, 0.12)" : "var(--geriatria-input-bg)",
+              border: `1px solid ${activeTab === key ? "#00cc52" : "var(--geriatria-border)"}`,
+              color: activeTab === key ? "#00b849" : "var(--geriatria-text-muted)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+
       <div className="geriatria-root">
         <div className="geriatria-fields-grid">
-          {formFields.length > 0 && (
+          {activeTab === "cfs" ? (
+            <CFSWizard
+              terminal={cfsTerminal} setTerminal={setCfsTerminal}
+              abvd={cfsAbvd} setAbvd={setCfsAbvd}
+              aivd={cfsAivd} setAivd={setCfsAivd}
+              chronic={cfsChronic} setChronic={setCfsChronic}
+              health={cfsHealth} setHealth={setCfsHealth}
+              effort={cfsEffort} setEffort={setCfsEffort}
+              sports={cfsSports} setSports={setCfsSports}
+            />
+          ) : formFields.length > 0 && (
             <>
-              {groupFieldsBySection(formFields).map(({ id, label, fields }) => (
+              {groupFieldsBySection(
+                activeTab === "cage"
+                  ? formFields.filter(f => f.section === "cage")
+                  : activeTab === "gds15"
+                    ? formFields.filter(f => f.section === "gds15")
+                    : formFields.filter(f => f.section !== "cage" && f.section !== "gds15")
+              ).map(({ id, label, fields }) => (
                 <React.Fragment key={id}>
                   <div style={styles.sectionLabel}>{label}</div>
                   <div className="geriatria-form-section">
@@ -581,7 +861,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           {formFields.length > 0 && (
             <>
               {/* Score cards row */}
-              <div style={{ display: "grid", gridTemplateColumns: cageFilled ? "1fr 1fr" : "1fr", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "10px" }}>
+                {activeTab === "avaliacao" && (
                 <div style={{
                   background: ivcfTotal === 0 ? "var(--geriatria-card-bg)" : (
                     ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.08)" :
@@ -610,8 +891,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                      ivcfClassificacao === "moderada" ? "Risco moderado" : "Risco alto"}
                   </div>
                 </div>
-
-                {cageFilled && (
+                )}
+                {activeTab === "cage" && cageFilled && (
                   <div style={{
                     background: cageTotal < 2 ? "rgba(0, 184, 73, 0.08)" : "rgba(224, 36, 36, 0.08)",
                     border: `1px solid ${
@@ -632,8 +913,57 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                     </div>
                   </div>
                 )}
+                {activeTab === "gds15" && gds15Filled && (() => {
+                  const gdsColor = gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424"
+                  return (
+                  <div style={{
+                    background: gds15Total <= 4 ? "rgba(0, 184, 73, 0.08)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
+                    border: `1px solid ${
+                      gds15Total <= 4 ? "rgba(0, 184, 73, 0.35)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
+                    }`,
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    textAlign: "center" as const,
+                  }}>
+                    <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+                      GDS-15
+                    </div>
+                    <div style={{ fontSize: "28px", fontWeight: 800, color: gdsColor }}>
+                      {gds15Total} / 15
+                    </div>
+                    <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+                      {gds15Total <= 4 ? "Normal" : gds15Total <= 9 ? "Depressão leve" : "Depressão moderada a grave"}
+                    </div>
+                  </div>
+                  )
+                })()}
+                {activeTab === "cfs" && cfsScore !== null && (() => {
+                  const cfsColor = cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : cfsScore <= 7 ? "#e02424" : "#7c2d12"
+                  return (
+                  <div style={{
+                    background: cfsScore <= 3 ? "rgba(0, 184, 73, 0.08)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
+                    border: `1px solid ${
+                      cfsScore <= 3 ? "rgba(0, 184, 73, 0.35)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
+                    }`,
+                    borderRadius: "12px",
+                    padding: "12px 16px",
+                    textAlign: "center" as const,
+                  }}>
+                    <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+                      CFS
+                    </div>
+                    <div style={{ fontSize: "28px", fontWeight: 800, color: cfsColor }}>
+                      {cfsScore} / 9
+                    </div>
+                    <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+                      {CFS_LABELS[cfsScore]}
+                    </div>
+                  </div>
+                  )
+                })()}
               </div>
 
+              {activeTab === "avaliacao" ? (
               <div
                 className="geriatria-result-card"
                 style={{
@@ -712,6 +1042,98 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   />
                 )}
               </div>
+              ) : activeTab === "cage" ? (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: cageTotal >= 2 ? "rgba(224, 36, 36, 0.06)" : "var(--geriatria-card-bg)",
+                  border: `1px solid ${cageTotal >= 2 ? "rgba(224, 36, 36, 0.3)" : "var(--geriatria-border)"}`,
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  CAGE
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {cageFilled ? (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: "24px", color: cageTotal >= 2 ? "#e02424" : "#00b849", marginBottom: "4px" }}>
+                        {cageTotal} / 4
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                        {cageTotal >= 2 ? "Resultado positivo — considerar avaliação para uso de álcool/substâncias" : "Resultado negativo — baixo risco"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Responda as perguntas do CAGE ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              ) : activeTab === "cfs" ? (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: cfsScore === null ? "var(--geriatria-card-bg)" : cfsScore <= 3 ? "rgba(0, 184, 73, 0.06)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.06)" : "rgba(224, 36, 36, 0.06)",
+                  border: `1px solid ${
+                    cfsScore === null ? "var(--geriatria-border)" :
+                    cfsScore <= 3 ? "rgba(0, 184, 73, 0.3)" :
+                    cfsScore <= 5 ? "rgba(234, 179, 8, 0.3)" : "rgba(224, 36, 36, 0.3)"
+                  }`,
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  CFS
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {cfsScore !== null ? (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: "24px", color: cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : "#e02424", marginBottom: "4px" }}>
+                        {cfsScore} — {CFS_LABELS[cfsScore]}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                        {cfsScore <= 3 ? "Sem fragilidade significativa" : cfsScore <= 5 ? "Fragilidade leve a muito leve — acompanhamento" : cfsScore <= 7 ? "Fragilidade moderada a grave — intervenção indicada" : "Fragilidade muito grave / fase terminal"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Siga a árvore de classificação ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              ) : (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: gds15Total <= 4 ? "var(--geriatria-card-bg)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.06)" : "rgba(224, 36, 36, 0.06)",
+                  border: `1px solid ${
+                    gds15Total <= 4 ? "var(--geriatria-border)" :
+                    gds15Total <= 9 ? "rgba(234, 179, 8, 0.3)" : "rgba(224, 36, 36, 0.3)"
+                  }`,
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  GDS-15
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {gds15Filled ? (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: "24px", color: gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424", marginBottom: "4px" }}>
+                        {gds15Total} / 15
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                        {gds15Total <= 4 ? "Normal — sem indicativos de depressão" : gds15Total <= 9 ? "Depressão leve — considerar avaliação complementar" : "Depressão moderada a grave — encaminhamento indicado"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Responda as perguntas da GDS-15 ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              )}
             </>
           )}
         </div>

@@ -37,6 +37,9 @@ export const COMPANIONS: CompanionConfig[] = [
         component: CalculadoraPREVENT,
         outputGroups: [
             { id: "risco", label: "PREVENT", targetSection: "objetivo" },
+            { id: "ipss", label: "IPSS", targetSection: "objetivo" },
+            { id: "gad7", label: "GAD-7", targetSection: "objetivo" },
+            { id: "phq9", label: "PHQ-9", targetSection: "objetivo" },
         ],
     },
     {
@@ -61,6 +64,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "tudo", label: "avaliação", targetSection: "subjetivo" },
             { id: "ivcf20", label: "IVCF-20", targetSection: "objetivo" },
             { id: "cage", label: "CAGE", targetSection: "objetivo" },
+            { id: "gds15", label: "GDS-15", targetSection: "objetivo" },
+            { id: "cfs", label: "CFS", targetSection: "objetivo" },
         ],
     },
     {

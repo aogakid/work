@@ -17,7 +17,7 @@ Regras obrigatórias:
 - A Id (identificação) deve conter todas as informações da ID original
 - Agrupar na HDA queixas relacionadas em parágrafos
 - Não trazer dados do Objetivo para o Subjetivo, nem duplicar informações já presentes
-- As informações de Avaliação/Análise e Plano/Conduta devem ser concisas e constar no tópico de pendências
+- As informações de Avaliação/Análise e Plano/Conduta devem ser concisas e constar no tópico de pendências anteriores
 - Campos sem informação: $
 - Output apenas em markdown puro, sem negritos
 
@@ -47,10 +47,8 @@ Modelo de output:
     - 
   - Medicamentos
     - 
-  - Alergias
-    - 
-  - Vacinação
-    - 
+  - Alergias: 
+  - Vacinação: 
 - AF: 
 - HV
   - Etilismo: 
@@ -64,6 +62,8 @@ Modelo de output:
   - Sono: 
   - Humor: 
   - Lazer: 
+- Pendências anteriores
+  - 
 
 ## Objetivo
 - Exame físico
@@ -82,10 +82,7 @@ Modelo de output:
   - Imagem
     - 
   - Escores
-    - 
-
-## Pendências anteriores
-- `
+    - `
 
 const TEMPLATE_APPENDIX = `
 

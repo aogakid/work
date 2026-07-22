@@ -774,6 +774,141 @@
     "value": ""
   },
   {
+    "section": "gds15",
+    "id": "gds15_01",
+    "label": "está satisfeito(a) com a sua vida?",
+    "labelMd": "GDS-01 - Satisfeito(a) com a vida",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_02",
+    "label": "abandonou muitas das suas atividades e interesses?",
+    "labelMd": "GDS-02 - Abandonou atividades",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_03",
+    "label": "sente que sua vida está vazia?",
+    "labelMd": "GDS-03 - Vida vazia",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_04",
+    "label": "anda muitas vezes aborrecido(a)?",
+    "labelMd": "GDS-04 - Aborrecido(a)",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_05",
+    "label": "está bem-disposto(a)/bem-humorado(a) a maior parte do tempo?",
+    "labelMd": "GDS-05 - Bem-humorado(a)",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_06",
+    "label": "anda com medo que lhe vá acontecer alguma coisa má?",
+    "labelMd": "GDS-06 - Medo",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_07",
+    "label": "sente-se feliz a maior parte do tempo?",
+    "labelMd": "GDS-07 - Feliz",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_08",
+    "label": "sente-se desamparado(a)?",
+    "labelMd": "GDS-08 - Desamparado(a)",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_09",
+    "label": "prefere ficar em casa, em vez de sair e fazer outras coisas?",
+    "labelMd": "GDS-09 - Fica em casa",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_10",
+    "label": "sente que tem mais problemas de memória do que as outras pessoas?",
+    "labelMd": "GDS-10 - Problemas de memória",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_11",
+    "label": "sente que é maravilhoso estar vivo(a)?",
+    "labelMd": "GDS-11 - Maravilhoso estar vivo",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_12",
+    "label": "sente-se inútil nas condições atuais?",
+    "labelMd": "GDS-12 - Inútil",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_13",
+    "label": "sente-se cheio(a) de energia?",
+    "labelMd": "GDS-13 - Cheio(a) de energia",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_14",
+    "label": "sente que a sua situação é desesperada?",
+    "labelMd": "GDS-14 - Situação desesperada",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
+    "section": "gds15",
+    "id": "gds15_15",
+    "label": "acha que a maioria das pessoas está melhor que o(a) senhor(a)?",
+    "labelMd": "GDS-15 - Outros melhores",
+    "type": "single_choice",
+    "options": ["sim", "não"],
+    "value": ""
+  },
+  {
     "section": "cage",
     "id": "cage_diminuir",
     "label": "já sentiu que deveria diminuir a quantidade de bebida",

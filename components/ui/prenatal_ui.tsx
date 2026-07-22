@@ -1041,7 +1041,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset() {
-            setDum(""); setTocado(false); setCopiado(false)
+            setDum(""); setTocado(false)
         },
     }), [])
 

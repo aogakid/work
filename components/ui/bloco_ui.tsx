@@ -103,6 +103,7 @@ function parseSections(text: string): { title: string; sections: Section[] } {
     const sectionChunks = body.split(/^## /m)
 
     const sections = createDefaultSections()
+    const extraChunks: string[] = []
     for (const chunk of sectionChunks) {
         if (!chunk.trim()) continue
         const newlineIdx = chunk.indexOf("\n")
@@ -111,6 +112,15 @@ function parseSections(text: string): { title: string; sections: Section[] } {
         const match = sections.find(s => s.title.toLowerCase() === header.toLowerCase())
         if (match) {
             match.content = content.trim()
+        } else if (content.trim()) {
+            extraChunks.push(`## ${header}\n${content.trim()}`)
+        }
+    }
+    if (extraChunks.length) {
+        const plano = sections.find(s => s.id === "plano")
+        if (plano) {
+            const extra = extraChunks.join("\n\n")
+            plano.content = plano.content ? plano.content + "\n\n" + extra : extra
         }
     }
 
@@ -337,6 +347,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             setTitle(parsed.title)
             setSections(parsed.sections)
             initialContentRef.current = cleaned
+            externalUpdateRef.current = true
+            bumpAllVersions()
         } else {
             initialContentRef.current = ""
         }
@@ -548,9 +560,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         const range = selection.getRangeAt(0)
         if (!range) return
         const el = sectionEditorRefs.current[sectionId]
-        const currentBlock = range.startContainer.parentElement === el
-            ? (range.startContainer as HTMLElement)
-            : range.startContainer.parentElement
+        let currentBlock: HTMLElement | null = range.startContainer as HTMLElement
+        while (currentBlock && currentBlock.parentElement !== el) {
+            currentBlock = currentBlock.parentElement as HTMLElement
+        }
 
         if (e.key === "Enter" && currentBlock) {
             const text = currentBlock.innerText || ""

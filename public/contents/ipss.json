@@ -1,0 +1,82 @@
+[
+  {
+    "id": "ipss_vazio",
+    "label": "Sensação de esvaziamento incompleto da bexiga",
+    "labelMd": "Vazio incompleto",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_frequencia",
+    "label": "Polaciúria (urina em menos de 2 horas após a última)",
+    "labelMd": "Frequência",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_intermitencia",
+    "label": "Intermitência urinária (jato cortado)",
+    "labelMd": "Intermitência",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_urgencia",
+    "label": "Urgência urinária (dificuldade de segurar)",
+    "labelMd": "Urgência",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_fraqueza",
+    "label": "Fraqueza do jato urinário",
+    "labelMd": "Jato fraco",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_esforco",
+    "label": "Estrangúria (esforço para começar a urinar)",
+    "labelMd": "Esforço",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 em cada 5 vezes", "Menos da metade", "Metade das vezes", "Mais da metade", "Quase sempre"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_nicturia",
+    "label": "Nictúria (necessidade de despertar durante a noite para urinar)",
+    "labelMd": "Nictúria",
+    "type": "single_choice",
+    "options": ["Nenhuma", "1 vez", "2 vezes", "3 vezes", "4 vezes", "5 ou mais vezes"],
+    "value": "Nenhuma",
+    "section": "sintomas",
+    "pesos": [0, 1, 2, 3, 4, 5]
+  },
+  {
+    "id": "ipss_qol",
+    "label": "Se pudesse viver com seu problema urinário do jeito que está, como se sentiria?",
+    "labelMd": "Qualidade de vida",
+    "type": "single_choice",
+    "options": ["Maravilhoso", "Satisfeito", "Neutro", "Insatisfeito", "Muito infeliz", "Terrível", "Pior possível"],
+    "value": "Maravilhoso",
+    "section": "qualidade_de_vida",
+    "pesos": [0, 1, 2, 3, 4, 5, 6]
+  }
+]

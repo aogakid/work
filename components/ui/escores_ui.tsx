@@ -96,6 +96,58 @@ const injectStyles = `
   input[type="number"]::-webkit-scrollbar {
     display: none;
   }
+
+  .ipss-slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0 4px 0;
+    grid-column: 1 / -1;
+  }
+  .ipss-slider-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--prevent-text-muted);
+    font-weight: 600;
+  }
+  .ipss-slider-value {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    min-height: 20px;
+    transition: color 0.2s ease;
+  }
+  .ipss-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 16px;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .ipss-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    cursor: pointer;
+    background: var(--ipss-accent, var(--prevent-text-muted));
+  }
+  .ipss-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    cursor: pointer;
+    background: var(--ipss-accent, var(--prevent-text-muted));
+  }
 `
 
 const styles = {
@@ -276,7 +328,25 @@ interface ResultadoEscore {
     seguimento: string;
 }
 
+interface ScoreQuestion {
+    id: string
+    label: string
+    labelMd?: string
+    type?: string
+    options: string[]
+    value: string
+    section?: string
+    pesos: number[]
+}
+
+type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9"
+
 const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function CalculadoraPREVENT({ style }: Props, ref) {
+    const [activeTab, setActiveTab] = useState<ScoreTool>("prevent")
+    const [ipssQuestions, setIpssQuestions] = useState<ScoreQuestion[]>([])
+    const [gad7Questions, setGad7Questions] = useState<ScoreQuestion[]>([])
+    const [phq9Questions, setPhq9Questions] = useState<ScoreQuestion[]>([])
+
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
     const [creatinina, setCreatinina] = useState("")
@@ -326,19 +396,87 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         })
     }, [])
 
+    useEffect(() => {
+        fetch("/contents/ipss.json")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setIpssQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+            })
+            .catch(() => setIpssQuestions([]))
+    }, [])
+
+    useEffect(() => {
+        fetch("/contents/gad7.json")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setGad7Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+            })
+            .catch(() => setGad7Questions([]))
+    }, [])
+
+    useEffect(() => {
+        fetch("/contents/phq9.json")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setPhq9Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+            })
+            .catch(() => setPhq9Questions([]))
+    }, [])
+
+    const scoreTool = useCallback((questions: ScoreQuestion[]) => {
+        const total = questions.reduce((acc, q) => {
+            const idx = q.options.indexOf(q.value)
+            return acc + (idx >= 0 ? q.pesos[idx] : 0)
+        }, 0)
+        const maxScore = questions.reduce((acc, q) => acc + Math.max(...q.pesos), 0)
+        return { total, maxScore }
+    }, [])
+
+    const ipss = scoreTool(ipssQuestions)
+    const ipssSeverity = ipss.total <= 7 ? "Leve" : ipss.total <= 19 ? "Moderado" : "Grave"
+    const ipssQol = ipssQuestions.find(q => q.id === "ipss_qol")
+    const ipssQolIdx = ipssQol ? ipssQol.options.indexOf(ipssQol.value) : -1
+
+    const gad7 = scoreTool(gad7Questions)
+    const gad7Severity = gad7.total <= 4 ? "Mínimo" : gad7.total <= 9 ? "Leve" : gad7.total <= 14 ? "Moderado" : "Grave"
+
+    const phq9 = scoreTool(phq9Questions)
+    const phq9Severity = phq9.total <= 4 ? "Mínimo" : phq9.total <= 9 ? "Leve" : phq9.total <= 14 ? "Moderado" : phq9.total <= 19 ? "Moderadamente grave" : "Grave"
+
+    const formatScoreOutput = useCallback((name: string, questions: ScoreQuestion[], s: { total: number; maxScore: number }, severity: string, extra?: string) => {
+        const answered = questions.filter(q => q.value !== "")
+        if (!answered.length) return null
+        const lines = answered.map(q => {
+            const idx = q.options.indexOf(q.value)
+            const peso = idx >= 0 ? q.pesos[idx] : 0
+            return `  - ${q.labelMd || q.label}: ${q.value} (${peso})`
+        })
+        lines.push(`  - ${name}: ${s.total}/${s.maxScore} (${severity})`)
+        if (extra) lines.push(extra)
+        return lines.join("\n")
+    }, [])
+
     useImperativeHandle(ref, () => ({
         getOutput(groupId: string): string | null {
             if (groupId === "risco" && resultado) {
                 const cat = resultado.categoriaRisco.toLowerCase()
                 return `  - PREVENT: ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
             }
+            if (groupId === "ipss") return formatScoreOutput("IPSS", ipssQuestions, ipss, ipssSeverity, ipssQolIdx >= 0 ? `  - QoL: ${ipssQolIdx}/6` : undefined)
+            if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7Questions, gad7, gad7Severity)
+            if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9Questions, phq9, phq9Severity)
             return null
         },
         reset() {
             setIdade(""); setSexo(""); setCreatinina(""); setPeso(""); setAltura(""); setImc(""); setAsc(""); setTfg(""); setPas(""); setColTotal(""); setHdl(""); setTriglicerideos(""); setLdl(""); setHba1c(""); setRac("")
             setPrevSecundaria(false); setHiperFam(false); setDiabetes(false); setFumante(false); setAntiHipertensivos(false); setUsoEstatinas(false)
             setResultado(null)
-            setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false })
+            setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false, colTotal: false, hdl: false, triglicerideos: false, hba1c: false })
+            const resetTool = (url: string, setter: (q: ScoreQuestion[]) => void) =>
+                fetch(url).then(r => r.json()).then(d => { if (Array.isArray(d)) setter(d.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" }))) }).catch(() => setter([]))
+            resetTool("/contents/ipss.json", setIpssQuestions)
+            resetTool("/contents/gad7.json", setGad7Questions)
+            resetTool("/contents/phq9.json", setPhq9Questions)
         },
     }))
 
@@ -1009,10 +1147,46 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         usoEstatinas,
     ])
 
+    const updateIpss = useCallback((questionId: string, value: string) => {
+        setIpssQuestions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
+    }, [])
+
+    const updateGad7 = useCallback((questionId: string, value: string) => {
+        setGad7Questions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
+    }, [])
+
+    const updatePhq9 = useCallback((questionId: string, value: string) => {
+        setPhq9Questions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
+    }, [])
+
     return (
         <div style={{ ...styles.container, ...style }} onFocus={() => { touchedRef.current = true }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
+            <div style={{ display: "flex", gap: "4px", marginBottom: "16px", flexWrap: "wrap" }}>
+                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"]] as const).map(([key, label]) => (
+                    <div
+                        key={key}
+                        onClick={() => setActiveTab(key)}
+                        style={{
+                            padding: "6px 16px",
+                            borderRadius: "20px",
+                            fontSize: "13px",
+                            fontWeight: activeTab === key ? 600 : 400,
+                            cursor: "pointer",
+                            userSelect: "none",
+                            background: activeTab === key ? "rgba(224, 36, 36, 0.18)" : "var(--prevent-input-bg)",
+                            border: `1px solid ${activeTab === key ? "#e02424" : "var(--prevent-border)"}`,
+                            color: activeTab === key ? "#ff4d4d" : "var(--prevent-text-muted)",
+                            transition: "all 0.15s ease",
+                        }}
+                    >
+                        {label}
+                    </div>
+                ))}
+            </div>
+
+            {activeTab === "prevent" ? (<>
             <div style={styles.title}>
                 PREVENT, CKD-EPI, IMC, LDL
             </div>
@@ -1503,6 +1677,155 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     )}
                 </div>
             </div>
+            </>) : (<>
+            {(() => {
+                const toolConfig: Record<string, {
+                    title: string; subtitle: string; questions: ScoreQuestion[];
+                    total: number; maxScore: number; severity: string;
+                    ranges: { max: number; label: string; color: string }[];
+                    interpretation: (total: number) => string[];
+                    update: (id: string, val: string) => void;
+                    extra?: React.ReactNode;
+                } | null> = {
+                    ipss: {
+                        title: "IPSS (International Prostate Symptom Score)",
+                        subtitle: "sobre os últimos 30 dias, quantas vezes teve:",
+                        questions: ipssQuestions, total: ipss.total, maxScore: ipss.maxScore,
+                        severity: ipssSeverity,
+                        ranges: [
+                            { max: 7, label: "Leve", color: "#00b849" },
+                            { max: 19, label: "Moderado", color: "#ff9900" },
+                            { max: 35, label: "Grave", color: "#e62219" },
+                        ],
+                        interpretation: (t) => [
+                            t <= 7 ? "Sintomas leves — observação clínica" : t <= 19 ? "Sintomas moderados — considerar tratamento" : "Sintomas graves — tratamento indicado",
+                        ],
+                        update: updateIpss,
+                        extra: ipssQolIdx >= 0 ? (
+                            <div style={{ marginTop: "12px", padding: "10px 12px", borderRadius: "8px", background: "rgba(120,120,120,0.06)", border: "1px solid var(--prevent-border)" }}>
+                                <div style={styles.condutaTitle}>Qualidade de Vida</div>
+                                <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--prevent-text)" }}>{ipssQolIdx} <span style={{ fontSize: "13px", fontWeight: 400, color: "var(--prevent-text-muted)" }}>/ 6</span></div>
+                                {ipssQolIdx >= 4 && <div style={{ ...styles.condutaTitle, marginTop: "6px", color: "#e62219" }}>Paciente refere alta insatisfação</div>}
+                            </div>
+                        ) : undefined,
+                    },
+                    gad7: {
+                        title: "GAD-7 (Generalized Anxiety Disorder)",
+                        subtitle: "nas últimas 2 semanas, com que frequência:",
+                        questions: gad7Questions, total: gad7.total, maxScore: gad7.maxScore,
+                        severity: gad7Severity,
+                        ranges: [
+                            { max: 4, label: "Mínimo", color: "#00b849" },
+                            { max: 9, label: "Leve", color: "#7cb342" },
+                            { max: 14, label: "Moderado", color: "#ff9900" },
+                            { max: 21, label: "Grave", color: "#e62219" },
+                        ],
+                        interpretation: (t) => [
+                            t <= 4 ? "Ansiedade mínima — monitoramento" : t <= 9 ? "Ansiedade leve — considerar avaliação" : t <= 14 ? "Ansiedade moderada — tratamento indicado" : "Ansiedade grave — encaminhamento psiquiátrico",
+                        ],
+                        update: updateGad7,
+                    },
+                    phq9: {
+                        title: "PHQ-9 (Patient Health Questionnaire)",
+                        subtitle: "nas últimas 2 semanas, com que frequência:",
+                        questions: phq9Questions, total: phq9.total, maxScore: phq9.maxScore,
+                        severity: phq9Severity,
+                        ranges: [
+                            { max: 4, label: "Mínimo", color: "#00b849" },
+                            { max: 9, label: "Leve", color: "#7cb342" },
+                            { max: 14, label: "Moderado", color: "#ff9900" },
+                            { max: 19, label: "Mod.-grave", color: "#f57c00" },
+                            { max: 27, label: "Grave", color: "#e62219" },
+                        ],
+                        interpretation: (t) => {
+                            const lines = [
+                                t <= 4 ? "Depressão mínima" : t <= 9 ? "Depressão leve" : t <= 14 ? "Depressão moderada" : t <= 19 ? "Depressão moderadamente grave" : "Depressão grave",
+                            ]
+                            if (phq9Questions.find(q => q.id === "phq9_morte" && q.options.indexOf(q.value) >= 1)) {
+                                lines.push("Atenção: avaliar risco suicida (item 9)")
+                            }
+                            return lines
+                        },
+                        update: updatePhq9,
+                    },
+                }
+                const cfg = toolConfig[activeTab]
+                if (!cfg) return null
+                const currentRange = cfg.ranges.find(r => cfg.total <= r.max) || cfg.ranges[cfg.ranges.length - 1]
+                const pct = cfg.maxScore > 0 ? (cfg.total / cfg.maxScore) * 100 : 0
+                return (<>
+                    <div style={styles.title}>{cfg.title}</div>
+                    <div style={styles.subtitle}>{cfg.subtitle}</div>
+                    <div className="prevent-root">
+                        <div className="prevent-fields-grid">
+                            {cfg.questions.map(q => {
+                                const idx = q.value !== "" ? q.options.indexOf(q.value) : -1
+                                const hue = idx >= 0 ? Math.round(120 - (idx / (q.options.length - 1)) * 120) : 0
+                                const accent = idx >= 0 ? `hsl(${hue}, 70%, 42%)` : "var(--prevent-text-muted)"
+                                return (
+                                    <React.Fragment key={q.id}>
+                                        {q.section === "qualidade_de_vida" && cfg.questions.indexOf(q) === cfg.questions.findIndex(x => x.section === "qualidade_de_vida") && (
+                                            <div style={styles.sectionLabel}>Qualidade de Vida</div>
+                                        )}
+                                        <div className="ipss-slider-row">
+                                            <label className="ipss-slider-label">{q.label}</label>
+                                            <input
+                                                type="range"
+                                                className="ipss-range"
+                                                min={0}
+                                                max={q.options.length - 1}
+                                                step={1}
+                                                value={idx >= 0 ? idx : 0}
+                                                onChange={e => {
+                                                    const newIdx = parseInt(e.target.value)
+                                                    cfg.update(q.id, q.value === q.options[newIdx] ? "" : q.options[newIdx])
+                                                }}
+                                                style={{
+                                                    ["--ipss-accent" as string]: accent,
+                                                    background: idx >= 0
+                                                        ? `linear-gradient(to right, ${accent} 0%, ${accent} ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) ${(idx / (q.options.length - 1)) * 100}%, var(--prevent-border) 100%)`
+                                                        : `var(--prevent-border)`,
+                                                }}
+                                            />
+                                            <div className="ipss-slider-value" style={{ color: accent }}>
+                                                {idx >= 0 ? q.options[idx] : "—"}
+                                            </div>
+                                        </div>
+                                    </React.Fragment>
+                                )
+                            })}
+                        </div>
+                        <div>
+                            <div
+                                className="prevent-result-card"
+                                style={{
+                                    background: `${currentRange.color}14`,
+                                    border: `1px solid ${currentRange.color}73`,
+                                }}
+                            >
+                                <span className="prevent-badge-risco" style={{ background: "rgba(255,255,255,0.6)", color: currentRange.color, border: `1px solid ${currentRange.color}73` }}>
+                                    {currentRange.label}
+                                </span>
+                                <div style={styles.label}>Pontuação</div>
+                                <div style={styles.scoreValue}>{cfg.total}<span style={{ fontSize: "16px", fontWeight: 400, color: "var(--prevent-text-muted)" }}> / {cfg.maxScore}</span></div>
+                                <div style={{ marginTop: "8px", borderRadius: "6px", overflow: "hidden", height: "6px", background: "var(--prevent-border)" }}>
+                                    <div style={{ height: "100%", width: `${pct}%`, background: currentRange.color, transition: "width 0.3s ease, background 0.3s ease" }} />
+                                </div>
+                                <div className="conduta-box">
+                                    <div style={styles.ldlAlvoBox}>
+                                        <div style={{ ...styles.condutaTitle, color: currentRange.color }}>Interpretação</div>
+                                        {cfg.interpretation(cfg.total).map((line, i) => (
+                                            <div key={i} style={{ fontSize: "14px", fontWeight: i === 0 ? 600 : 400, color: "var(--prevent-text)", marginTop: i > 0 ? "4px" : 0 }}>{line}</div>
+                                        ))}
+                                    </div>
+                                    {cfg.extra}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>)
+            })()}
+            </>)}
         </div>
     )
 })

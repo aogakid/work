@@ -1,0 +1,74 @@
+[
+  {
+    "id": "phq9_poucointeresse",
+    "label": "Pouco interesse ou prazer em fazer as coisas",
+    "labelMd": "Pouco interesse",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_abatido",
+    "label": "Sentir-se para baixo, deprimido ou sem esperança",
+    "labelMd": "Abatimento",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_sono",
+    "label": "Dificuldade para pegar no sono ou manter o sono, ou dormir demais",
+    "labelMd": "Alteração do sono",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_cansado",
+    "label": "Sentir-se cansado ou com pouca energia",
+    "labelMd": "Cansaço",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_apetite",
+    "label": "Falta de apetite ou comer demais",
+    "labelMd": "Alteração do apetite",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_autoestima",
+    "label": "Sentir-se mal consigo mesmo ou achar que é um fracasso",
+    "labelMd": "Autoestima",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_concentracao",
+    "label": "Dificuldade para se concentrar em atividades, como ler ou assistir televisão",
+    "labelMd": "Concentração",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_lentidao",
+    "label": "Mover-se ou falar tão devagar que as pessoas notaram, ou o contrário (agitado)",
+    "labelMd": "Lentidão/Agitação",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  },
+  {
+    "id": "phq9_morte",
+    "label": "Pensar que seria melhor estar morto ou se machucar de alguma forma",
+    "labelMd": "Ideação suicida",
+    "options": ["Nenhuma vez", "Vários dias", "Mais da metade dos dias", "Quase todos os dias"],
+    "value": "Nenhuma vez",
+    "pesos": [0, 1, 2, 3]
+  }
+]
