@@ -443,28 +443,21 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const phq9 = scoreTool(phq9Questions)
     const phq9Severity = phq9.total <= 4 ? "Mínimo" : phq9.total <= 9 ? "Leve" : phq9.total <= 14 ? "Moderado" : phq9.total <= 19 ? "Moderadamente grave" : "Grave"
 
-    const formatScoreOutput = useCallback((name: string, questions: ScoreQuestion[], s: { total: number; maxScore: number }, severity: string, extra?: string) => {
-        const answered = questions.filter(q => q.value !== "")
-        if (!answered.length) return null
-        const lines = answered.map(q => {
-            const idx = q.options.indexOf(q.value)
-            const peso = idx >= 0 ? q.pesos[idx] : 0
-            return `  - ${q.labelMd || q.label}: ${q.value} (${peso})`
-        })
-        lines.push(`  - ${name}: ${s.total}/${s.maxScore} (${severity})`)
-        if (extra) lines.push(extra)
-        return lines.join("\n")
-    }, [])
+    const todayBR = new Date().toLocaleDateString("pt-BR")
+
+    const formatScoreOutput = useCallback((name: string, s: { total: number; maxScore: number }) => {
+        return `${name} (${todayBR}): ${s.total}/${s.maxScore}`
+    }, [todayBR])
 
     useImperativeHandle(ref, () => ({
         getOutput(groupId: string): string | null {
             if (groupId === "risco" && resultado) {
                 const cat = resultado.categoriaRisco.toLowerCase()
-                return `  - PREVENT: ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
+                return `PREVENT (${todayBR}): ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
             }
-            if (groupId === "ipss") return formatScoreOutput("IPSS", ipssQuestions, ipss, ipssSeverity, ipssQolIdx >= 0 ? `  - QoL: ${ipssQolIdx}/6` : undefined)
-            if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7Questions, gad7, gad7Severity)
-            if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9Questions, phq9, phq9Severity)
+            if (groupId === "ipss") return formatScoreOutput("IPSS", ipss)
+            if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7)
+            if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9)
             return null
         },
         reset() {

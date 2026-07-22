@@ -539,51 +539,32 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       md += `  - ${getLabelMd(field)}: ${valueMd}\n`
     })
 
+    const todayBR = new Date().toLocaleDateString("pt-BR")
+
     if (sectionId === "ivcf20") {
       const ivcfFilled = formFields.some(f => f.section === "ivcf20" && f.type !== "divider" && f.id !== "ivcf_total" && f.value && (typeof f.value === "string" ? f.value !== "" : (f.value as string[]).length > 0))
       if (!ivcfFilled) return null
       const total = computeIVCFTotal(formFields)
-      return `- IVCF-20: ${total}`
+      return `IVCF-20 (${todayBR}): ${total}/40`
     }
 
     if (sectionId === "cage") {
       const cageFilled = formFields.some(f => f.section === "cage" && f.type === "single_choice" && f.value && f.value !== "")
       if (!cageFilled) return null
       const total = computeCAGETotal(formFields)
-      return `- CAGE: ${total}`
+      return `CAGE (${todayBR}): ${total}/4`
     }
 
     if (sectionId === "gds15") {
       const gdsFilled = formFields.some(f => f.section === "gds15" && f.type === "single_choice" && f.value && f.value !== "")
       if (!gdsFilled) return null
       const total = computeGDSTotal(formFields)
-      const classif = total <= 4 ? "Normal" : total <= 9 ? "Depressão leve" : "Depressão moderada a grave"
-      return `- GDS-15: ${total} (${classif})`
+      return `GDS-15 (${todayBR}): ${total}/15`
     }
 
     if (sectionId === "cfs") {
       if (cfsScore === null) return null
-      const parts = [`- CFS: ${cfsScore} — ${CFS_LABELS[cfsScore]}`]
-      parts.push(`  - Terminal: ${cfsTerminal}`)
-      parts.push(`  - ABVDs com ajuda: ${cfsAbvd.size}/5`)
-      if (cfsTerminal === "não") {
-        parts.push(`  - AIVDs com ajuda: ${cfsAivd.size}/6`)
-        if (cfsAivd.size === 0) {
-          parts.push(`  - Condições crônicas: ${cfsChronic === "10+" ? "≥ 10" : "0–9"}`)
-          if (cfsChronic === "0-9") {
-            const healthLabel = cfsHealth === "muito_boa" ? "Muito boa" : cfsHealth === "boa" ? "Boa" : cfsHealth === "excelente" ? "Excelente" : "Regular/ruim"
-            parts.push(`  - Autopercepção: ${healthLabel}`)
-            if (cfsHealth !== "regular_ruim") {
-              const effortLabel = cfsEffort === "todo_tempo" ? "O tempo todo" : cfsEffort === "as_vezes" ? "Às vezes" : "Raramente/nunca"
-              parts.push(`  - Exigência de esforço: ${effortLabel}`)
-              if (cfsEffort !== "todo_tempo") {
-                parts.push(`  - Atividades esportivas: ${cfsSports === "sim" ? "Sim" : "Não"}`)
-              }
-            }
-          }
-        }
-      }
-      return parts.join("\n")
+      return `CFS (${todayBR}): ${cfsScore}/9 — ${CFS_LABELS[cfsScore]}`
     }
 
     return md.trimEnd()

@@ -4133,33 +4133,6 @@
         "value": ""
       },
       {
-        "section": "geral",
-        "id": "violência",
-        "label": "violência/bullying",
-        "labelMd": "Violência/bullying",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
-        "section": "geral",
-        "id": "sono",
-        "label": "Sono",
-        "labelMd": "Sono",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
-        "section": "geral",
-        "id": "atividade",
-        "label": "atividade física",
-        "labelMd": "Atividade física",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
         "section": "desenvolvimento",
         "id": "tanner",
         "label": "Estadiamento de Tanner",
@@ -4179,81 +4152,72 @@
       },
       {
         "section": "desenvolvimento",
-        "id": "rendimento",
-        "label": "Rendimento escolar",
-        "labelMd": "Rendimento escolar",
+        "id": "home",
+        "label": "H (Home) - Casa",
+        "labelMd": "H (Home)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "ansiedade",
-        "label": "sintomas ansiosos",
-        "labelMd": "Sintomas ansiosos",
+        "id": "education",
+        "label": "E (Education) - Educação / emprego",
+        "labelMd": "E (Education)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "depressão",
-        "label": "sintomas depressivos",
-        "labelMd": "Sintomas depressivos",
+        "id": "eating",
+        "label": "E (Eating) - Distúrbios alimentares",
+        "labelMd": "E (Eating)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "ideacao",
-        "label": "ideação suicida",
-        "labelMd": "Ideação Suicida",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "etilismo",
-        "label": "etilismo",
-        "labelMd": "Etilismo",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "tabagismo",
-        "label": "tabagismo",
-        "labelMd": "Tabagismo",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "autoestima",
-        "label": "autoestima",
-        "labelMd": "Autoestima",
+        "id": "activities",
+        "label": "A (Activities) - Atividades",
+        "labelMd": "A (Activities)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "interacao",
-        "label": "interação social",
-        "labelMd": "Interação social",
+        "id": "drugs",
+        "label": "D (Drugs) - Drogas lícitas / ilícitas",
+        "labelMd": "D (Drugs)",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "sexuality",
+        "label": "S (Sexuality) - Sexualidade",
+        "labelMd": "S (Sexuality)",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "security",
+        "label": "S (Security) - Segurança",
+        "labelMd": "S (Security)",
+        "type": "text_required",
+        "options": null,
+        "value": ""
+      },
+      {
+        "section": "desenvolvimento",
+        "id": "suicide",
+        "label": "S (Suicide) - Suicídio",
+        "labelMd": "S (Suicide)",
         "type": "text_required",
         "options": null,
         "value": ""
@@ -4349,33 +4313,6 @@
         "value": ""
       },
       {
-        "section": "geral",
-        "id": "violência",
-        "label": "violência/bullying",
-        "labelMd": "Violência/bullying",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
-        "section": "geral",
-        "id": "sono",
-        "label": "Sono",
-        "labelMd": "Sono",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
-        "section": "geral",
-        "id": "atividade",
-        "label": "atividade física",
-        "labelMd": "Atividade física",
-        "type": "text_required",
-        "options": null,
-        "value": ""
-      },
-      {
         "section": "desenvolvimento",
         "id": "tanner",
         "label": "Estadiamento de Tanner",
@@ -4395,108 +4332,72 @@
       },
       {
         "section": "desenvolvimento",
-        "id": "rendimento",
-        "label": "Rendimento escolar",
-        "labelMd": "Rendimento escolar",
+        "id": "home",
+        "label": "H (Home) - Casa",
+        "labelMd": "H (Home)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "vocacao",
-        "label": "Vocação",
-        "labelMd": "Vocação",
+        "id": "education",
+        "label": "E (Education) - Educação / emprego",
+        "labelMd": "E (Education)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "ansiedade",
-        "label": "sintomas ansiosos",
-        "labelMd": "Sintomas ansiosos",
+        "id": "eating",
+        "label": "E (Eating) - Distúrbios alimentares",
+        "labelMd": "E (Eating)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "depressão",
-        "label": "sintomas depressivos",
-        "labelMd": "Sintomas depressivos",
+        "id": "activities",
+        "label": "A (Activities) - Atividades",
+        "labelMd": "A (Activities)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "ideacao",
-        "label": "ideação suicida",
-        "labelMd": "Ideação Suicida",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "etilismo",
-        "label": "etilismo",
-        "labelMd": "Etilismo",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "tabagismo",
-        "label": "tabagismo",
-        "labelMd": "Tabagismo",
-        "type": "single_choice",
-        "options": [
-          "não",
-          "sim"
-        ],
-        "value": ""
-      },
-      {
-        "section": "desenvolvimento",
-        "id": "autoestima",
-        "label": "autoestima",
-        "labelMd": "Autoestima",
+        "id": "drugs",
+        "label": "D (Drugs) - Drogas lícitas / ilícitas",
+        "labelMd": "D (Drugs)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "sexo",
-        "label": "atividade sexual",
-        "labelMd": "Atividade sexual",
+        "id": "sexuality",
+        "label": "S (Sexuality) - Sexualidade",
+        "labelMd": "S (Sexuality)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "contracepcao",
-        "label": "contracepção",
-        "labelMd": "Contracepção",
+        "id": "security",
+        "label": "S (Security) - Segurança",
+        "labelMd": "S (Security)",
         "type": "text_required",
         "options": null,
         "value": ""
       },
       {
         "section": "desenvolvimento",
-        "id": "interacao",
-        "label": "interação social",
-        "labelMd": "Interação social",
+        "id": "suicide",
+        "label": "S (Suicide) - Suicídio",
+        "labelMd": "S (Suicide)",
         "type": "text_required",
         "options": null,
         "value": ""

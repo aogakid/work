@@ -1033,7 +1033,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
     const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
     getOutputRef.current = (groupId: string): string | null => {
         if (groupId === "ig_dpp" && resultado?.valido) {
-            return `- IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}`
+            return `IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}`
         }
         return null
     }
