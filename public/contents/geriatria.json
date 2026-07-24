@@ -5,7 +5,10 @@
     "label": "mora sozinho",
     "labelMd": "Mora sozinho",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -14,7 +17,10 @@
     "label": "residente em ILPI, abrigo ou outra moradia coletiva",
     "labelMd": "ILPI/abrigo",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -23,7 +29,10 @@
     "label": "tem companheiro(a) ou cônjuge",
     "labelMd": "Companheiro(a)",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -32,7 +41,10 @@
     "label": "viuvez recente (último ano)",
     "labelMd": "Viuvez recente",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -41,7 +53,10 @@
     "label": "alguém disponível para atendê-lo(a) em caso de necessidade",
     "labelMd": "Cuidador disponível",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -50,7 +65,10 @@
     "label": "recebe visitas de familiares ou amigos com regularidade",
     "labelMd": "Visitas regulares",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -59,7 +77,10 @@
     "label": "responsável pelo cuidado de pessoas dependentes na sua casa",
     "labelMd": "Cuida de dependentes",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -68,7 +89,10 @@
     "label": "capaz de ler e escrever",
     "labelMd": "Ler e escrever",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -77,7 +101,10 @@
     "label": "beneficiário do BPC ou Bolsa Família",
     "labelMd": "BPC/Bolsa Família",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -86,7 +113,10 @@
     "label": "quedas no ano passado",
     "labelMd": "Quedas no último ano",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -95,7 +125,10 @@
     "label": "aconselhado sobre uso de bengala ou andador",
     "labelMd": "Bengala/andador",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -104,7 +137,10 @@
     "label": "instabilidade ao andar",
     "labelMd": "Instabilidade",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -113,7 +149,10 @@
     "label": "apoia-se nos móveis para andar",
     "labelMd": "Apoia em móveis",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -122,7 +161,10 @@
     "label": "preocupação com quedas",
     "labelMd": "Preocupação com quedas",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -131,7 +173,10 @@
     "label": "precisa de apoio para levantar de uma cadeira",
     "labelMd": "Apoio para levantar",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -140,7 +185,10 @@
     "label": "dificuldade para subir no meio-fio",
     "labelMd": "Subir meio-fio",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -149,7 +197,10 @@
     "label": "urgência urinária",
     "labelMd": "Urgência urinária",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -158,7 +209,10 @@
     "label": "hipoestesia nos pés",
     "labelMd": "Hipoestesia pés",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -167,7 +221,10 @@
     "label": "uso de medicamentos que o deixam tonto ou cansado",
     "labelMd": "Medicamentos tontura",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -176,7 +233,10 @@
     "label": "uso de hipnóticos ou ansiolíticos",
     "labelMd": "Hipnóticos/ansiolíticos",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -185,7 +245,10 @@
     "label": "sentimentos de tristeza ou depressão",
     "labelMd": "Tristeza/depressão",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -194,7 +257,11 @@
     "label": "dificuldade para abrir ou fechar embalagens",
     "labelMd": "Abrir/fechar embalagens",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -203,7 +270,11 @@
     "label": "dificuldade para ler o que está escrito na embalagem",
     "labelMd": "Ler embalagem",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -212,7 +283,11 @@
     "label": "dificuldade para lembrar de tomar o medicamento",
     "labelMd": "Lembrar de tomar",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -221,7 +296,11 @@
     "label": "dificuldade para tomar vários comprimidos de uma vez",
     "labelMd": "Vários comprimidos",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -230,7 +309,11 @@
     "label": "dificuldade para conseguir os medicamentos no tempo certo",
     "labelMd": "Conseguir medicamentos",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -239,7 +322,11 @@
     "label": "costuma mudar a forma como usa os medicamentos sem orientação médica",
     "labelMd": "Automudança sem orientação",
     "type": "single_choice",
-    "options": ["sim", "não", "às vezes"],
+    "options": [
+      "sim",
+      "não",
+      "às vezes"
+    ],
     "value": ""
   },
   {
@@ -248,7 +335,11 @@
     "label": "idade",
     "labelMd": "Idade",
     "type": "single_choice",
-    "options": ["60 a 74 anos", "75 a 84 anos", "≥ 85 anos"],
+    "options": [
+      "60 a 74 anos",
+      "75 a 84 anos",
+      "≥ 85 anos"
+    ],
     "value": ""
   },
   {
@@ -257,7 +348,10 @@
     "label": "comparando com outras pessoas de sua idade, sua saúde é",
     "labelMd": "Autopercepção de saúde",
     "type": "single_choice",
-    "options": ["excelente/muito boa/boa", "regular/ruim"],
+    "options": [
+      "excelente/muito boa/boa",
+      "regular/ruim"
+    ],
     "value": ""
   },
   {
@@ -275,7 +369,10 @@
     "label": "por causa da saúde ou condição física, deixou de fazer compras",
     "labelMd": "Deixou de fazer compras",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -284,7 +381,10 @@
     "label": "por causa da saúde, deixou de controlar dinheiro ou pagar contas",
     "labelMd": "Deixou de controlar dinheiro",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -293,7 +393,10 @@
     "label": "por causa da saúde, deixou de realizar pequenos trabalhos domésticos",
     "labelMd": "Deixou de fazer trabalhos domésticos",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -311,7 +414,10 @@
     "label": "por causa da saúde, deixou de tomar banho sozinho",
     "labelMd": "Deixou de tomar banho",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -329,7 +435,10 @@
     "label": "alguém falou que você está ficando esquecido",
     "labelMd": "Esquecimento (família)",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -338,7 +447,10 @@
     "label": "esquecimento que está piorando nos últimos meses",
     "labelMd": "Esquecimento piorando",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -347,7 +459,10 @@
     "label": "esquecimento impedindo atividades do cotidiano",
     "labelMd": "Esquecimento impede atividades",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -365,7 +480,10 @@
     "label": "no último mês, ficou com desânimo, tristeza ou desesperança",
     "labelMd": "Desânimo/tristeza",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -374,7 +492,10 @@
     "label": "no último mês, perdeu interesse ou prazer em atividades prazerosas",
     "labelMd": "Perda de interesse/prazer",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -392,7 +513,10 @@
     "label": "incapaz de elevar os braços acima do nível do ombro",
     "labelMd": "Elevar braços",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -401,7 +525,10 @@
     "label": "incapaz de manusear ou segurar pequenos objetos",
     "labelMd": "Manusear objetos",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -424,7 +551,10 @@
     "label": "dificuldade para caminhar impedindo atividades cotidianas",
     "labelMd": "Dificuldade para caminhar",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -433,7 +563,10 @@
     "label": "duas ou mais quedas no último ano",
     "labelMd": "Duas+ quedas",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -451,7 +584,10 @@
     "label": "perde urina ou fezes sem querer",
     "labelMd": "Incontinência",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -469,7 +605,10 @@
     "label": "problemas de visão impedindo atividades cotidianas",
     "labelMd": "Problemas de visão",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -478,7 +617,10 @@
     "label": "problemas de audição impedindo atividades cotidianas",
     "labelMd": "Problemas de audição",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -518,7 +660,10 @@
     "label": "fumante",
     "labelMd": "Fumante",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -527,7 +672,10 @@
     "label": "uso de álcool",
     "labelMd": "Álcool",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -536,7 +684,10 @@
     "label": "restrito ao leito",
     "labelMd": "Restrito ao leito",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -545,7 +696,10 @@
     "label": "restrito ao domicílio",
     "labelMd": "Restrito ao domicílio",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -554,7 +708,10 @@
     "label": "feridas crônicas ou lesões de pele",
     "labelMd": "Feridas crônicas",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -563,7 +720,10 @@
     "label": "sinais de desidratação",
     "labelMd": "Desidratação",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -572,7 +732,10 @@
     "label": "sinais de desnutrição",
     "labelMd": "Desnutrição",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -581,7 +744,10 @@
     "label": "dificuldades para engolir",
     "labelMd": "Dificuldade para engolir",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -608,7 +774,10 @@
     "label": "sono reparador",
     "labelMd": "Sono reparador",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -617,7 +786,10 @@
     "label": "deixa de fazer atividades pela manhã por sensação de cansaço",
     "labelMd": "Cansaço matinal",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -626,7 +798,10 @@
     "label": "sono impacta no sono de outras pessoas",
     "labelMd": "Impacto no sono alheio",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -635,7 +810,10 @@
     "label": "áreas com circulação livre de obstáculos",
     "labelMd": "Circulação livre",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -644,7 +822,10 @@
     "label": "presença de barras de apoio",
     "labelMd": "Barras de apoio",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -653,7 +834,10 @@
     "label": "pisos uniformes e tapetes bem fixos",
     "labelMd": "Pisos/tapetes",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -662,7 +846,10 @@
     "label": "iluminação suficiente em todos os cômodos, incluindo degraus",
     "labelMd": "Iluminação",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -671,7 +858,10 @@
     "label": "interruptores acessíveis na entrada dos cômodos",
     "labelMd": "Interruptores",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -680,7 +870,10 @@
     "label": "área do chuveiro com antiderrapante",
     "labelMd": "Chuveiro antiderrapante",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -689,7 +882,10 @@
     "label": "presença de box com abertura fácil",
     "labelMd": "Box fácil abertura",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -698,7 +894,10 @@
     "label": "armários na altura adequada (ao alcance das mãos)",
     "labelMd": "Armários na altura",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -707,7 +906,10 @@
     "label": "escadas",
     "labelMd": "Escadas",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -716,7 +918,10 @@
     "label": "piso antiderrapante",
     "labelMd": "Piso antiderrapante",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -725,7 +930,10 @@
     "label": "corrimão bem posicionado, firme e de ambos os lados",
     "labelMd": "Corrimão",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -734,7 +942,10 @@
     "label": "moradia própria",
     "labelMd": "Moradia própria",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -743,7 +954,10 @@
     "label": "moradia em boas condições de organização e higiene",
     "labelMd": "Moradia boas condições",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -752,7 +966,10 @@
     "label": "acesso a renda própria ou familiar suficiente para subsistência",
     "labelMd": "Renda suficiente",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -761,7 +978,10 @@
     "label": "participação em atividade extradomiciliar, comunitária ou rede social",
     "labelMd": "Atividade extradomiciliar",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -770,7 +990,10 @@
     "label": "participa de atividade coletiva/lazer",
     "labelMd": "Atividade coletiva/lazer",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -779,7 +1002,10 @@
     "label": "está satisfeito(a) com a sua vida?",
     "labelMd": "GDS-01 - Satisfeito(a) com a vida",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -788,7 +1014,10 @@
     "label": "abandonou muitas das suas atividades e interesses?",
     "labelMd": "GDS-02 - Abandonou atividades",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -797,7 +1026,10 @@
     "label": "sente que sua vida está vazia?",
     "labelMd": "GDS-03 - Vida vazia",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -806,7 +1038,10 @@
     "label": "anda muitas vezes aborrecido(a)?",
     "labelMd": "GDS-04 - Aborrecido(a)",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -815,7 +1050,10 @@
     "label": "está bem-disposto(a)/bem-humorado(a) a maior parte do tempo?",
     "labelMd": "GDS-05 - Bem-humorado(a)",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -824,7 +1062,10 @@
     "label": "anda com medo que lhe vá acontecer alguma coisa má?",
     "labelMd": "GDS-06 - Medo",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -833,7 +1074,10 @@
     "label": "sente-se feliz a maior parte do tempo?",
     "labelMd": "GDS-07 - Feliz",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -842,7 +1086,10 @@
     "label": "sente-se desamparado(a)?",
     "labelMd": "GDS-08 - Desamparado(a)",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -851,7 +1098,10 @@
     "label": "prefere ficar em casa, em vez de sair e fazer outras coisas?",
     "labelMd": "GDS-09 - Fica em casa",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -860,7 +1110,10 @@
     "label": "sente que tem mais problemas de memória do que as outras pessoas?",
     "labelMd": "GDS-10 - Problemas de memória",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -869,7 +1122,10 @@
     "label": "sente que é maravilhoso estar vivo(a)?",
     "labelMd": "GDS-11 - Maravilhoso estar vivo",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -878,7 +1134,10 @@
     "label": "sente-se inútil nas condições atuais?",
     "labelMd": "GDS-12 - Inútil",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -887,7 +1146,10 @@
     "label": "sente-se cheio(a) de energia?",
     "labelMd": "GDS-13 - Cheio(a) de energia",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -896,7 +1158,10 @@
     "label": "sente que a sua situação é desesperada?",
     "labelMd": "GDS-14 - Situação desesperada",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -905,8 +1170,202 @@
     "label": "acha que a maioria das pessoas está melhor que o(a) senhor(a)?",
     "labelMd": "GDS-15 - Outros melhores",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_banho",
+    "label": "banho",
+    "labelMd": "Banho",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_vestir",
+    "label": "vestir-se",
+    "labelMd": "Vestir-se",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_toileting",
+    "label": "usar banheiro (higiene e toileting)",
+    "labelMd": "Toileting",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_transferencia",
+    "label": "transferências (cama ↔ cadeira)",
+    "labelMd": "Transferências",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_continencia",
+    "label": "continência urinária e fecal",
+    "labelMd": "Continência",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "katz_alimentacao",
+    "label": "alimentar-se",
+    "labelMd": "Alimentação",
+    "type": "single_choice",
+    "options": [
+      "independente",
+      "com ajuda",
+      "dependente"
+    ],
+    "value": "independente"
+  },
+  {
+    "section": "katzlawton",
+    "id": "div_katz",
+    "label": null,
+    "labelMd": null,
+    "type": "divider",
+    "options": null,
+    "value": ""
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_telefone",
+    "label": "usar telefone",
+    "labelMd": "Telefone",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_compras",
+    "label": "fazer compras",
+    "labelMd": "Compras",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_refeicoes",
+    "label": "preparar refeições",
+    "labelMd": "Preparar refeições",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_casa",
+    "label": "cuidar da casa",
+    "labelMd": "Casa",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_roupa",
+    "label": "lavar roupa",
+    "labelMd": "Lavanderia",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_transporte",
+    "label": "usar meios de transporte",
+    "labelMd": "Transporte",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_medicamentos",
+    "label": "responsabilidade com medicamentos",
+    "labelMd": "Medicamentos",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
+  },
+  {
+    "section": "katzlawton",
+    "id": "lawton_financas",
+    "label": "gerenciar finanças",
+    "labelMd": "Finanças",
+    "type": "single_choice",
+    "options": [
+      "sozinho",
+      "com ajuda",
+      "não consegue"
+    ],
+    "value": "sozinho"
   },
   {
     "section": "cage",
@@ -914,7 +1373,10 @@
     "label": "já sentiu que deveria diminuir a quantidade de bebida",
     "labelMd": "CAGE - Diminuir",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -923,7 +1385,10 @@
     "label": "alguém comentou sobre seu jeito de beber e isso aborreceu você",
     "labelMd": "CAGE - Aborrecido",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -932,7 +1397,10 @@
     "label": "já se sentiu culpado ou mal por causa do consumo de álcool",
     "labelMd": "CAGE - Culpa",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   },
   {
@@ -941,7 +1409,10 @@
     "label": "precisou beber pela manhã para se sentir melhor ou superar ressaca",
     "labelMd": "CAGE - Manhã",
     "type": "single_choice",
-    "options": ["sim", "não"],
+    "options": [
+      "sim",
+      "não"
+    ],
     "value": ""
   }
 ]

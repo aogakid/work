@@ -82,6 +82,58 @@ const injectStyles = `
     min-width: 0;
   }
 
+  .kl-slider-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0 4px 0;
+    grid-column: 1 / -1;
+  }
+  .kl-slider-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--geriatria-text-muted);
+    font-weight: 600;
+  }
+  .kl-slider-value {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    min-height: 20px;
+    transition: color 0.2s ease;
+  }
+  .kl-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 16px;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .kl-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    cursor: pointer;
+    background: var(--kl-accent, var(--geriatria-text-muted));
+  }
+  .kl-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    cursor: pointer;
+    background: var(--kl-accent, var(--geriatria-text-muted));
+  }
+
   @media (min-width: 600px) {
     .geriatria-form-section {
       grid-template-columns: 1fr 1fr;
@@ -241,6 +293,7 @@ const secoes = [
   { id: "sono", label: "Sono" },
   { id: "ambiental", label: "Avaliação Ambiental" },
   { id: "suporte", label: "Suporte Sociofamiliar" },
+  { id: "katzlawton", label: "Katz/Lawton" },
   { id: "cage", label: "CAGE" },
   { id: "gds15", label: "GDS-15" },
   { id: "cfs", label: "CFS" },
@@ -284,6 +337,41 @@ const computeIVCFTotal = (fields: FormField[]): number => {
     }
   })
 
+  return total
+}
+
+const KATZ_SCORE_MAP: Record<string, number> = {
+  independente: 1,
+  "com ajuda": 0.5,
+  dependente: 0,
+}
+
+const LAWTON_SCORE_MAP: Record<string, number> = {
+  sozinho: 1,
+  "com ajuda": 0.5,
+  "não consegue": 0,
+}
+
+const KATZ_IDS = ["katz_banho", "katz_vestir", "katz_toileting", "katz_transferencia", "katz_continencia", "katz_alimentacao"]
+const LAWTON_IDS = ["lawton_telefone", "lawton_compras", "lawton_refeicoes", "lawton_casa", "lawton_roupa", "lawton_transporte", "lawton_medicamentos", "lawton_financas"]
+
+const computeKatzTotal = (fields: FormField[]): number => {
+  let total = 0
+  fields.forEach(f => {
+    if (KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value) {
+      total += KATZ_SCORE_MAP[f.value] ?? 0
+    }
+  })
+  return total
+}
+
+const computeLawtonTotal = (fields: FormField[]): number => {
+  let total = 0
+  fields.forEach(f => {
+    if (LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value) {
+      total += LAWTON_SCORE_MAP[f.value] ?? 0
+    }
+  })
   return total
 }
 
@@ -485,7 +573,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const [formFields, setFormFields] = useState<FormField[]>([])
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
-  const [activeTab, setActiveTab] = useState<"avaliacao" | "cage" | "gds15" | "cfs">("avaliacao")
+  const [activeTab, setActiveTab] = useState<"avaliacao" | "katzlawton" | "cage" | "gds15" | "cfs">("avaliacao")
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [cfsTerminal, setCfsTerminal] = useState<"sim" | "não" | null>(null)
@@ -583,13 +671,26 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       return `GDS-15 (${todayBR}): ${total}/15`
     }
 
+    if (sectionId === "katzlawton") {
+      const klFilled = formFields.some(f => f.section === "katzlawton" && f.type === "single_choice" && f.value && f.value !== "")
+      if (!klFilled) return null
+      const katz = computeKatzTotal(formFields)
+      const lawton = computeLawtonTotal(formFields)
+      const katzCount = formFields.filter(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "").length
+      const lawtonCount = formFields.filter(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "").length
+      let md = `- Katz/Lawton (${todayBR})\n`
+      if (katzCount > 0) md += `  - Katz: ${katz}/6\n`
+      if (lawtonCount > 0) md += `  - Lawton: ${lawton}/8\n`
+      return md.trimEnd()
+    }
+
     if (sectionId === "cfs") {
       if (cfsScore === null) return null
       return `CFS (${todayBR}): ${cfsScore}/9 — ${CFS_LABELS[cfsScore]}`
     }
 
     return md.trimEnd()
-  }, [formFields, cfsScore, cfsTerminal, cfsAbvd, cfsAivd, cfsChronic, cfsHealth, cfsEffort, cfsSports])
+  }, [formFields, cfsScore])
 
   const generateMarkdown = useCallback(() => {
     return secoes
@@ -602,7 +703,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   getOutputRef.current = (groupId: string): string | null => {
     if (groupId === "tudo") {
       return secoes
-        .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs")
+        .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton")
         .map(s => generateSectionMarkdown(s.id, s.label))
         .filter(Boolean)
         .join("\n\n") || null
@@ -696,6 +797,38 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
         )
       case "single_choice": {
         const isLong = (field.label?.length ?? 0) > 22
+        const isKL = field.section === "katzlawton"
+        if (isKL && field.options && field.options.length >= 3) {
+          const idx = field.value ? field.options.indexOf(field.value as string) : -1
+          const hue = idx >= 0 ? Math.round(120 - (idx / (field.options.length - 1)) * 120) : 0
+          const accent = idx >= 0 ? `hsl(${hue}, 70%, 42%)` : "var(--geriatria-text-muted)"
+          return (
+            <div key={field.id} className="kl-slider-row">
+              <label className="kl-slider-label">{field.label}</label>
+              <input
+                type="range"
+                className="kl-range"
+                min={0}
+                max={field.options.length - 1}
+                step={1}
+                value={idx >= 0 ? idx : 0}
+                onChange={(e) => {
+                  const newIdx = parseInt(e.target.value)
+                  updateFieldValue(field.id, field.value === field.options![newIdx] ? "" : field.options![newIdx])
+                }}
+                style={{
+                  ["--kl-accent" as string]: accent,
+                  background: idx >= 0
+                    ? `linear-gradient(to right, ${accent} 0%, ${accent} ${(idx / (field.options.length - 1)) * 100}%, var(--geriatria-border) ${(idx / (field.options.length - 1)) * 100}%, var(--geriatria-border) 100%)`
+                    : `var(--geriatria-border)`,
+                }}
+              />
+              <div className="kl-slider-value" style={{ color: accent }}>
+                {idx >= 0 ? field.options[idx] : "—"}
+              </div>
+            </div>
+          )
+        }
         return (
           <div
             key={field.id}
@@ -788,6 +921,9 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const cageFilled = formFields.some(f => f.section === "cage" && f.type === "single_choice" && f.value && f.value !== "")
   const gds15Total = computeGDSTotal(formFields)
   const gds15Filled = formFields.some(f => f.section === "gds15" && f.type === "single_choice" && f.value && f.value !== "")
+  const katzTotal = computeKatzTotal(formFields)
+  const lawtonTotal = computeLawtonTotal(formFields)
+  const klFilled = formFields.some(f => f.section === "katzlawton" && f.type === "single_choice" && f.value && f.value !== "")
 
   const ivcfClassificacao = ivcfTotal === 0
     ? ""
@@ -847,6 +983,41 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     )
   })() : null
 
+  const katzlawtonCard = activeTab === "katzlawton" && klFilled ? (() => {
+    const hasKatz = formFields.some(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
+    const hasLawton = formFields.some(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
+    return (
+    <div style={{ display: "grid", gridTemplateColumns: hasKatz && hasLawton ? "1fr 1fr" : "1fr", gap: "8px" }}>
+      {hasKatz && (
+        <div style={{
+          background: katzTotal >= 5 ? "rgba(0, 184, 73, 0.08)" : katzTotal >= 3 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
+          border: `1px solid ${katzTotal >= 5 ? "rgba(0, 184, 73, 0.35)" : katzTotal >= 3 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"}`,
+          borderRadius: "12px", padding: "12px 16px", textAlign: "center" as const,
+        }}>
+          <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>Katz ADL</div>
+          <div style={{ fontSize: "28px", fontWeight: 800, color: katzTotal >= 5 ? "#00b849" : katzTotal >= 3 ? "#ca8a04" : "#e02424" }}>{katzTotal} / 6</div>
+          <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+            {katzTotal >= 5 ? "Independente" : katzTotal >= 3 ? "Dependência parcial" : "Dependência significativa"}
+          </div>
+        </div>
+      )}
+      {hasLawton && (
+        <div style={{
+          background: lawtonTotal >= 6 ? "rgba(0, 184, 73, 0.08)" : lawtonTotal >= 3 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
+          border: `1px solid ${lawtonTotal >= 6 ? "rgba(0, 184, 73, 0.35)" : lawtonTotal >= 3 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"}`,
+          borderRadius: "12px", padding: "12px 16px", textAlign: "center" as const,
+        }}>
+          <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>Lawton IADL</div>
+          <div style={{ fontSize: "28px", fontWeight: 800, color: lawtonTotal >= 6 ? "#00b849" : lawtonTotal >= 3 ? "#ca8a04" : "#e02424" }}>{lawtonTotal} / 8</div>
+          <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+            {lawtonTotal >= 6 ? "Independente" : lawtonTotal >= 3 ? "Ajudas pontuais" : "Muita dependência"}
+          </div>
+        </div>
+      )}
+    </div>
+    )
+  })() : null
+
   return (
     <div style={{ ...styles.container, ...style }}>
       <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
@@ -855,7 +1026,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       <div style={styles.subtitle}>baseado na caderneta da pessoa idosa</div>
 
       <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
-        {([["avaliacao", "Avaliação"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
+        {([["avaliacao", "Avaliação"], ["katzlawton", "Katz/Lawton"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
           <div
             key={key}
             onClick={() => setActiveTab(key)}
@@ -902,7 +1073,9 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   ? formFields.filter(f => f.section === "cage")
                   : activeTab === "gds15"
                     ? formFields.filter(f => f.section === "gds15")
-                    : formFields.filter(f => f.section !== "cage" && f.section !== "gds15")
+                    : activeTab === "katzlawton"
+                      ? formFields.filter(f => f.section === "katzlawton")
+                      : formFields.filter(f => f.section !== "cage" && f.section !== "gds15" && f.section !== "katzlawton")
               ).map(({ id, label, fields }) => (
                 <React.Fragment key={id}>
                   <div style={styles.sectionLabel}>{label}</div>
@@ -973,6 +1146,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                 )}
                 {gds15Card}
                 {cfsCard}
+                {katzlawtonCard}
               </div>
 
               {activeTab === "avaliacao" ? (
@@ -1110,6 +1284,48 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   ) : (
                     <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
                       Siga a árvore de classificação ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              ) : activeTab === "katzlawton" ? (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: "var(--geriatria-card-bg)",
+                  border: "1px solid var(--geriatria-border)",
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  Katz/Lawton
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {klFilled ? (
+                    <>
+                      {formFields.some(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "") && (
+                        <div style={{ marginBottom: "8px" }}>
+                          <div style={{ fontWeight: 700, fontSize: "20px", color: katzTotal >= 5 ? "#00b849" : katzTotal >= 3 ? "#ca8a04" : "#e02424", marginBottom: "2px" }}>
+                            Katz ADL: {katzTotal} / 6
+                          </div>
+                          <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                            {katzTotal >= 5 ? "Independente nas AVDs básicas" : katzTotal >= 3 ? "Dependência parcial — algumas AVDs comprometidas" : "Dependência significativa na maioria das AVDs"}
+                          </div>
+                        </div>
+                      )}
+                      {formFields.some(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "") && (
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: "20px", color: lawtonTotal >= 6 ? "#00b849" : lawtonTotal >= 3 ? "#ca8a04" : "#e02424", marginBottom: "2px" }}>
+                            Lawton IADL: {lawtonTotal} / 8
+                          </div>
+                          <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                            {lawtonTotal >= 6 ? "Independente nas AIVDs" : lawtonTotal >= 3 ? "Ajudas pontuais — algumas AIVDs comprometidas" : "Muita dependência — maioria das AIVDs comprometidas"}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Responda as escalas ao lado.
                     </div>
                   )}
                 </div>

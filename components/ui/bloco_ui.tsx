@@ -164,9 +164,18 @@ function mergeSections(title: string, sections: Section[]): string {
 /* ── Sanitization ────────────────────────────────────────────────── */
 function limparTextoInvisivel(txt: string): string {
     return (txt || "")
-        .replace(/\u00A0/g, " ")
-        .replace(/\u200B/g, "")
+        .replace(/[\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000\uFEFF]/g, " ")
+        .replace(/[\u200B\u200C\u200D\u2060\u00AD]/g, "")
         .replace(/\u00D7/g, "x")
+        .replace(/\u00F7/g, "/")
+        .replace(/[\u2018\u2019]/g, "'")
+        .replace(/[\u201C\u201D]/g, '"')
+        .replace(/[\u2013\u2014\u2015]/g, "-")
+        .replace(/\u2022/g, "-")
+        .replace(/\u2026/g, "...")
+        .replace(/\u00A9/g, "(c)")
+        .replace(/\u00AE/g, "(R)")
+        .replace(/\u2122/g, "(TM)")
         .split("\n")
         .map(line => line.trimEnd())
         .filter((line, i, arr) => {
@@ -592,18 +601,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
         if (e.key === "Enter" && currentBlock) {
             const text = currentBlock.innerText || ""
-            if (text.trim() === "-") {
+            const listMatch = text.match(/^([\s\t]*-\s)/)
+            if (listMatch) {
+                e.preventDefault()
+                document.execCommand("insertText", false, "\n" + listMatch[1])
+                handleSectionInput()
+            } else if (/^\s*-\s*$/.test(text) && !listMatch) {
                 e.preventDefault()
                 document.execCommand("delete")
                 document.execCommand("insertBlockquote")
                 handleSectionInput()
-            } else {
-                const listMatch = text.match(/^([\s\t]*-\s)/)
-                if (listMatch) {
-                    e.preventDefault()
-                    document.execCommand("insertText", false, "\n" + listMatch[1])
-                    handleSectionInput()
-                }
             }
         }
 

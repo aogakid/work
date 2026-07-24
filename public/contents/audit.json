@@ -1,0 +1,92 @@
+[
+  {
+    "id": "audit_1",
+    "label": "Com que frequência consome bebidas alcoólicas?",
+    "labelMd": "Frequência",
+    "options": ["Nunca", "Mensalmente", "2-4x/mês", "2-3x/semana", "4+x/semana"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_2",
+    "label": "Quantas bebidas consome num dia típico?",
+    "labelMd": "Qtd/dia",
+    "options": ["1-2", "3-4", "5-6", "7-9", "10+"],
+    "value": "1-2",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_3",
+    "label": "Com que frequência consome 6 ou mais bebidas numa só ocasião?",
+    "labelMd": "6+ ocas.",
+    "options": ["Nunca", "Mensalmente", "2-4x/mês", "2-3x/semana", "4+x/semana"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_4",
+    "label": "Quantas vezes no último ano notou que não conseguia parar de beber?",
+    "labelMd": "Perda controle",
+    "options": ["Nunca", "Menos 1x/mês", "Mensalmente", "Semanalmente", "Diariamente"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_5",
+    "label": "Quantas vezes no último ano deixou de fazer o que esperava por causa da bebida?",
+    "labelMd": "Incapaz",
+    "options": ["Nunca", "Menos 1x/mês", "Mensalmente", "Semanalmente", "Diariamente"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_6",
+    "label": "Quantas vezes no último ano precisou de uma bebida pela manhã para se sentir melhor?",
+    "labelMd": "Necessidade manhã",
+    "options": ["Nunca", "Menos 1x/mês", "Mensalmente", "Semanalmente", "Diariamente"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_7",
+    "label": "Quantas vezes no último ano sentiu culpa ou remorso depois de beber?",
+    "labelMd": "Culpa/remorso",
+    "options": ["Nunca", "Menos 1x/mês", "Mensalmente", "Semanalmente", "Diariamente"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_8",
+    "label": "Quantas vezes no último ano não conseguiu lembrar o que aconteceu devido à bebida?",
+    "labelMd": "Blackout",
+    "options": ["Nunca", "Menos 1x/mês", "Mensalmente", "Semanalmente", "Diariamente"],
+    "value": "Nunca",
+    "section": "AUDIT",
+    "pesos": [0, 1, 2, 3, 4]
+  },
+  {
+    "id": "audit_9",
+    "label": "Você ou outra pessoa já foi ferido devido ao seu consumo de álcool?",
+    "labelMd": "Ferido",
+    "options": ["Não", "Sim, mas não no último ano", "Sim, no último ano"],
+    "value": "Não",
+    "section": "AUDIT",
+    "pesos": [0, 2, 4]
+  },
+  {
+    "id": "audit_10",
+    "label": "Algum familiar, amigo ou profissional já se preocupou com o seu consumo de álcool?",
+    "labelMd": "Preoc. terceiros",
+    "options": ["Não", "Sim, mas não no último ano", "Sim, no último ano"],
+    "value": "Não",
+    "section": "AUDIT",
+    "pesos": [0, 2, 4]
+  }
+]

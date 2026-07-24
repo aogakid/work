@@ -344,7 +344,7 @@ interface ScoreOutput {
     maxScore: number
 }
 
-type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9" | "fagerstrom"
+type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9" | "audit" | "fagerstrom"
 
 interface ScoreRange {
     max: number
@@ -370,6 +370,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [ipssQuestions, setIpssQuestions] = useState<ScoreQuestion[]>([])
     const [gad7Questions, setGad7Questions] = useState<ScoreQuestion[]>([])
     const [phq9Questions, setPhq9Questions] = useState<ScoreQuestion[]>([])
+    const [auditQuestions, setAuditQuestions] = useState<ScoreQuestion[]>([])
     const [fagerstromQuestions, setFagerstromQuestions] = useState<ScoreQuestion[]>([])
     const [fetchError, setFetchError] = useState(false)
 
@@ -450,6 +451,15 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     }, [])
 
     useEffect(() => {
+        fetch("/contents/audit.json")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setAuditQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+            })
+            .catch(() => setFetchError(true))
+    }, [])
+
+    useEffect(() => {
         fetch("/contents/fagerstrom.json")
             .then(res => res.json())
             .then(data => {
@@ -481,6 +491,9 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const fagerstrom = scoreTool(fagerstromQuestions)
     const fagerstromSeverity = fagerstrom.total <= 2 ? "Muito baixa" : fagerstrom.total <= 4 ? "Baixa" : fagerstrom.total <= 5 ? "Média" : fagerstrom.total <= 7 ? "Alta" : "Muito alta"
 
+    const audit = scoreTool(auditQuestions)
+    const auditSeverity = audit.total <= 7 ? "Baixo risco" : audit.total <= 15 ? "Consumo de risco" : audit.total <= 19 ? "Consumo nocivo" : "Possível dependência"
+
     const todayBR = new Date().toLocaleDateString("pt-BR")
 
     const formatScoreOutput = useCallback((name: string, s: ScoreOutput) => {
@@ -497,6 +510,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7)
         if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9)
         if (groupId === "fagerstrom") return formatScoreOutput("Fagerström", fagerstrom)
+        if (groupId === "audit") return formatScoreOutput("AUDIT", audit)
         return null
     }
 
@@ -506,6 +520,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         resetTool("/contents/ipss.json", setIpssQuestions)
         resetTool("/contents/gad7.json", setGad7Questions)
         resetTool("/contents/phq9.json", setPhq9Questions)
+        resetTool("/contents/audit.json", setAuditQuestions)
         resetTool("/contents/fagerstrom.json", setFagerstromQuestions)
     }, [])
 
@@ -1203,6 +1218,10 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         setFagerstromQuestions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
     }, [])
 
+    const updateAudit = useCallback((questionId: string, value: string) => {
+        setAuditQuestions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
+    }, [])
+
     const scoreToolsContent = (() => {
         const toolConfig: Record<string, ScoreToolConfig | null> = {
             ipss: {
@@ -1282,6 +1301,22 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     t <= 2 ? "Dependência muito baixa — chance alta de sucesso ao parar" : t <= 4 ? "Dependência baixa — bom prognóstico para cessação" : t <= 5 ? "Dependência moderada — considerar suporte farmacológico" : t <= 7 ? "Dependência alta — intervenção farmacológica recomendada" : "Dependência muito alta — terapia combinada indicada",
                 ],
                 update: updateFagerstrom,
+            },
+            audit: {
+                title: "AUDIT (Identificação de Problemas com Álcool)",
+                subtitle: "nos últimos 12 meses:",
+                questions: auditQuestions, total: audit.total, maxScore: audit.maxScore,
+                severity: auditSeverity,
+                ranges: [
+                    { max: 7, label: "Baixo risco", color: "#00b849" },
+                    { max: 15, label: "Consumo de risco", color: "#ff9900" },
+                    { max: 19, label: "Consumo nocivo", color: "#f57c00" },
+                    { max: 40, label: "Possível dependência", color: "#e62219" },
+                ],
+                interpretation: (t: number) => [
+                    t <= 7 ? "Consumo baixo risco — orientação padrão" : t <= 15 ? "Consumo de risco — aconselhamento breve" : t <= 19 ? "Consumo nocivo — intervenção breve indicada" : "Possível dependência — encaminhamento para tratamento especializado",
+                ],
+                update: updateAudit,
             },
         }
         const cfg = toolConfig[activeTab]
@@ -1399,7 +1434,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={{ display: "flex", gap: "4px", marginBottom: "16px", flexWrap: "wrap" }}>
-                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"], ["fagerstrom", "Fagerström"]] as const).map(([key, label]) => (
+                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"], ["audit", "AUDIT"], ["fagerstrom", "Fagerström"]] as const).map(([key, label]) => (
                     <div
                         key={key}
                         onClick={() => setActiveTab(key)}
