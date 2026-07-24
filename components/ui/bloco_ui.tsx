@@ -563,13 +563,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         if (!content || !content.trim()) return "<div><br></div>"
         return content.split("\n").map(l => {
             if (l === "") return "<div><br></div>"
-            const indent = l.match(/^(\s*)/)?.[1]?.length || 0
-            const indentLevel = Math.floor(indent / 2)
-            const paddingLeft = Math.min(indentLevel * 20, 80)
-            if (/^- /i.test(l.trim())) return indentLevel === 0
-                ? `<div style="padding-left:${paddingLeft}px"><strong>${l.trim()}</strong></div>`
-                : `<div style="padding-left:${paddingLeft}px">${l.trim()}</div>`
-            return `<div style="padding-left:${paddingLeft}px">${l.trim()}</div>`
+            if (/^- /i.test(l.trim())) {
+                const indent = l.match(/^(\s*)/)?.[1]?.length || 0
+                if (indent === 0) return `<div><strong>${l}</strong></div>`
+            }
+            return `<div>${l}</div>`
         }).join("")
     }, [])
 
