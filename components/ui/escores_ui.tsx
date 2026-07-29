@@ -4,6 +4,7 @@ import type { CompanionActions } from "../companions/registry"
 import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 
 
+
 const injectStyles = `
   :root {
     --prevent-bg: #ffffff;
@@ -372,7 +373,6 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [phq9Questions, setPhq9Questions] = useState<ScoreQuestion[]>([])
     const [auditQuestions, setAuditQuestions] = useState<ScoreQuestion[]>([])
     const [fagerstromQuestions, setFagerstromQuestions] = useState<ScoreQuestion[]>([])
-    const [fetchError, setFetchError] = useState(false)
 
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
@@ -400,6 +400,12 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const syncRef = useRef(false)
     const touchedRef = useRef(false)
 
+    const ipssRef = useRef<ScoreQuestion[] | null>(null)
+    const gad7Ref = useRef<ScoreQuestion[] | null>(null)
+    const phq9Ref = useRef<ScoreQuestion[] | null>(null)
+    const auditRef = useRef<ScoreQuestion[] | null>(null)
+    const fagerstromRef = useRef<ScoreQuestion[] | null>(null)
+
     const broadcast = useCallback(() => {
         if (syncRef.current) return
         if (!touchedRef.current) return
@@ -423,49 +429,20 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         })
     }, [])
 
-    useEffect(() => {
-        fetch("/contents/ipss.json")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setIpssQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+    useEffect(function() {
+        function doFetch(url: string, ref: React.MutableRefObject<ScoreQuestion[] | null>, setter: (q: ScoreQuestion[]) => void) {
+            fetch(url).then(function(r) { return r.json() }).then(function(data) {
+                if (Array.isArray(data)) {
+                    ref.current = data
+                    setter(data.map(function(q) { return { ...q, value: q.value ?? "" } }))
+                }
             })
-            .catch(() => setFetchError(true))
-    }, [])
-
-    useEffect(() => {
-        fetch("/contents/gad7.json")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setGad7Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
-            })
-            .catch(() => setFetchError(true))
-    }, [])
-
-    useEffect(() => {
-        fetch("/contents/phq9.json")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setPhq9Questions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
-            })
-            .catch(() => setFetchError(true))
-    }, [])
-
-    useEffect(() => {
-        fetch("/contents/audit.json")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setAuditQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
-            })
-            .catch(() => setFetchError(true))
-    }, [])
-
-    useEffect(() => {
-        fetch("/contents/fagerstrom.json")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setFagerstromQuestions(data.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
-            })
-            .catch(() => setFetchError(true))
+        }
+        doFetch("/contents/ipss.json", ipssRef, setIpssQuestions)
+        doFetch("/contents/gad7.json", gad7Ref, setGad7Questions)
+        doFetch("/contents/phq9.json", phq9Ref, setPhq9Questions)
+        doFetch("/contents/audit.json", auditRef, setAuditQuestions)
+        doFetch("/contents/fagerstrom.json", fagerstromRef, setFagerstromQuestions)
     }, [])
 
     const scoreTool = useCallback((questions: ScoreQuestion[]) => {
@@ -515,13 +492,11 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     }
 
     const resetAllTools = useCallback(() => {
-        const resetTool = (url: string, setter: (q: ScoreQuestion[]) => void) =>
-            fetch(url).then(r => r.json()).then(d => { if (Array.isArray(d)) setter(d.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" }))) }).catch(() => setter([]))
-        resetTool("/contents/ipss.json", setIpssQuestions)
-        resetTool("/contents/gad7.json", setGad7Questions)
-        resetTool("/contents/phq9.json", setPhq9Questions)
-        resetTool("/contents/audit.json", setAuditQuestions)
-        resetTool("/contents/fagerstrom.json", setFagerstromQuestions)
+        if (ipssRef.current) setIpssQuestions(ipssRef.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+        if (gad7Ref.current) setGad7Questions(gad7Ref.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+        if (phq9Ref.current) setPhq9Questions(phq9Ref.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+        if (auditRef.current) setAuditQuestions(auditRef.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+        if (fagerstromRef.current) setFagerstromQuestions(fagerstromRef.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
     }, [])
 
     useImperativeHandle(ref, () => ({
@@ -1455,12 +1430,6 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     </div>
                 ))}
             </div>
-
-            {fetchError && (
-                <div style={{ marginBottom: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12.5px", color: "#b91c1c", lineHeight: 1.4 }}>
-                    Falha ao carregar dados de um ou mais escores. Verifique a conexão e recarregue a página.
-                </div>
-            )}
 
             {activeTab === "prevent" ? (<>
             <div style={styles.title}>

@@ -4,6 +4,12 @@ import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
 import { COMPANIONS, type CompanionRef } from "../companions/registry"
+import GeriatriaUI from "./geriatria_ui"
+import CalculadoraPREVENT from "./escores_ui"
+import ExamesUI from "./exames_ui"
+import RastreiosPreventivos from "./rastreios_ui"
+import PuericulturaUI from "./puericultura_ui"
+import CalculadoraGestacional from "./prenatal_ui"
 
 class CompanionErrorBoundary extends React.Component<
     { children: React.ReactNode; name: string },
@@ -28,6 +34,23 @@ class CompanionErrorBoundary extends React.Component<
         return this.props.children
     }
 }
+
+function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
+    const Comp = component
+    if (typeof Comp === "object" && Comp !== null) {
+        const $$typeof = (Comp as Record<string, unknown>).$$typeof
+        console.log("[SafeCompanion] rendering", id, "type:", typeof Comp, "$$typeof:", $$typeof, "displayName:", (Comp as Record<string, unknown>).displayName)
+    } else {
+        console.log("[SafeCompanion] rendering", id, "type:", typeof Comp)
+    }
+    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
+}
+
+function DirectCompanion({ Comp, id, companionRefs }: { Comp: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
+    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
+}
+
+
 
 const supabase = createClient(
     "https://odqdzyqjpufitvahrhiq.supabase.co",
@@ -210,6 +233,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
     const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const DIRETOS: Record<string, React.ElementType> = {
+        escores: CalculadoraPREVENT,
+        exames: ExamesUI,
+        rastreios: RastreiosPreventivos,
+        geriatria: GeriatriaUI,
+        puericultura: PuericulturaUI,
+        prenatal: CalculadoraGestacional,
+    }
     const companionEverOpened = React.useRef<Record<string, boolean>>({})
     const resetAllCompanions = React.useCallback(() => {
         Object.values(companionRefs.current).forEach(ref => ref?.reset())
@@ -1131,7 +1162,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
                                 {shouldMount && (
                                     <CompanionErrorBoundary name={c.label}>
-                                        <c.component ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                                        {c.id === "geriatria" ? (
+                                            <GeriatriaUI ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                                        ) : DIRETOS[c.id] ? (
+                                            <DirectCompanion Comp={DIRETOS[c.id]} id={c.id} companionRefs={companionRefs} />
+                                        ) : (
+                                            <SafeCompanion component={c.component} id={c.id} companionRefs={companionRefs} />
+                                        )}
                                     </CompanionErrorBoundary>
                                 )}
                             </div>

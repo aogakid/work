@@ -583,17 +583,24 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const [cfsHealth, setCfsHealth] = useState<"excelente" | "muito_boa" | "boa" | "regular_ruim" | null>(null)
   const [cfsEffort, setCfsEffort] = useState<"todo_tempo" | "as_vezes" | "raramente_nunca" | null>(null)
   const [cfsSports, setCfsSports] = useState<"sim" | "não" | null>(null)
-  const [fetchError, setFetchError] = useState(false)
-
-  useEffect(() => {
-    fetch("/contents/geriatria.json")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
-        }
-      })
-      .catch(() => setFormFields([]))
+  const originalDataRef = useRef<FormField[] | null>(null)
+  function handleFetchResponse(r: Response): Promise<FormField[]> {
+    if (!r.ok) { throw new Error("HTTP " + r.status) }
+    return r.json()
+  }
+  function handleFormData(data: FormField[]): void {
+    if (!Array.isArray(data)) { return }
+    originalDataRef.current = data
+    setFormFields(data.map(function(f) { return { ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" } }))
+  }
+  function handleFetchError(e: unknown): void {
+    if (e instanceof Error) { console.warn("[GeriatriaUI]", e) }
+  }
+  useEffect(function() {
+    fetch("/contents/geriatria.json", { cache: "no-store" })
+      .then(handleFetchResponse)
+      .then(handleFormData)
+      .catch(handleFetchError)
   }, [])
 
   useEffect(() => {
@@ -724,14 +731,9 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       setCfsHealth(null)
       setCfsEffort(null)
       setCfsSports(null)
-      fetch("/contents/geriatria.json")
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
-          }
-        })
-      .catch(() => setFetchError(true))
+      if (originalDataRef.current) {
+        setFormFields(originalDataRef.current.map(f => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
+      }
     },
   }), [])
 
@@ -1047,12 +1049,6 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           </div>
         ))}
       </div>
-
-      {fetchError && (
-        <div style={{ marginBottom: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: "12.5px", color: "#b91c1c", lineHeight: 1.4 }}>
-          Falha ao carregar dados da geriatria. Verifique a conexão e recarregue a página.
-        </div>
-      )}
 
       <div className="geriatria-root">
         <div className="geriatria-fields-grid">

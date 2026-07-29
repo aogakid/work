@@ -1,6 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
+
 import {
   Indicator,
   Sex,
@@ -608,6 +609,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
   const [sexo, setSexo] = useState<"M" | "F">("M")
   const [mobile, setMobile] = useState(true)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+  const puericulturaRef = useRef<AgeGroupForm[] | null>(null)
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth <= 600)
@@ -624,14 +626,15 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
     el.style.height = `${el.scrollHeight}px`
   }, [markdownOutput])
 
-    useEffect(() => {
-    fetch("/contents/puericultura.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setAgeGroupForms(Array.isArray(data) ? (data as AgeGroupForm[]) : [])
-      })
-      .catch(() => { setAgeGroupForms([]) })
-  }, [])
+  function loadPuericultura() {
+    fetch("/contents/puericultura.json").then(function(r) { return r.json() }).then(function(data) {
+      if (Array.isArray(data)) {
+        puericulturaRef.current = data
+        setAgeGroupForms(data)
+      }
+    })
+  }
+  useEffect(loadPuericultura, [])
 
   useEffect(() => {
     if (!dataNascimento) {
@@ -817,15 +820,8 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
     getOutput: (groupId: string) => getOutputRef.current(groupId),
     reset() {
       setDataNascimento(""); setIdadeAnos(""); setIdadeMeses(""); setIdadeCalculada(""); setFaixaEtaria(""); setLabelClinico("")
-      setSexo("M"); setCopiado(false); setMarkdownOutput(""); setAgeGroupForms([])
-      fetch("/contents/puericultura.json")
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setFormFields(data.map((f: FormField) => ({ ...f, value: Array.isArray(f.value) ? [...f.value] : f.value ?? "" })))
-          }
-        })
-        .catch(() => setFormFields([]))
+      setSexo("M"); setCopiado(false); setMarkdownOutput("")
+      if (puericulturaRef.current) setAgeGroupForms(puericulturaRef.current)
     },
   }), [])
 

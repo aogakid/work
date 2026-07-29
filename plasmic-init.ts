@@ -14,7 +14,6 @@ import RastreiosPreventivos from "./components/ui/rastreios_ui";
 import CalculadoraVisita from "./components/ui/visita_ui";
 import PuericulturaUI from "./components/ui/puericultura_ui";
 import ExamesUI from "./components/ui/exames_ui";
-import GeriatriaUI from "./components/ui/geriatria_ui";
 
 // Action HOCs (code overrides)
 import {
@@ -199,10 +198,7 @@ PLASMIC.registerComponent(ExamesUI, {
   props: {},
 });
 
-PLASMIC.registerComponent(GeriatriaUI, {
-  name: "GeriatriaUI",
-  props: {},
-});
+
 
 // ---------------------------------------------------------------------------
 // Action HOCs (code overrides)
