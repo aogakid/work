@@ -11,6 +11,15 @@ import RastreiosPreventivos from "./rastreios_ui"
 import PuericulturaUI from "./puericultura_ui"
 import CalculadoraGestacional from "./prenatal_ui"
 
+function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
+    const Comp = component
+    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
+}
+
+function DirectCompanion({ Comp, id, companionRefs }: { Comp: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
+    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
+}
+
 class CompanionErrorBoundary extends React.Component<
     { children: React.ReactNode; name: string },
     { hasError: boolean }
@@ -33,21 +42,6 @@ class CompanionErrorBoundary extends React.Component<
         }
         return this.props.children
     }
-}
-
-function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
-    const Comp = component
-    if (typeof Comp === "object" && Comp !== null) {
-        const $$typeof = (Comp as Record<string, unknown>).$$typeof
-        console.log("[SafeCompanion] rendering", id, "type:", typeof Comp, "$$typeof:", $$typeof, "displayName:", (Comp as Record<string, unknown>).displayName)
-    } else {
-        console.log("[SafeCompanion] rendering", id, "type:", typeof Comp)
-    }
-    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
-}
-
-function DirectCompanion({ Comp, id, companionRefs }: { Comp: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
-    return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
 }
 
 

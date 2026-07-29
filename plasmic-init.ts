@@ -8,6 +8,7 @@ import Bloco from "./components/ui/bloco_ui";
 import EncaminhaEspecialidade from "./components/ui/encaminhador_ui_entrada_especialidade";
 import EncaminhaInput from "./components/ui/encaminhador_ui_entrada_prontuario";
 import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
+import GeriatriaUI from "./components/ui/geriatria_ui";
 import CalculadoraPREVENT from "./components/ui/escores_ui";
 import CalculadoraGestacional from "./components/ui/prenatal_ui";
 import RastreiosPreventivos from "./components/ui/rastreios_ui";
@@ -166,6 +167,11 @@ PLASMIC.registerComponent(EncaminhaOutput, {
       argTypes: [],
     },
   },
+});
+
+PLASMIC.registerComponent(GeriatriaUI, {
+  name: "GeriatriaUI",
+  props: {},
 });
 
 PLASMIC.registerComponent(CalculadoraPREVENT, {
