@@ -1,7 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useRef, useCallback } from "react"
 import type { CompanionActions } from "../companions/registry"
-import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
+import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 
 
@@ -279,6 +279,46 @@ const styles = {
     },
 }
 
+const TEMA_CLARO = {
+    "--prevent-bg": "#ffffff",
+    "--prevent-text": "#1a1916",
+    "--prevent-text-muted": "#6b6760",
+    "--prevent-input-bg": "rgba(120,120,120,0.08)",
+    "--prevent-border": "rgba(120,120,120,0.15)",
+    "--prevent-card-bg": "rgba(120,120,120,0.06)",
+    "--prevent-conduta-border": "rgba(0,0,0,0.08)",
+    "--prevent-invalid-bg": "#fdecec",
+    "--prevent-ok": "#007a30",
+    "--prevent-ok-bg": "rgba(0,184,73,0.05)",
+    "--prevent-ok-border": "rgba(0,184,73,0.3)",
+    "--prevent-warn": "#b56100",
+    "--prevent-warn-bg": "rgba(242,143,0,0.06)",
+    "--prevent-warn-border": "rgba(242,143,0,0.35)",
+    "--prevent-danger": "#ba120a",
+    "--prevent-danger-bg": "rgba(245,49,39,0.06)",
+    "--prevent-danger-border": "rgba(245,49,39,0.3)",
+} as React.CSSProperties
+
+const TEMA_ESCURO = {
+    "--prevent-bg": "#1c1917",
+    "--prevent-text": "#f5f5f4",
+    "--prevent-text-muted": "#78716c",
+    "--prevent-input-bg": "#2e2b29",
+    "--prevent-border": "rgba(255,255,255,0.15)",
+    "--prevent-card-bg": "rgba(255,255,255,0.06)",
+    "--prevent-conduta-border": "rgba(255,255,255,0.08)",
+    "--prevent-invalid-bg": "#3a1515",
+    "--prevent-ok": "#34d399",
+    "--prevent-ok-bg": "rgba(16,185,129,0.15)",
+    "--prevent-ok-border": "rgba(16,185,129,0.45)",
+    "--prevent-warn": "#fbbf24",
+    "--prevent-warn-bg": "rgba(251,191,36,0.15)",
+    "--prevent-warn-border": "rgba(251,191,36,0.45)",
+    "--prevent-danger": "#f87171",
+    "--prevent-danger-bg": "rgba(248,113,113,0.15)",
+    "--prevent-danger-border": "rgba(248,113,113,0.45)",
+} as React.CSSProperties
+
 // Configuração adaptiva de alertas para prevenir quebras visuais em Modo Escuro
 const CONFIG_RISCOS: Record<
     string,
@@ -397,6 +437,52 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [usoEstatinas, setUsoEstatinas] = useState(false)
     const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
 
+    const [escuro, setEscuro] = useState(false)
+
+    useEffect(() => {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)")
+        const atualizar = () => setEscuro(mq.matches)
+        atualizar()
+        mq.addEventListener("change", atualizar)
+        return () => mq.removeEventListener("change", atualizar)
+    }, [])
+
+    const cor = escuro
+        ? {
+              bg: "#1c1917",
+              text: "#f5f5f4",
+              muted: "#78716c",
+              inputBg: "#2e2b29",
+              border: "rgba(255,255,255,0.15)",
+              invalidBg: "#3a1515",
+              ok: "#4ade80",
+              okBg: "rgba(16,185,129,0.15)",
+              okBorder: "rgba(16,185,129,0.45)",
+              warn: "#fbbf24",
+              warnBg: "rgba(251,191,36,0.15)",
+              warnBorder: "rgba(251,191,36,0.45)",
+              danger: "#f87171",
+              dangerBg: "rgba(248,113,113,0.15)",
+              dangerBorder: "rgba(248,113,113,0.45)",
+          }
+        : {
+              bg: "#ffffff",
+              text: "#1a1916",
+              muted: "#6b6760",
+              inputBg: "rgba(120,120,120,0.08)",
+              border: "rgba(120,120,120,0.15)",
+              invalidBg: "#fdecec",
+              ok: "#007a30",
+              okBg: "rgba(0,184,73,0.05)",
+              okBorder: "rgba(0,184,73,0.3)",
+              warn: "#b56100",
+              warnBg: "rgba(242,143,0,0.06)",
+              warnBorder: "rgba(242,143,0,0.35)",
+              danger: "#ba120a",
+              dangerBg: "rgba(245,49,39,0.06)",
+              dangerBorder: "rgba(245,49,39,0.3)",
+          }
+
     const syncRef = useRef(false)
     const touchedRef = useRef(false)
 
@@ -415,6 +501,18 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     useEffect(() => broadcast(), [broadcast])
 
     useEffect(() => {
+        const snap = getFieldSyncSnapshot()
+        if (Object.keys(snap).length > 0) {
+            syncRef.current = true
+            touchedRef.current = true
+            if (snap.idade !== undefined) setIdade(snap.idade)
+            if (snap.sexo !== undefined) setSexo(snap.sexo)
+            if (snap.ct !== undefined) setColTotal(snap.ct)
+            if (snap.hdl !== undefined) setHdl(snap.hdl)
+            if (snap.trig !== undefined) setTriglicerideos(snap.trig)
+            if (snap.cr !== undefined) setCreatinina(snap.cr.replace(/,/g, "."))
+            setTimeout(() => { syncRef.current = false }, 0)
+        }
         return listenFieldSync(({ source, values }) => {
             if (source === "escores") return
             syncRef.current = true
@@ -424,7 +522,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             if (values.ct !== undefined) setColTotal(values.ct)
             if (values.hdl !== undefined) setHdl(values.hdl)
             if (values.trig !== undefined) setTriglicerideos(values.trig)
-            if (values.cr !== undefined) setCreatinina(values.cr)
+            if (values.cr !== undefined) setCreatinina(values.cr.replace(/,/g, "."))
             setTimeout(() => { syncRef.current = false }, 0)
         })
     }, [])
@@ -546,7 +644,10 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         const i = parseInt(idade)
         const cr = parseFloat(creatinina)
         const valorAsc = parseFloat(asc)
-        if (!i || !sexo || !cr || isNaN(cr) || cr <= 0) return
+        if (!i || !sexo || !cr || isNaN(cr) || cr <= 0) {
+            setTfg("")
+            return
+        }
         const a = sexo === "F" ? 0.7 : 0.9
         const b =
             sexo === "F"
@@ -594,24 +695,24 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const obterEstiloLdl = () => {
         const valorLdl = parseFloat(ldl)
         if (!ldl || isNaN(valorLdl))
-            return { ...styles.input, background: "rgba(0,0,0,0.04)" }
+            return { ...styles.input, background: cor.inputBg, color: cor.text }
         let limiteMeta = 130
         if (resultado && CONFIG_RISCOS[resultado.categoriaRisco])
             limiteMeta = CONFIG_RISCOS[resultado.categoriaRisco].limiteLdl
-        const base = { ...styles.input }
+        const base = { ...styles.input, color: cor.text }
         return valorLdl <= limiteMeta
             ? {
                   ...base,
-                  background: "rgba(0, 184, 73, 0.05)",
-                  borderColor: "rgba(0, 184, 73, 0.3)",
-                  color: "#007a30",
+                  background: cor.okBg,
+                  borderColor: cor.okBorder,
+                  color: cor.ok,
                   fontWeight: 600,
               }
             : {
                   ...base,
-                  background: "rgba(245, 49, 39, 0.06)",
-                  borderColor: "rgba(245, 49, 39, 0.3)",
-                  color: "#ba120a",
+                  background: cor.dangerBg,
+                  borderColor: cor.dangerBorder,
+                  color: cor.danger,
                   fontWeight: 600,
               }
     }
@@ -630,36 +731,36 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const obterEstiloTfg = () => {
         const v = parseInt(tfg)
         if (!tfg || isNaN(v))
-            return { ...styles.input, background: "rgba(0,0,0,0.04)" }
-        const base = { ...styles.input, paddingRight: "56px" }
+            return { ...styles.input, background: cor.inputBg, color: cor.text }
+        const base = { ...styles.input, paddingRight: "56px", color: cor.text }
         if (v >= 60)
             return {
                 ...base,
-                background: "rgba(0, 184, 73, 0.05)",
-                borderColor: "rgba(0, 184, 73, 0.3)",
-                color: "#007a30",
+                background: cor.okBg,
+                borderColor: cor.okBorder,
+                color: cor.ok,
                 fontWeight: 600,
             }
         if (v >= 30)
             return {
                 ...base,
-                background: "rgba(242, 143, 0, 0.06)",
-                borderColor: "rgba(242, 143, 0, 0.35)",
-                color: "#b56100",
+                background: cor.warnBg,
+                borderColor: cor.warnBorder,
+                color: cor.warn,
                 fontWeight: 600,
             }
         return {
             ...base,
-            background: "rgba(245, 49, 39, 0.06)",
-            borderColor: "rgba(245, 49, 39, 0.3)",
-            color: "#ba120a",
+            background: cor.dangerBg,
+            borderColor: cor.dangerBorder,
+            color: cor.danger,
             fontWeight: 600,
         }
     }
 
     const obterCorTextoKdigo = () => {
         const v = parseInt(tfg)
-        return v >= 60 ? "#007a30" : v >= 30 ? "#b56100" : "#ba120a"
+        return v >= 60 ? cor.ok : v >= 30 ? cor.warn : cor.danger
     }
 
     const obterClassificacaoImc = () => {
@@ -676,40 +777,36 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const obterEstiloImc = () => {
         const v = parseFloat(imc)
         if (!imc || isNaN(v))
-            return { ...styles.input, background: "rgba(0,0,0,0.04)" }
-        const base = { ...styles.input, paddingRight: "72px" }
+            return { ...styles.input, background: cor.inputBg, color: cor.text }
+        const base = { ...styles.input, paddingRight: "72px", color: cor.text }
         if (v >= 18.5 && v < 25)
             return {
                 ...base,
-                background: "rgba(0, 184, 73, 0.05)",
-                borderColor: "rgba(0, 184, 73, 0.3)",
-                color: "#007a30",
+                background: cor.okBg,
+                borderColor: cor.okBorder,
+                color: cor.ok,
                 fontWeight: 600,
             }
         if (v < 18.5 || (v >= 25 && v < 30))
             return {
                 ...base,
-                background: "rgba(242, 143, 0, 0.06)",
-                borderColor: "rgba(242, 143, 0, 0.35)",
-                color: "#b56100",
+                background: cor.warnBg,
+                borderColor: cor.warnBorder,
+                color: cor.warn,
                 fontWeight: 600,
             }
         return {
             ...base,
-            background: "rgba(245, 49, 39, 0.06)",
-            borderColor: "rgba(245, 49, 39, 0.3)",
-            color: "#ba120a",
+            background: cor.dangerBg,
+            borderColor: cor.dangerBorder,
+            color: cor.danger,
             fontWeight: 600,
         }
     }
 
     const obterCorTextoImc = () => {
         const v = parseFloat(imc)
-        return v >= 18.5 && v < 25
-            ? "#007a30"
-            : v < 18.5 || (v >= 25 && v < 30)
-              ? "#b56100"
-              : "#ba120a"
+        return v >= 18.5 && v < 25 ? cor.ok : v < 18.5 || (v >= 25 && v < 30) ? cor.warn : cor.danger
     }
 
     // Validation functions for field limits based on cvd.js
@@ -776,10 +873,16 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             return {
                 ...styles.input,
                 border: "2px solid #dc2626",
-                backgroundColor: "rgba(220, 38, 38, 0.05)",
+                background: cor.invalidBg,
+                color: cor.text,
             }
         }
-        return styles.input
+        return {
+            ...styles.input,
+            background: cor.inputBg,
+            border: `1px solid ${cor.border}`,
+            color: cor.text,
+        }
     }
 
     // Algoritmo PREVENT Dinâmico Conforme os Biomarcadores Preenchidos
@@ -1404,8 +1507,10 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
 
     const markTouched = () => { touchedRef.current = true }
 
+    const varsTema = (escuro ? TEMA_ESCURO : TEMA_CLARO) as React.CSSProperties
+
     return (
-        <div style={{ ...styles.container, ...style }} onFocus={markTouched}>
+        <div style={{ ...styles.container, background: cor.bg, color: cor.text, ...varsTema, ...style }} onFocus={markTouched}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={{ display: "flex", gap: "4px", marginBottom: "16px", flexWrap: "wrap" }}>
@@ -1420,8 +1525,8 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             fontWeight: activeTab === key ? 600 : 400,
                             cursor: "pointer",
                             userSelect: "none",
-                            background: activeTab === key ? "rgba(224, 36, 36, 0.18)" : "var(--prevent-input-bg)",
-                            border: `1px solid ${activeTab === key ? "#e02424" : "var(--prevent-border)"}`,
+                            background: activeTab === key ? "rgba(224, 36, 36, 0.18)" : cor.inputBg,
+                            border: `1px solid ${activeTab === key ? "#e02424" : cor.border}`,
                             color: activeTab === key ? "#ff4d4d" : "var(--prevent-text-muted)",
                             transition: "all 0.15s ease",
                         }}
@@ -1568,7 +1673,8 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             readOnly
                             style={{
                                 ...styles.input,
-                                background: "rgba(0,0,0,0.04)",
+                                background: cor.inputBg,
+                                color: cor.text,
                                 fontWeight: asc ? 600 : 400,
                             }}
                         />

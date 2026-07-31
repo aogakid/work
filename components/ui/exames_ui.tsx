@@ -1,26 +1,44 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useRef, useState, useCallback, useMemo, useEffect } from "react"
 import type { CompanionActions } from "../companions/registry"
-import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
+import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 const EXAMES_PREFIX = "exames"
 
 const injectStyles = `
-  :root {
+  .${EXAMES_PREFIX}-root {
     --${EXAMES_PREFIX}-bg: #ffffff;
     --${EXAMES_PREFIX}-text: #1a1916;
     --${EXAMES_PREFIX}-text-muted: #6b6760;
     --${EXAMES_PREFIX}-input-bg: rgba(120,120,120,0.08);
     --${EXAMES_PREFIX}-border: rgba(120,120,120,0.15);
+    --${EXAMES_PREFIX}-ok: #007a30;
+    --${EXAMES_PREFIX}-ok-bg: rgba(0,184,73,0.06);
+    --${EXAMES_PREFIX}-ok-border: rgba(0,184,73,0.3);
+    --${EXAMES_PREFIX}-warn: #b56100;
+    --${EXAMES_PREFIX}-warn-bg: rgba(242,143,0,0.06);
+    --${EXAMES_PREFIX}-warn-border: rgba(242,143,0,0.35);
+    --${EXAMES_PREFIX}-danger: #ba120a;
+    --${EXAMES_PREFIX}-danger-bg: rgba(245,49,39,0.06);
+    --${EXAMES_PREFIX}-danger-border: rgba(245,49,39,0.3);
   }
 
   @media (prefers-color-scheme: dark) {
-    :root {
+    .${EXAMES_PREFIX}-root {
       --${EXAMES_PREFIX}-bg: #1c1917;
       --${EXAMES_PREFIX}-text: #f5f5f4;
       --${EXAMES_PREFIX}-text-muted: #78716c;
       --${EXAMES_PREFIX}-input-bg: #2e2b29;
       --${EXAMES_PREFIX}-border: rgba(255,255,255,0.15);
+      --${EXAMES_PREFIX}-ok: #4ade80;
+      --${EXAMES_PREFIX}-ok-bg: rgba(34,197,94,0.14);
+      --${EXAMES_PREFIX}-ok-border: rgba(34,197,94,0.35);
+      --${EXAMES_PREFIX}-warn: #fbbf24;
+      --${EXAMES_PREFIX}-warn-bg: rgba(251,191,36,0.14);
+      --${EXAMES_PREFIX}-warn-border: rgba(251,191,36,0.35);
+      --${EXAMES_PREFIX}-danger: #f87171;
+      --${EXAMES_PREFIX}-danger-bg: rgba(248,113,113,0.14);
+      --${EXAMES_PREFIX}-danger-border: rgba(248,113,113,0.35);
     }
   }
 
@@ -324,12 +342,12 @@ function formatDateBR(dateStr: string): string {
 interface EstagioDrc { estagio: string; cor: string; bg: string; border: string }
 
 function kdigoTfg(v: number): EstagioDrc {
-  if (v >= 90) return { estagio: "G1", cor: "#007a30", bg: "rgba(0,184,73,0.06)", border: "rgba(0,184,73,0.3)" }
-  if (v >= 60) return { estagio: "G2", cor: "#007a30", bg: "rgba(0,184,73,0.06)", border: "rgba(0,184,73,0.3)" }
-  if (v >= 45) return { estagio: "G3a", cor: "#b56100", bg: "rgba(242,143,0,0.06)", border: "rgba(242,143,0,0.35)" }
-  if (v >= 30) return { estagio: "G3b", cor: "#b56100", bg: "rgba(242,143,0,0.06)", border: "rgba(242,143,0,0.35)" }
-  if (v >= 15) return { estagio: "G4", cor: "#ba120a", bg: "rgba(245,49,39,0.06)", border: "rgba(245,49,39,0.3)" }
-  return { estagio: "G5", cor: "#ba120a", bg: "rgba(245,49,39,0.06)", border: "rgba(245,49,39,0.3)" }
+  if (v >= 90) return { estagio: "G1", cor: "var(--exames-ok)", bg: "var(--exames-ok-bg)", border: "var(--exames-ok-border)" }
+  if (v >= 60) return { estagio: "G2", cor: "var(--exames-ok)", bg: "var(--exames-ok-bg)", border: "var(--exames-ok-border)" }
+  if (v >= 45) return { estagio: "G3a", cor: "var(--exames-warn)", bg: "var(--exames-warn-bg)", border: "var(--exames-warn-border)" }
+  if (v >= 30) return { estagio: "G3b", cor: "var(--exames-warn)", bg: "var(--exames-warn-bg)", border: "var(--exames-warn-border)" }
+  if (v >= 15) return { estagio: "G4", cor: "var(--exames-danger)", bg: "var(--exames-danger-bg)", border: "var(--exames-danger-border)" }
+  return { estagio: "G5", cor: "var(--exames-danger)", bg: "var(--exames-danger-bg)", border: "var(--exames-danger-border)" }
 }
 
 interface Props {
@@ -378,8 +396,33 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   const [copied, setCopied] = useState(false)
   const syncRef = useRef(false)
   const touchedRef = useRef(false)
+  const [escuro, setEscuro] = useState(false)
 
   useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)")
+    const atualizar = () => setEscuro(mq.matches)
+    atualizar()
+    mq.addEventListener("change", atualizar)
+    return () => mq.removeEventListener("change", atualizar)
+  }, [])
+
+  useEffect(() => {
+    const snap = getFieldSyncSnapshot()
+    if (Object.keys(snap).length > 0) {
+      syncRef.current = true
+      touchedRef.current = true
+      setValues(prev => {
+        const next = { ...prev }
+        if (snap.idade !== undefined) next["idade"] = snap.idade
+        if (snap.sexo !== undefined) next["sexo"] = snap.sexo
+        if (snap.ct !== undefined) next["ct"] = snap.ct
+        if (snap.hdl !== undefined) next["hdl"] = snap.hdl
+        if (snap.trig !== undefined) next["trig"] = snap.trig
+        if (snap.cr !== undefined) next["cr"] = snap.cr
+        return next
+      })
+      setTimeout(() => { syncRef.current = false }, 0)
+    }
     return listenFieldSync(({ source, values }) => {
       if (source === "exames") return
       syncRef.current = true
@@ -494,12 +537,16 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
 
   const s = useMemo(buildStyles, [])
 
+  const tema = escuro
+    ? { "--exames-bg": "#1c1917", "--exames-text": "#f5f5f4", "--exames-text-muted": "#78716c", "--exames-input-bg": "#2e2b29", "--exames-border": "rgba(255,255,255,0.15)", "--exames-ok": "#4ade80", "--exames-ok-bg": "rgba(34,197,94,0.14)", "--exames-ok-border": "rgba(34,197,94,0.35)", "--exames-warn": "#fbbf24", "--exames-warn-bg": "rgba(251,191,36,0.14)", "--exames-warn-border": "rgba(251,191,36,0.35)", "--exames-danger": "#f87171", "--exames-danger-bg": "rgba(248,113,113,0.14)", "--exames-danger-border": "rgba(248,113,113,0.35)" } as React.CSSProperties
+    : { "--exames-ok": "#007a30", "--exames-ok-bg": "rgba(0,184,73,0.06)", "--exames-ok-border": "rgba(0,184,73,0.3)", "--exames-warn": "#b56100", "--exames-warn-bg": "rgba(242,143,0,0.06)", "--exames-warn-border": "rgba(242,143,0,0.35)", "--exames-danger": "#ba120a", "--exames-danger-bg": "rgba(245,49,39,0.06)", "--exames-danger-border": "rgba(245,49,39,0.3)" } as React.CSSProperties
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
       <div
         className={`${EXAMES_PREFIX}-root`}
-        style={{ ...s.container, ...style }}
+        style={{ ...s.container, ...tema, ...style }}
         onFocus={() => { touchedRef.current = true }}
       >
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "start", justifyContent: "space-between" }}>

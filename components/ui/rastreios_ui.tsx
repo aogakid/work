@@ -1,7 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
-import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
+import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 interface FatoresRisco {
     tabagista: boolean
@@ -674,6 +674,9 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
     const touchedRef = useRef(false)
 
     useEffect(() => {
+        const snap = getFieldSyncSnapshot()
+        if (snap.idade !== undefined && snap.idade !== idade) setIdade(snap.idade)
+        if (snap.sexo !== undefined && snap.sexo !== sexo) setSexo(snap.sexo)
         return listenFieldSync(({ source, values }) => {
             if (source === "rastreios") return
             syncRef.current = true
