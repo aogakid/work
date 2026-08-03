@@ -449,7 +449,7 @@ export default function CalculadoraVisita({ style }: Props) {
         if (pontos <= 5) return { classificacao: "Baixo", intervalo: "6 meses a 1 ano" }
         if (pontos <= 10) return { classificacao: "Médio", intervalo: "4 a 6 meses" }
         if (pontos <= 14) return { classificacao: "Alto", intervalo: "2 a 3 meses" }
-        return { classificacao: "Muito Alto", intervalo: "Quinzenal a mensal" }
+        return { classificacao: "Muito Alto", intervalo: "15 a 60 dias" }
     }
 
     const { classificacao, intervalo } = getClassificacao()
