@@ -33,24 +33,6 @@ export default function Document() {
               background-color: #000000 !important;
             }
           }
-          ::view-transition-old(root) {
-            animation: 300ms ease-in both slide-out-up;
-            opacity: 1 !important;
-          }
-
-          ::view-transition-new(root) {
-            animation: 300ms ease-out both slide-in-up;
-          }
-
-          @keyframes slide-out-up {
-            from { transform: translateY(0); }
-            to { transform: translateY(-100%); }
-          }
-
-          @keyframes slide-in-up {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-          }
           .plasmic-default__svg * {
             stroke-width: 2.5 !important;
           }
