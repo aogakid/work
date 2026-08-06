@@ -543,8 +543,7 @@ const rData: RastreioItem[] = [
         id: "epds",
         titulo: "Depressão perinatal",
         cat: "Saúde mental",
-        condicao: (i, s, f) =>
-            s === "F" && ((i >= 15 && i <= 45) || f.gestante),
+        condicao: (_i, s, f) => s === "F" && f.gestante,
         metodo: "EPDS no pré-natal (1º e 3º trimestres) e até 6 semanas pós-parto.",
         obs: "Ponto de corte ≥12 indica avaliação adicional.",
     },
@@ -675,17 +674,22 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
 
     useEffect(() => {
         const snap = getFieldSyncSnapshot()
-        if (snap.idade !== undefined && snap.idade !== idade) setIdade(snap.idade)
-        if (snap.sexo !== undefined && snap.sexo !== sexo) setSexo(snap.sexo)
+        if (Object.keys(snap).length > 0) {
+            syncRef.current = true
+            touchedRef.current = true
+            if (snap.idade !== undefined) setIdade(snap.idade)
+            if (snap.sexo !== undefined) setSexo(snap.sexo)
+            setTimeout(() => { syncRef.current = false }, 0)
+        }
         return listenFieldSync(({ source, values }) => {
             if (source === "rastreios") return
             syncRef.current = true
             touchedRef.current = true
-            if (values.idade !== undefined && values.idade !== idade) setIdade(values.idade)
-            if (values.sexo !== undefined && values.sexo !== sexo) setSexo(values.sexo)
+            if (values.idade !== undefined) setIdade(values.idade)
+            if (values.sexo !== undefined) setSexo(values.sexo)
             setTimeout(() => { syncRef.current = false }, 0)
         })
-    }, [idade, sexo])
+    }, [])
 
     useEffect(() => {
         if (syncRef.current) return
