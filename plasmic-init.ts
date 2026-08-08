@@ -5,6 +5,7 @@ import GoogleSheetsInput from "./components/ui/agenda_ui";
 import FormularioInput from "./components/ui/arrumador_ui_entrada";
 import FormularioOutput from "./components/ui/arrumador_ui_saida";
 import Bloco from "./components/ui/bloco_ui";
+import Preceptoria from "./components/ui/preceptoria_ui";
 import EncaminhaEspecialidade from "./components/ui/encaminhador_ui_entrada_especialidade";
 import EncaminhaInput from "./components/ui/encaminhador_ui_entrada_prontuario";
 import EncaminhaOutput from "./components/ui/encaminhador_ui_saida";
@@ -117,6 +118,17 @@ PLASMIC.registerComponent(Bloco, {
       description: "Clear editor content",
       argTypes: [],
     },
+    cronometro: {
+      description: "Activate timer",
+      argTypes: [],
+    },
+  },
+});
+
+PLASMIC.registerComponent(Preceptoria, {
+  name: "Preceptoria",
+  props: {},
+  refActions: {
     cronometro: {
       description: "Activate timer",
       argTypes: [],
