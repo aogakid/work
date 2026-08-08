@@ -43,6 +43,8 @@ const BUROCRACIA_META: SecaoMeta = { id: "burocracia", title: "Burocracia", lett
 
 const MAPA_SECAO_ID: Record<string, string> = { S: "subjetivo", O: "objetivo", A: "avaliacao", P: "plano" }
 
+const corSecao = (secao: string) => secao === "S" ? "#3b82f6" : secao === "O" ? "#22c55e" : secao === "A" ? "#d9a707" : secao === "P" ? "#f97316" : secao === "B" ? "#8b5cf6" : "#ef4444"
+
 const TIPOS: { id: string; label: string }[] = [
     { id: "consulta_agendada", label: "consulta agendada" },
     { id: "pre_natal", label: "pré natal" },
@@ -94,62 +96,53 @@ async function carregarTemplates(): Promise<TemplatesData> {
     return result
 }
 
-const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, ref) {
+/* ── Timer session ────────────────────────────────────────────────── */
+interface SessaoTimer {
+    id: number
+    nome: string
+    secao: string
+    tempoLimite: number
+    graus: Graus
+    mostrarBurocracia: boolean
+    tempoBurocracia: number
+    tipoSelecionado: string
+}
+
+const calcularLimites = (tempoLimite: number, graus: Graus, mostrarBurocracia: boolean, tempoBurocracia: number): Graus => ({
+    S: tempoLimite * 60 * (graus.S / 360),
+    O: tempoLimite * 60 * (graus.O / 360),
+    A: tempoLimite * 60 * (graus.A / 360),
+    P: tempoLimite * 60 * (graus.P / 360),
+    B: (tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)) * 60,
+})
+
+interface CronometroDashboardProps {
+    tempoLimite: number
+    graus: Graus
+    mostrarBurocracia: boolean
+    tempoBurocracia: number
+    tipoSelecionado: string
+    onAbrirTemplate: (secId: string) => void
+    onSecaoChange: (secao: string) => void
+    onReiniciar: () => void
+}
+
+const CronometroDashboard = (props: CronometroDashboardProps) => {
+    const { tempoLimite, graus, mostrarBurocracia, tempoBurocracia, tipoSelecionado, onAbrirTemplate, onSecaoChange, onReiniciar } = props
+
     /* ── Timer state ── */
-    const [tempoLimite, setTempoLimite] = React.useState<number>(15)
     const [segundosDecorridos, setSegundosDecorridos] = React.useState<number>(0)
-    const [cronometroAtivo, setCronometroAtivo] = React.useState<boolean>(false)
-    const [mostrarSetupRelogio, setMostrarSetupRelogio] = React.useState<boolean>(true)
-    const [relogioExiting, setRelogioExiting] = React.useState<boolean>(false)
     const [isPaused, setIsPaused] = React.useState<boolean>(false)
-    const [mostrarBurocracia, setMostrarBurocracia] = React.useState<boolean>(false)
-    const [tempoBurocracia, setTempoBurocracia] = React.useState<number>(15)
-    const [mostrarAvancado, setMostrarAvancado] = React.useState<boolean>(false)
-    const [graus, setGraus] = React.useState<Graus>(GRAUS_DEFAULT)
-    const [limitesEstado, setLimitesEstado] = React.useState<Graus>({ S: 0, O: 0, A: 0, P: 0, B: 0 })
-    const [shakeTimeCount, setShakeTimeCount] = React.useState<number>(0)
     const [arquivadoManualmente, setArquivadoManualmente] = React.useState<boolean>(false)
+    const [limitesEstado, setLimitesEstado] = React.useState<Graus>(() => calcularLimites(tempoLimite, graus, mostrarBurocracia, tempoBurocracia))
+    const [shakeTimeCount, setShakeTimeCount] = React.useState<number>(0)
     const ultimoPercentualRef = React.useRef<number>(0)
     const momentoInicioRef = React.useRef<number>(0)
     const segundosAcumuladosRef = React.useRef<number>(0)
-    const relogioRef = React.useRef<SVGSVGElement>(null)
-    const relogioAvancadoRef = React.useRef<SVGSVGElement>(null)
-    const grausRef = React.useRef<Graus>(GRAUS_DEFAULT)
-
-    /* ── Preceptoria state ── */
-    const [tipoSelecionado, setTipoSelecionado] = React.useState<string>("consulta_agendada")
-    const [mostrarTemplate, setMostrarTemplate] = React.useState<boolean>(false)
-    const [templateSecaoId, setTemplateSecaoId] = React.useState<string>("subjetivo")
-    const [templateTitulo, setTemplateTitulo] = React.useState<string>("")
-    const [templateConteudo, setTemplateConteudo] = React.useState<string>("")
-
-    React.useEffect(() => {
-        carregarTemplates()
-    }, [])
-
-    /* ── Clock hand drag ── */
-    const tratarMovimentoPonteiro = (clientX: number, clientY: number) => {
-        if (!relogioRef.current) return
-        const rect = relogioRef.current.getBoundingClientRect()
-        const anguloRad = Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2))
-        let anguloGraus = anguloRad * (180 / Math.PI) + 90
-        if (anguloGraus < 0) anguloGraus += 360
-        let minutosCalculados = Math.round(anguloGraus / 6)
-        if (minutosCalculados === 60 || minutosCalculados === 0) minutosCalculados = 60
-        setTempoLimite(Math.min(60, Math.max(1, minutosCalculados)))
-    }
-
-    const iniciarArrastoPonteiro = (e: React.MouseEvent) => {
-        tratarMovimentoPonteiro(e.clientX, e.clientY)
-        const mover = (ev: MouseEvent) => tratarMovimentoPonteiro(ev.clientX, ev.clientY)
-        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
-        window.addEventListener("mousemove", mover)
-        window.addEventListener("mouseup", soltar)
-    }
 
     /* ── Timer calculations ── */
     const minutosPassados = Math.floor(segundosDecorridos / 60)
-    const textoCronometro = cronometroAtivo ? `${String(minutosPassados).padStart(2, "0")} min.` : "00 min."
+    const textoCronometro = `${String(minutosPassados).padStart(2, "0")} min.`
 
     const totalSegundosLimite = (tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)) * 60
     const limiteSegundosS = limitesEstado.S || 0
@@ -158,73 +151,31 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const limiteSegundosP = limitesEstado.P || 0
     const limiteSegundosB = limitesEstado.B || 0
 
-    const pontoArco = (cx: number, cy: number, r: number, angulo: number) => {
-        const rad = (angulo * Math.PI) / 180
-        return [cx + r * Math.sin(rad), cy - r * Math.cos(rad)]
-    }
-
-    const pathFatia = (inicio: number, fim: number) => {
-        const p1 = pontoArco(CLOCK_CX, CLOCK_CY, CLOCK_R, inicio)
-        const p2 = pontoArco(CLOCK_CX, CLOCK_CY, CLOCK_R, fim)
-        const grande = fim - inicio > 180 ? 1 : 0
-        return `M ${CLOCK_CX} ${CLOCK_CY} L ${p1[0]} ${p1[1]} A ${CLOCK_R} ${CLOCK_R} 0 ${grande} 1 ${p2[0]} ${p2[1]} Z`
-    }
-
-    const percentualDaPosicaoAvancado = (clientX: number, clientY: number) => {
-        if (!relogioAvancadoRef.current) return null
-        const rect = relogioAvancadoRef.current.getBoundingClientRect()
-        const anguloRad = Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2))
-        let anguloGraus = anguloRad * (180 / Math.PI) + 90
-        if (anguloGraus < 0) anguloGraus += 360
-        return Math.round(anguloGraus)
-    }
-
-    const aplicarFronteira = (fronteira: string, valor: number) => {
-        const atual = grausRef.current
-        const snap = Math.round(valor / CLOCK_PASSO_GRAUS) * CLOCK_PASSO_GRAUS
-        const novo = { ...atual }
-        if (fronteira === "S") novo.S = Math.max(CLOCK_MIN_FATIA, Math.min(snap, atual.O - CLOCK_MIN_FATIA))
-        else if (fronteira === "O") novo.O = Math.max(atual.S + CLOCK_MIN_FATIA, Math.min(snap, atual.A - CLOCK_MIN_FATIA))
-        else if (fronteira === "A") novo.A = Math.max(atual.O + CLOCK_MIN_FATIA, Math.min(snap, 360 - CLOCK_MIN_FATIA))
-        setGraus(novo)
-        grausRef.current = novo
-    }
-
-    const iniciarArrastoFronteira = (fronteira: string, e: React.MouseEvent) => {
-        const p = percentualDaPosicaoAvancado(e.clientX, e.clientY)
-        if (p !== null) aplicarFronteira(fronteira, p)
-        const mover = (ev: MouseEvent) => {
-            const np = percentualDaPosicaoAvancado(ev.clientX, ev.clientY)
-            if (np !== null) aplicarFronteira(fronteira, np)
-        }
-        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
-        window.addEventListener("mousemove", mover)
-        window.addEventListener("mouseup", soltar)
-    }
-
     let secaoAtual = "S"
     let secaoExtrapolada = false
     let progressoVaoS = 0, progressoVaoO = 0, progressoVaoA = 0, progressoVaoP = 0, progressoVaoB = 0
 
-    if (cronometroAtivo) {
-        if (segundosDecorridos < limiteSegundosS) { secaoAtual = "S"; progressoVaoS = (segundosDecorridos / limiteSegundosS) * 100 }
-        else if (segundosDecorridos < limiteSegundosO) { secaoAtual = "O"; progressoVaoS = 100; progressoVaoO = ((segundosDecorridos - limiteSegundosS) / (limiteSegundosO - limiteSegundosS)) * 100 }
-        else if (segundosDecorridos < limiteSegundosA) { secaoAtual = "A"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = ((segundosDecorridos - limiteSegundosO) / (limiteSegundosA - limiteSegundosO)) * 100 }
-        else if (segundosDecorridos < limiteSegundosP) { secaoAtual = "P"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100 }
-        else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) { secaoAtual = "B"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = ((segundosDecorridos - limiteSegundosP) / (limiteSegundosB - limiteSegundosP)) * 100 }
-        else { secaoAtual = "FIM"; secaoExtrapolada = true; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = 100 }
-    }
+    if (segundosDecorridos < limiteSegundosS) { secaoAtual = "S"; progressoVaoS = (segundosDecorridos / limiteSegundosS) * 100 }
+    else if (segundosDecorridos < limiteSegundosO) { secaoAtual = "O"; progressoVaoS = 100; progressoVaoO = ((segundosDecorridos - limiteSegundosS) / (limiteSegundosO - limiteSegundosS)) * 100 }
+    else if (segundosDecorridos < limiteSegundosA) { secaoAtual = "A"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = ((segundosDecorridos - limiteSegundosO) / (limiteSegundosA - limiteSegundosO)) * 100 }
+    else if (segundosDecorridos < limiteSegundosP) { secaoAtual = "P"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100 }
+    else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) { secaoAtual = "B"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = ((segundosDecorridos - limiteSegundosP) / (limiteSegundosB - limiteSegundosP)) * 100 }
+    else { secaoAtual = "FIM"; secaoExtrapolada = true; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = 100 }
 
     React.useEffect(() => {
-        if (!cronometroAtivo || isPaused || arquivadoManualmente || totalSegundosLimite <= 0) return
+        onSecaoChange(secaoAtual)
+    }, [secaoAtual]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    React.useEffect(() => {
+        if (isPaused || arquivadoManualmente || totalSegundosLimite <= 0) return
         const p = Math.floor((segundosDecorridos / totalSegundosLimite) * 10)
         if (p > ultimoPercentualRef.current && p <= 10 && p > 0) { ultimoPercentualRef.current = p; setShakeTimeCount(c => c + 1) }
-    }, [segundosDecorridos, cronometroAtivo, isPaused, totalSegundosLimite, arquivadoManualmente])
+    }, [segundosDecorridos, isPaused, totalSegundosLimite, arquivadoManualmente])
 
     /* Timer tick */
     React.useEffect(() => {
         let interval: NodeJS.Timeout
-        if (cronometroAtivo && !isPaused && !arquivadoManualmente) {
+        if (!isPaused && !arquivadoManualmente) {
             momentoInicioRef.current = Date.now() - segundosAcumuladosRef.current * 1000
             interval = setInterval(() => {
                 const totalSegundosReais = Math.floor((Date.now() - momentoInicioRef.current) / 1000)
@@ -233,49 +184,21 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
             }, 250)
         }
         return () => clearInterval(interval)
-    }, [cronometroAtivo, isPaused, arquivadoManualmente])
+    }, [isPaused, arquivadoManualmente])
 
     /* Timer colors */
-    let corDinamicaPopup = "#3b82f6", bgDinamicoPopup = "rgba(59,130,246,0.12)", borderDinamicaPopup = "rgba(59,130,246,0.25)"
-    if (tempoLimite > 15 && tempoLimite <= 30) { corDinamicaPopup = "#22c55e"; bgDinamicoPopup = "rgba(34,197,94,0.12)"; borderDinamicaPopup = "rgba(34,197,94,0.25)" }
-    else if (tempoLimite > 30 && tempoLimite <= 45) { corDinamicaPopup = "#eab308"; bgDinamicoPopup = "rgba(234,179,8,0.12)"; borderDinamicaPopup = "rgba(234,179,8,0.25)" }
-    else if (tempoLimite > 45) { corDinamicaPopup = "#ef4444"; bgDinamicoPopup = "rgba(239,68,68,0.12)"; borderDinamicaPopup = "rgba(239,68,68,0.25)" }
-
     let chipTextColor = "#3b82f6"
-    if (cronometroAtivo) {
-        if (arquivadoManualmente) { chipTextColor = "var(--meta-text)" }
-        else if (secaoExtrapolada) { chipTextColor = "#ffffff" }
-        else if (secaoAtual === "S") { chipTextColor = "#3b82f6" }
-        else if (secaoAtual === "O") { chipTextColor = "#22c55e" }
-        else if (secaoAtual === "A") { chipTextColor = "#d9a707" }
-        else if (secaoAtual === "P") { chipTextColor = "#f97316" }
-        else if (secaoAtual === "B") { chipTextColor = "#8b5cf6" }
-    }
+    if (arquivadoManualmente) { chipTextColor = "var(--meta-text)" }
+    else if (secaoExtrapolada) { chipTextColor = "#ffffff" }
+    else if (secaoAtual === "S") { chipTextColor = "#3b82f6" }
+    else if (secaoAtual === "O") { chipTextColor = "#22c55e" }
+    else if (secaoAtual === "A") { chipTextColor = "#d9a707" }
+    else if (secaoAtual === "P") { chipTextColor = "#f97316" }
+    else if (secaoAtual === "B") { chipTextColor = "#8b5cf6" }
 
     /* ── Actions ── */
-    const dispararCronometroAtivo = () => {
-        setMostrarSetupRelogio(false); setArquivadoManualmente(false); setSegundosDecorridos(0)
-        segundosAcumuladosRef.current = 0; ultimoPercentualRef.current = 0
-        setShakeTimeCount(0); momentoInicioRef.current = Date.now()
-        const totalBase = (tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)) * 60
-        setLimitesEstado({
-            S: tempoLimite * 60 * (graus.S / 360),
-            O: tempoLimite * 60 * (graus.O / 360),
-            A: tempoLimite * 60 * (graus.A / 360),
-            P: tempoLimite * 60 * (graus.P / 360),
-            B: totalBase,
-        })
-        setCronometroAtivo(true); setIsPaused(false)
-    }
-
-    const fecharCronometroCompleto = () => {
-        setCronometroAtivo(false); setIsPaused(false); setArquivadoManualmente(false); setSegundosDecorridos(0)
-        segundosAcumuladosRef.current = 0; ultimoPercentualRef.current = 0
-        setShakeTimeCount(0); setMostrarSetupRelogio(true)
-    }
-
     const pularSecao = () => {
-        if (!cronometroAtivo || arquivadoManualmente) return
+        if (arquivadoManualmente) return
         const ordem = mostrarBurocracia ? ["S", "O", "A", "P", "B"] : ["S", "O", "A", "P"]
         const idx = ordem.indexOf(secaoAtual)
         if (idx === -1) return
@@ -285,7 +208,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     }
 
     const adicionarBonus = () => {
-        if (!cronometroAtivo || arquivadoManualmente) return
+        if (arquivadoManualmente) return
         const ordem = mostrarBurocracia ? ["S", "O", "A", "P", "B"] : ["S", "O", "A", "P"]
         const idx = ordem.indexOf(secaoAtual)
         if (idx === -1) return
@@ -295,29 +218,13 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
         setLimitesEstado(novos)
     }
 
-    const abrirSetup = () => {
-        setMostrarSetupRelogio(true)
-    }
-
-    React.useEffect(() => {
-        const lidarComCronometroOuvinte = () => abrirSetup()
-        window.addEventListener("framerCronometro", lidarComCronometroOuvinte)
-        return () => window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
-    }, [])
-
-    useImperativeHandle(ref, () => ({
-        cronometro: () => {
-            fecharCronometroCompleto()
-            setMostrarSetupRelogio(true)
-        },
-    })) // eslint-disable-line react-hooks/exhaustive-deps
-
     /* ── Display meta ── */
     const metaAtual = secaoAtual === "B" ? BUROCRACIA_META : SECTION_META.find(m => m.letter === secaoAtual)
     let displayTitle = secaoExtrapolada ? "tempo extrapolado" : (metaAtual?.title || "")
     if (arquivadoManualmente) displayTitle = "atendimento arquivado"
 
     const metaTotal = tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)
+    const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
 
     /* ── SOAP cluster ── */
     const clusterItems: ClusterItem[] = SECTION_META.map(m => {
@@ -390,7 +297,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
 
         return (
             <div key={item.meta.letter} style={{ width: "140px", height: "140px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <div onClick={() => { if (secId) mostrarTemplateSecao(secId) }} title={secId ? "ver modelo" : undefined} style={{ position: "relative", width: "128px", height: "128px", display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${scale})`, transition: "transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease", cursor: secId ? "pointer" : "default", opacity: slotOpacity, transformOrigin: "center center" }}>
+                <div onClick={() => { if (secId) onAbrirTemplate(secId) }} title={secId ? "ver modelo" : undefined} style={{ position: "relative", width: "128px", height: "128px", display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${scale})`, transition: "transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease", cursor: secId ? "pointer" : "default", opacity: slotOpacity, transformOrigin: "center center" }}>
                     <svg width="128" height="128" viewBox="0 0 128 128" style={{ position: "absolute", top: 0, left: 0, width: "128px", height: "128px" }}>
                         <circle cx="64" cy="64" r={RAIO_RING} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
                         <circle cx="64" cy="64" r={RAIO_RING} fill="none" stroke={ringColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeDasharray={CIRCUNFERENCIA_RING} strokeDashoffset={CIRCUNFERENCIA_RING * (1 - ringProgress)} transform="rotate(-90 64 64)" style={{ transition: "stroke-dashoffset 0.3s ease, stroke 0.3s ease" }} />
@@ -405,38 +312,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
             </div>
         )
     }
-
-    /* ── Template helpers ── */
-    const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
-
-    const mostrarTemplateSecao = (secId: string) => {
-        const meta = SECTION_META.find(m => m.id === secId)
-        if (!meta) return
-        setTemplateSecaoId(secId)
-        setTemplateTitulo(`${meta.title} · ${labelTipo}`)
-        setTemplateConteudo("")
-        setMostrarTemplate(true)
-        carregarTemplates().then(data => {
-            const conteudo = data[tipoSelecionado]?.[secId] || ""
-            setTemplateConteudo(conteudo)
-        })
-    }
-
-    const renderTemplateLinhas = (texto: string) => {
-        const linhas = texto.split("\n")
-        return linhas.map((linha, i) => {
-            const matchIndent = linha.match(/^ +/)
-            const indent = matchIndent ? matchIndent[0].length : 0
-            const ehSub = indent > 0
-            return (
-                <div key={i} style={{ paddingLeft: `${indent * 7}px`, color: ehSub ? "var(--meta-text)" : "#f5f5f4", fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {linha}
-                </div>
-            )
-        })
-    }
-
-    const templateMeta = SECTION_META.find(m => m.id === templateSecaoId) || SECTION_META[0]
 
     /* ── Session summary (on archive) ── */
     const formatarTempo = (s: number) => {
@@ -476,6 +351,189 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
 
     const corUsado = (usado: number, alocado: number) => usado < alocado ? "#22c55e" : (usado > alocado ? "#ef4444" : "#f5f5f4")
 
+    /* ── Render ── */
+    return (
+        <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "26px", width: "100%", maxWidth: "520px" }}>
+            {/* SOAP circles */}
+            {!arquivadoManualmente && (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
+                    {clusterItems.map(renderCircle)}
+                </div>
+            )}
+            {!arquivadoManualmente && (
+                <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "15px", fontWeight: 600, color: arquivadoManualmente ? "var(--meta-text)" : (secaoExtrapolada ? "#ef4444" : (metaAtual?.color || "#f5f5f4")), letterSpacing: "0.02em", textAlign: "center" }}>
+                    {displayTitle}
+                </div>
+            )}
+
+            {/* Elapsed time */}
+            {!arquivadoManualmente && (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
+                    <div key={`time-shake-${shakeTimeCount}`} className={`${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "76px", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: chipTextColor, transformOrigin: "center center" }}>
+                        {textoCronometro}
+                    </div>
+                    {isPaused && (
+                        <div className="gas-ui-blockout" style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 700, color: "var(--meta-text)", letterSpacing: "0.5px", background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.12)" }}>PAUSADO</div>
+                    )}
+                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
+                        meta: {metaTotal} min{mostrarBurocracia ? " · burocracia incluída" : ""}
+                    </div>
+                </div>
+            )}
+
+            {/* Controls */}
+            {!arquivadoManualmente && (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <button className="gas-scale-hover" onClick={() => setArquivadoManualmente(true)} title="concluir atendimento" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#ffffff", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✓</button>
+                    {secaoAtual !== "FIM" && (
+                        <button className="gas-scale-hover" onClick={pularSecao} title="pular seção (tempo restante vai para a próxima)" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#f5f5f4", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>⏭</button>
+                    )}
+                    {secaoAtual !== "FIM" && (
+                        <button className="gas-scale-hover" onClick={adicionarBonus} title="adicionar 10% do tempo à seção atual" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#4ade80", fontSize: "11px", fontWeight: 800, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>+10%</button>
+                    )}
+                    <button className={`gas-scale-hover ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={() => setIsPaused(!isPaused)} title={isPaused ? "retomar" : "pausar"} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: chipTextColor, fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>
+                        {isPaused ? "▶" : "❚❚"}
+                    </button>
+                    <button className="gas-scale-hover" onClick={onReiniciar} title="encerrar" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(239,68,68,0.14)", color: "#ef4444", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✕</button>
+                </div>
+            )}
+
+            {arquivadoManualmente && (
+                <div className="framer-timer-entrance gas-ui-blockout" style={{ width: "100%", maxWidth: "420px", background: "#0d0d0d", border: "1px solid #262626", borderRadius: "14px", overflow: "hidden", boxSizing: "border-box" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 16px", borderBottom: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
+                        <span style={{ width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(34,197,94,0.14)", color: "#22c55e", fontSize: "15px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>✓</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "13px", fontWeight: 600, color: "#f5f5f4" }}>resumo do atendimento</div>
+                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>{labelTipo}</div>
+                        </div>
+                    </div>
+                    <div style={{ padding: "6px 0" }}>
+                        {resumoLinhas.map(s => (
+                            <div key={s.letter} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px" }}>
+                                <span style={{ width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: "11px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>{s.letter}</span>
+                                <div style={{ flex: 1, minWidth: 0 }}>
+                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", fontWeight: 600, color: "#f5f5f4" }}>{s.title}</div>
+                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)" }}>usou <b style={{ color: corUsado(s.usado, s.alocado), fontWeight: 700 }}>{formatarTempo(s.usado)}</b> / {formatarTempo(s.alocado)}</div>
+                                </div>
+                                <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", fontWeight: 700, color: s.done ? "#22c55e" : "var(--meta-text)", flexShrink: 0 }}>{s.done ? "✓ concluída" : (s.ativo ? "em curso" : "—")}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ padding: "10px 16px", borderTop: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
+                        <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
+                            usou <b style={{ color: corUsado(segundosDecorridos, totalSegundosLimite), fontWeight: 700 }}>{formatarTempo(segundosDecorridos)}</b> / {formatarTempo(totalSegundosLimite)}
+                        </div>
+                    </div>
+                    <div style={{ padding: "0 16px 14px 16px" }}>
+                        <button className="gas-scale-hover" onClick={onReiniciar} style={{ width: "100%", background: "rgba(120,113,108,0.1)", color: "var(--meta-text)", border: "1px solid rgba(120,113,108,0.2)", borderRadius: "8px", padding: "8px 18px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>reiniciar cronômetro</button>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, ref) {
+    /* ── Sessions ── */
+    const [sessoes, setSessoes] = React.useState<SessaoTimer[]>([])
+    const [sessaoAtivaId, setSessaoAtivaId] = React.useState<number | null>(null)
+    const [renomeandoId, setRenomeandoId] = React.useState<number | null>(null)
+    const [renomeandoTexto, setRenomeandoTexto] = React.useState<string>("")
+    const proximoIdRef = React.useRef<number>(1)
+
+    /* ── Setup editor state ── */
+    const [tempoLimite, setTempoLimite] = React.useState<number>(15)
+    const [mostrarSetupRelogio, setMostrarSetupRelogio] = React.useState<boolean>(true)
+    const [relogioExiting, setRelogioExiting] = React.useState<boolean>(false)
+    const [mostrarBurocracia, setMostrarBurocracia] = React.useState<boolean>(false)
+    const [tempoBurocracia, setTempoBurocracia] = React.useState<number>(15)
+    const [mostrarAvancado, setMostrarAvancado] = React.useState<boolean>(false)
+    const [graus, setGraus] = React.useState<Graus>(GRAUS_DEFAULT)
+    const [tipoSelecionado, setTipoSelecionado] = React.useState<string>("consulta_agendada")
+    const relogioRef = React.useRef<SVGSVGElement>(null)
+    const relogioAvancadoRef = React.useRef<SVGSVGElement>(null)
+    const grausRef = React.useRef<Graus>(GRAUS_DEFAULT)
+
+    /* ── Preceptoria state ── */
+    const [mostrarTemplate, setMostrarTemplate] = React.useState<boolean>(false)
+    const [templateSecaoId, setTemplateSecaoId] = React.useState<string>("subjetivo")
+    const [templateTitulo, setTemplateTitulo] = React.useState<string>("")
+    const [templateConteudo, setTemplateConteudo] = React.useState<string>("")
+
+    React.useEffect(() => {
+        carregarTemplates()
+    }, [])
+
+    /* ── Clock hand drag ── */
+    const tratarMovimentoPonteiro = (clientX: number, clientY: number) => {
+        if (!relogioRef.current) return
+        const rect = relogioRef.current.getBoundingClientRect()
+        const anguloRad = Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2))
+        let anguloGraus = anguloRad * (180 / Math.PI) + 90
+        if (anguloGraus < 0) anguloGraus += 360
+        let minutosCalculados = Math.round(anguloGraus / 6)
+        if (minutosCalculados === 60 || minutosCalculados === 0) minutosCalculados = 60
+        setTempoLimite(Math.min(60, Math.max(1, minutosCalculados)))
+    }
+
+    const iniciarArrastoPonteiro = (e: React.MouseEvent) => {
+        tratarMovimentoPonteiro(e.clientX, e.clientY)
+        const mover = (ev: MouseEvent) => tratarMovimentoPonteiro(ev.clientX, ev.clientY)
+        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
+        window.addEventListener("mousemove", mover)
+        window.addEventListener("mouseup", soltar)
+    }
+
+    /* ── Setup helpers ── */
+    const pontoArco = (cx: number, cy: number, r: number, angulo: number) => {
+        const rad = (angulo * Math.PI) / 180
+        return [cx + r * Math.sin(rad), cy - r * Math.cos(rad)]
+    }
+
+    const pathFatia = (inicio: number, fim: number) => {
+        const p1 = pontoArco(CLOCK_CX, CLOCK_CY, CLOCK_R, inicio)
+        const p2 = pontoArco(CLOCK_CX, CLOCK_CY, CLOCK_R, fim)
+        const grande = fim - inicio > 180 ? 1 : 0
+        return `M ${CLOCK_CX} ${CLOCK_CY} L ${p1[0]} ${p1[1]} A ${CLOCK_R} ${CLOCK_R} 0 ${grande} 1 ${p2[0]} ${p2[1]} Z`
+    }
+
+    const percentualDaPosicaoAvancado = (clientX: number, clientY: number) => {
+        if (!relogioAvancadoRef.current) return null
+        const rect = relogioAvancadoRef.current.getBoundingClientRect()
+        const anguloRad = Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2))
+        let anguloGraus = anguloRad * (180 / Math.PI) + 90
+        if (anguloGraus < 0) anguloGraus += 360
+        return Math.round(anguloGraus)
+    }
+
+    const aplicarFronteira = (fronteira: string, valor: number) => {
+        const atual = grausRef.current
+        const snap = Math.round(valor / CLOCK_PASSO_GRAUS) * CLOCK_PASSO_GRAUS
+        const novo = { ...atual }
+        if (fronteira === "S") novo.S = Math.max(CLOCK_MIN_FATIA, Math.min(snap, atual.O - CLOCK_MIN_FATIA))
+        else if (fronteira === "O") novo.O = Math.max(atual.S + CLOCK_MIN_FATIA, Math.min(snap, atual.A - CLOCK_MIN_FATIA))
+        else if (fronteira === "A") novo.A = Math.max(atual.O + CLOCK_MIN_FATIA, Math.min(snap, 360 - CLOCK_MIN_FATIA))
+        setGraus(novo)
+        grausRef.current = novo
+    }
+
+    const iniciarArrastoFronteira = (fronteira: string, e: React.MouseEvent) => {
+        const p = percentualDaPosicaoAvancado(e.clientX, e.clientY)
+        if (p !== null) aplicarFronteira(fronteira, p)
+        const mover = (ev: MouseEvent) => {
+            const np = percentualDaPosicaoAvancado(ev.clientX, ev.clientY)
+            if (np !== null) aplicarFronteira(fronteira, np)
+        }
+        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
+        window.addEventListener("mousemove", mover)
+        window.addEventListener("mouseup", soltar)
+    }
+
+    /* Timer colors */
+    let corDinamicaPopup = "#3b82f6", bgDinamicoPopup = "rgba(59,130,246,0.12)", borderDinamicaPopup = "rgba(59,130,246,0.25)"
+    if (tempoLimite > 15 && tempoLimite <= 30) { corDinamicaPopup = "#22c55e"; bgDinamicoPopup = "rgba(34,197,94,0.12)"; borderDinamicaPopup = "rgba(34,197,94,0.25)" }
+    else if (tempoLimite > 30 && tempoLimite <= 45) { corDinamicaPopup = "#eab308"; bgDinamicoPopup = "rgba(234,179,8,0.12)"; borderDinamicaPopup = "rgba(234,179,8,0.25)" }
+    else if (tempoLimite > 45) { corDinamicaPopup = "#ef4444"; bgDinamicoPopup = "rgba(239,68,68,0.12)"; borderDinamicaPopup = "rgba(239,68,68,0.25)" }
 
     const fatiasAvancado = [
         { key: "S", meta: SECTION_META[0], inicio: 0, fim: graus.S },
@@ -510,6 +568,93 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const durP = (360 - graus.A) / 3.6
     const resumoAvancado = `S ${Math.round((tempoLimite * durS / 100) * 10) / 10} min · O ${Math.round((tempoLimite * durO / 100) * 10) / 10} min · A ${Math.round((tempoLimite * durA / 100) * 10) / 10} min · P ${Math.round((tempoLimite * durP / 100) * 10) / 10} min`
 
+    /* ── Actions ── */
+    const abrirSetup = () => {
+        setMostrarSetupRelogio(true)
+        setRelogioExiting(false)
+    }
+
+    const iniciarSessao = () => {
+        const nova: SessaoTimer = {
+            id: proximoIdRef.current,
+            nome: `atendimento ${proximoIdRef.current}`,
+            secao: "S",
+            tempoLimite,
+            graus: { ...graus },
+            mostrarBurocracia,
+            tempoBurocracia,
+            tipoSelecionado,
+        }
+        proximoIdRef.current += 1
+        setSessoes(prev => [...prev, nova])
+        setSessaoAtivaId(nova.id)
+        setMostrarSetupRelogio(false)
+        setRelogioExiting(false)
+    }
+
+    const encerrarSessao = (id: number) => {
+        const restantes = sessoes.filter(s => s.id !== id)
+        setSessoes(restantes)
+        if (sessaoAtivaId === id) {
+            setSessaoAtivaId(restantes.length > 0 ? restantes[restantes.length - 1].id : null)
+        }
+        if (renomeandoId === id) setRenomeandoId(null)
+    }
+
+    const confirmarRenomear = () => {
+        if (renomeandoId === null) return
+        const nome = renomeandoTexto.trim()
+        setSessoes(prev => prev.map(s => s.id === renomeandoId ? { ...s, nome: nome || s.nome } : s))
+        setRenomeandoId(null)
+    }
+
+    const atualizarSecaoSessao = (id: number, secao: string) => {
+        setSessoes(prev => prev.map(s => s.id === id ? { ...s, secao } : s))
+    }
+
+    const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
+
+    const abrirTemplate = (secId: string) => {
+        const meta = SECTION_META.find(m => m.id === secId)
+        if (!meta) return
+        setTemplateSecaoId(secId)
+        setTemplateTitulo(`${meta.title} · ${labelTipo}`)
+        setTemplateConteudo("")
+        setMostrarTemplate(true)
+        carregarTemplates().then(data => {
+            const conteudo = data[tipoSelecionado]?.[secId] || ""
+            setTemplateConteudo(conteudo)
+        })
+    }
+
+    const renderTemplateLinhas = (texto: string) => {
+        const linhas = texto.split("\n")
+        return linhas.map((linha, i) => {
+            const matchIndent = linha.match(/^ +/)
+            const indent = matchIndent ? matchIndent[0].length : 0
+            const ehSub = indent > 0
+            return (
+                <div key={i} style={{ paddingLeft: `${indent * 7}px`, color: ehSub ? "var(--meta-text)" : "#f5f5f4", fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                    {linha}
+                </div>
+            )
+        })
+    }
+
+    const templateMeta = SECTION_META.find(m => m.id === templateSecaoId) || SECTION_META[0]
+
+    React.useEffect(() => {
+        const lidarComCronometroOuvinte = () => abrirSetup()
+        window.addEventListener("framerCronometro", lidarComCronometroOuvinte)
+        return () => window.removeEventListener("framerCronometro", lidarComCronometroOuvinte)
+    }, [])
+
+    useImperativeHandle(ref, () => ({
+        cronometro: () => {
+            abrirSetup()
+        },
+    })) // eslint-disable-line react-hooks/exhaustive-deps
+
     return (
         <div className="preceptoria-root framer-editor-container" style={{ width: "100%", height: "100%", borderRadius: "10px", boxSizing: "border-box", overflow: "hidden", position: "relative", overflowX: "hidden" }}>
             <style>{`
@@ -532,6 +677,8 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                 .gas-soap-heavy-trigger { animation: gasAmplifiedShake 0.95s cubic-bezier(0.25, 1, 0.5, 1) forwards; transform-origin: center center; }
                 @keyframes gasPlayPulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
                 .gas-play-pulse-btn { animation: gasPlayPulse 1.4s ease-in-out infinite; }
+                @keyframes gasTabBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+                .gas-tab-blink { animation: gasTabBlink 0.9s ease-in-out infinite; }
                 .gas-hover-btn { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; cursor: pointer; transition: background 0.2s, transform 0.1s; font-size: 8px; border: none; }
                 .gas-hover-btn:active { transform: scale(0.85); }
                 .gas-hover-btn:hover { transform: scale(1.12); }
@@ -546,16 +693,42 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
             {/* ── MAIN ── */}
             <div style={{ width: "100%", height: "100%", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", display: "flex", flexDirection: "column", position: "relative" }}>
 
+                {/* ── TABS ── */}
+                {sessoes.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "12px 16px 0 16px", flexWrap: "wrap", position: "relative", zIndex: 30 }}>
+                        {sessoes.map(s => {
+                            const ativa = s.id === sessaoAtivaId
+                            const editando = renomeandoId === s.id
+                            const corTab = corSecao(s.secao || "S")
+                            return (
+                                <div key={s.id} className={s.secao === "FIM" ? "gas-tab-blink" : undefined} onClick={() => { setSessaoAtivaId(s.id); setMostrarSetupRelogio(false); setRelogioExiting(false); setRenomeandoId(null) }} style={{ display: "flex", alignItems: "center", gap: "5px", padding: "5px 8px 5px 10px", borderRadius: "8px", cursor: "pointer", background: ativa ? `${corTab}26` : "rgba(255,255,255,0.05)", border: ativa ? `1px solid ${corTab}` : `1px solid ${corTab}59`, fontFamily: '"Google Sans Flex", sans-serif', transition: "background 0.2s, border 0.2s" }}>
+                                    {editando ? (
+                                        <input autoFocus value={renomeandoTexto} onChange={e => setRenomeandoTexto(e.target.value)} onBlur={confirmarRenomear} onKeyDown={e => { if (e.key === "Enter") confirmarRenomear(); else if (e.key === "Escape") setRenomeandoId(null) }} onClick={e => e.stopPropagation()} style={{ width: "80px", background: "#0a0a0a", border: "1px solid rgba(59,130,246,0.5)", color: "#f5f5f4", borderRadius: "5px", padding: "3px 6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none" }} />
+                                    ) : (
+                                        <span onClick={e => { if (ativa) { e.stopPropagation(); setRenomeandoId(s.id); setRenomeandoTexto(s.nome) } }} title={ativa ? "clique para renomear" : undefined} style={{ fontSize: "12px", fontWeight: 600, color: ativa ? "#f5f5f4" : "var(--meta-text)", maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "5px" }}>
+                                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: corTab, flexShrink: 0 }} />
+                                            {s.nome}
+                                        </span>
+                                    )}
+                                    <span style={{ fontSize: "9px", color: corTab, fontFamily: '"Google Sans Flex", sans-serif', fontWeight: 700 }}>{s.tempoLimite}m</span>
+                                    <button onClick={e => { e.stopPropagation(); encerrarSessao(s.id) }} title="encerrar" style={{ background: "transparent", border: "none", color: "var(--meta-text)", cursor: "pointer", fontSize: "10px", padding: "0", lineHeight: 1, fontFamily: '"Google Sans Flex", sans-serif' }}>✕</button>
+                                </div>
+                            )
+                        })}
+                        <button className="gas-scale-hover" onClick={abrirSetup} title="novo cronômetro" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "28px", height: "28px", borderRadius: "8px", background: "rgba(255,255,255,0.06)", border: "1px dashed rgba(255,255,255,0.25)", color: "#f5f5f4", cursor: "pointer", fontSize: "14px", fontFamily: '"Google Sans Flex", sans-serif' }}>+</button>
+                    </div>
+                )}
+
                 {/* ── CENTERED CONTENT ── */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", minHeight: 0, boxSizing: "border-box" }}>
 
                     {/* ── EMPTY STATE ── */}
-                    {!cronometroAtivo && !mostrarSetupRelogio && (
+                    {sessoes.length === 0 && !mostrarSetupRelogio && (
                         <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", textAlign: "center", maxWidth: "340px" }}>
                             <div style={{ width: "72px", height: "72px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", fontSize: "28px" }}>⏱</div>
                             <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "16px", fontWeight: 600, color: "#f5f5f4" }}>monitoramento de atendimento</div>
                             <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", color: "var(--meta-text)", lineHeight: 1.5 }}>inicia o cronômetro para acompanhar o tempo de cada etapa do atendimento (S-O-A-P).</div>
-                            <button className="gas-scale-hover gas-ui-blockout" onClick={() => { setMostrarSetupRelogio(true) }} style={{ marginTop: "8px", background: "#3b82f6", color: "#ffffff", border: "none", borderRadius: "8px", padding: "10px 22px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', display: "flex", alignItems: "center", gap: "6px" }}>
+                            <button className="gas-scale-hover gas-ui-blockout" onClick={abrirSetup} style={{ marginTop: "8px", background: "#3b82f6", color: "#ffffff", border: "none", borderRadius: "8px", padding: "10px 22px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', display: "flex", alignItems: "center", gap: "6px" }}>
                                 <span>▶</span> iniciar cronômetro
                             </button>
                         </div>
@@ -628,93 +801,19 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                 <select value={tipoSelecionado} onChange={e => setTipoSelecionado(e.target.value)} style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", marginBottom: "10px", marginTop: "4px", cursor: "pointer" }}>
                                     {TIPOS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
                                 </select>
-                                <button className="gas-scale-hover" onClick={dispararCronometroAtivo} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: "6px 0", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
+                                <button className="gas-scale-hover" onClick={iniciarSessao} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: "6px 0", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
                                     <span>▶</span> iniciar
                                 </button>
                             </div>
                         </>
                     )}
 
-                    {/* ── DASHBOARD ── */}
-                    {cronometroAtivo && (
-                        <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "26px", width: "100%", maxWidth: "520px" }}>
-                            {/* SOAP circles */}
-                            {!arquivadoManualmente && (
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
-                                    {clusterItems.map(renderCircle)}
-                                </div>
-                            )}
-                            {!arquivadoManualmente && (
-                                <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "15px", fontWeight: 600, color: arquivadoManualmente ? "var(--meta-text)" : (secaoExtrapolada ? "#ef4444" : (metaAtual?.color || "#f5f5f4")), letterSpacing: "0.02em", textAlign: "center" }}>
-                                    {displayTitle}
-                                </div>
-                            )}
-
-                            {/* Elapsed time */}
-                            {!arquivadoManualmente && (
-                                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                                    <div key={`time-shake-${shakeTimeCount}`} className={`${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "76px", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: chipTextColor, transformOrigin: "center center" }}>
-                                        {textoCronometro}
-                                    </div>
-                                    {isPaused && (
-                                        <div className="gas-ui-blockout" style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 700, color: "var(--meta-text)", letterSpacing: "0.5px", background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.12)" }}>PAUSADO</div>
-                                    )}
-                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
-                                        meta: {metaTotal} min{mostrarBurocracia ? " · burocracia incluída" : ""}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Controls */}
-                            {!arquivadoManualmente && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                    <button className="gas-scale-hover" onClick={() => setArquivadoManualmente(true)} title="concluir atendimento" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#ffffff", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✓</button>
-                                    {secaoAtual !== "FIM" && (
-                                        <button className="gas-scale-hover" onClick={pularSecao} title="pular seção (tempo restante vai para a próxima)" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#f5f5f4", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>⏭</button>
-                                    )}
-                                    {secaoAtual !== "FIM" && (
-                                        <button className="gas-scale-hover" onClick={adicionarBonus} title="adicionar 10% do tempo à seção atual" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#4ade80", fontSize: "11px", fontWeight: 800, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>+10%</button>
-                                    )}
-                                    <button className={`gas-scale-hover ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={() => setIsPaused(!isPaused)} title={isPaused ? "retomar" : "pausar"} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: chipTextColor, fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>
-                                        {isPaused ? "▶" : "❚❚"}
-                                    </button>
-                                    <button className="gas-scale-hover" onClick={fecharCronometroCompleto} title="encerrar" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(239,68,68,0.14)", color: "#ef4444", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✕</button>
-                                </div>
-                            )}
-
-                            {arquivadoManualmente && (
-                                <div className="framer-timer-entrance gas-ui-blockout" style={{ width: "100%", maxWidth: "420px", background: "#0d0d0d", border: "1px solid #262626", borderRadius: "14px", overflow: "hidden", boxSizing: "border-box" }}>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 16px", borderBottom: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
-                                        <span style={{ width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(34,197,94,0.14)", color: "#22c55e", fontSize: "15px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>✓</span>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "13px", fontWeight: 600, color: "#f5f5f4" }}>resumo do atendimento</div>
-                                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>{labelTipo}</div>
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: "6px 0" }}>
-                                        {resumoLinhas.map(s => (
-                                            <div key={s.letter} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px" }}>
-                                                <span style={{ width: "24px", height: "24px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: "11px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>{s.letter}</span>
-                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", fontWeight: 600, color: "#f5f5f4" }}>{s.title}</div>
-                                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)" }}>usou <b style={{ color: corUsado(s.usado, s.alocado), fontWeight: 700 }}>{formatarTempo(s.usado)}</b> / {formatarTempo(s.alocado)}</div>
-                                                </div>
-                                                <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", fontWeight: 700, color: s.done ? "#22c55e" : "var(--meta-text)", flexShrink: 0 }}>{s.done ? "✓ concluída" : (s.ativo ? "em curso" : "—")}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div style={{ padding: "10px 16px", borderTop: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
-                                        <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
-                                            usou <b style={{ color: corUsado(segundosDecorridos, totalSegundosLimite), fontWeight: 700 }}>{formatarTempo(segundosDecorridos)}</b> / {formatarTempo(totalSegundosLimite)}
-                                        </div>
-                                    </div>
-                                    <div style={{ padding: "0 16px 14px 16px" }}>
-                                        <button className="gas-scale-hover" onClick={fecharCronometroCompleto} style={{ width: "100%", background: "rgba(120,113,108,0.1)", color: "var(--meta-text)", border: "1px solid rgba(120,113,108,0.2)", borderRadius: "8px", padding: "8px 18px", fontSize: "12px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>reiniciar cronômetro</button>
-                                    </div>
-                                </div>
-                            )}
+                    {/* ── DASHBOARDS ── */}
+                    {!mostrarSetupRelogio && sessoes.map(s => (
+                        <div key={s.id} style={{ display: sessaoAtivaId === s.id ? "flex" : "none", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                            <CronometroDashboard tempoLimite={s.tempoLimite} graus={s.graus} mostrarBurocracia={s.mostrarBurocracia} tempoBurocracia={s.tempoBurocracia} tipoSelecionado={s.tipoSelecionado} onAbrirTemplate={abrirTemplate} onSecaoChange={secao => atualizarSecaoSessao(s.id, secao)} onReiniciar={() => { encerrarSessao(s.id); abrirSetup() }} />
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
 
