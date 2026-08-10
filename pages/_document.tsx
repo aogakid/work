@@ -6,7 +6,7 @@ export default function Document() {
       <Head>
         <meta name="theme-color" content="#FFFDF5" />
         <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

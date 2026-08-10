@@ -1255,7 +1255,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* Timer trigger */}
                 {!cronometroAtivo && (
-                    <button className="gas-ui-blockout gas-hover-btn" onClick={() => { setPopupDispensado(false); setMostrarSetupRelogio(true); setMostrarPopupSugestao(false) }} style={{ background: "var(--meta-bg)", backdropFilter: "blur(4px)", padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: "1px solid var(--meta-border)", pointerEvents: "auto", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, width: "auto", height: "auto" }}>
+                    <button className="gas-ui-blockout gas-hover-btn gas-order-time" onClick={() => { setPopupDispensado(false); setMostrarSetupRelogio(true); setMostrarPopupSugestao(false) }} style={{ background: "var(--meta-bg)", backdropFilter: "blur(4px)", padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: "1px solid var(--meta-border)", pointerEvents: "auto", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, width: "auto", height: "auto" }}>
                         <span style={{ fontSize: "14px" }}>⏱</span>
                         Cronômetro
                     </button>

@@ -71,7 +71,7 @@ const injectStyles = `
 
   .geriatria-form-section {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     grid-column: 1 / -1;
     background: rgba(120, 120, 120, 0.04);
@@ -136,13 +136,13 @@ const injectStyles = `
 
   @media (min-width: 600px) {
     .geriatria-form-section {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
   }
 
   @media (max-width: 600px) {
     .geriatria-form-section {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 `
@@ -183,9 +183,8 @@ const styles = {
     letterSpacing: "0.05em",
     color: "var(--geriatria-text-muted)",
     fontWeight: 600,
-    whiteSpace: "nowrap" as const,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    lineHeight: 1.4,
+    whiteSpace: "normal" as const,
     maxWidth: "100%",
   },
   sectionLabel: {
@@ -573,7 +572,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const [formFields, setFormFields] = useState<FormField[]>([])
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
-  const [activeTab, setActiveTab] = useState<"avaliacao" | "katzlawton" | "cage" | "gds15" | "cfs">("avaliacao")
+  const [activeTab, setActiveTab] = useState<"avaliacao" | "ivcf20" | "katzlawton" | "cage" | "gds15" | "cfs">("avaliacao")
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [cfsTerminal, setCfsTerminal] = useState<"sim" | "não" | null>(null)
@@ -701,6 +700,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
 
   const generateMarkdown = useCallback(() => {
     return secoes
+      .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton")
       .map(s => generateSectionMarkdown(s.id, s.label))
       .filter(Boolean)
       .join("\n\n")
@@ -859,7 +859,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       }
       case "multiple_choice":
         return (
-          <div key={field.id} style={{ gridColumn: "1 / -1" }}>
+          <div key={field.id} style={{ gridColumn: "1 / -1", minWidth: 0, overflow: "hidden" }}>
             <label style={styles.label}>{field.label}</label>
             <div className="geriatria-chips-grid" style={{ marginTop: "8px" }}>
               {field.options?.map(opt => {
@@ -1027,8 +1027,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       <div style={styles.title}>checklist da geriatria</div>
       <div style={styles.subtitle}>baseado na caderneta da pessoa idosa</div>
 
-      <div style={{ display: "flex", gap: "4px", marginBottom: "16px" }}>
-        {([["avaliacao", "Avaliação"], ["katzlawton", "Katz/Lawton"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
+        {([["avaliacao", "Avaliação"], ["ivcf20", "IVCF-20"], ["katzlawton", "Katz/Lawton"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
           <div
             key={key}
             onClick={() => setActiveTab(key)}
@@ -1065,13 +1065,15 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           ) : formFields.length > 0 && (
             <>
               {groupFieldsBySection(
-                activeTab === "cage"
-                  ? formFields.filter(f => f.section === "cage")
-                  : activeTab === "gds15"
-                    ? formFields.filter(f => f.section === "gds15")
-                    : activeTab === "katzlawton"
-                      ? formFields.filter(f => f.section === "katzlawton")
-                      : formFields.filter(f => f.section !== "cage" && f.section !== "gds15" && f.section !== "katzlawton")
+                activeTab === "ivcf20"
+                  ? formFields.filter(f => f.section === "ivcf20")
+                  : activeTab === "cage"
+                    ? formFields.filter(f => f.section === "cage")
+                    : activeTab === "gds15"
+                      ? formFields.filter(f => f.section === "gds15")
+                      : activeTab === "katzlawton"
+                        ? formFields.filter(f => f.section === "katzlawton")
+                        : formFields.filter(f => f.section !== "cage" && f.section !== "gds15" && f.section !== "katzlawton" && f.section !== "ivcf20")
               ).map(({ id, label, fields }) => (
                 <React.Fragment key={id}>
                   <div style={styles.sectionLabel}>{label}</div>
@@ -1089,7 +1091,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
             <>
               {/* Score cards row */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "10px" }}>
-                {activeTab === "avaliacao" && (
+                {activeTab === "ivcf20" && (
                 <div style={{
                   background: ivcfTotal === 0 ? "var(--geriatria-card-bg)" : (
                     ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.08)" :
@@ -1322,6 +1324,38 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   ) : (
                     <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
                       Responda as escalas ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              ) : activeTab === "ivcf20" ? (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: ivcfTotal === 0 ? "var(--geriatria-card-bg)" : ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.06)" : ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.06)" : "rgba(224, 36, 36, 0.06)",
+                  border: `1px solid ${
+                    ivcfTotal === 0 ? "var(--geriatria-border)" :
+                    ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.3)" :
+                    ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.3)" : "rgba(224, 36, 36, 0.3)"
+                  }`,
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  IVCF-20
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {ivcfTotal > 0 ? (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: "24px", color: ivcfTotal <= 6 ? "#00b849" : ivcfTotal <= 14 ? "#ca8a04" : "#e02424", marginBottom: "4px" }}>
+                        {ivcfTotal} / 40
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                        {ivcfClassificacao === "baixa" ? "Risco baixo de vulnerabilidade clínico-funcional" : ivcfClassificacao === "moderada" ? "Risco moderado — considerar acompanhamento" : "Risco alto — intervenção multidisciplinar indicada"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Responda as perguntas do IVCF-20 ao lado.
                     </div>
                   )}
                 </div>
