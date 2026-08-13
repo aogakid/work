@@ -22,8 +22,7 @@ Regras obrigatórias:
 - Output apenas em markdown puro, sem negritos
 
 CAPITALIZAÇÃO
-- Deve seguir a norma culta do português obrigatoriamente: início de frases, listas, nomes próprios em maiúsculo.
-- Medicamentos em minúsculo, exceto quando em início de frase ou lista
+- Deve seguir a norma culta do português obrigatoriamente: capitalizar a primeira letra de frases, listas e nomes próprios
 - Siglas clássicas e clínicas devem permanecer manter seu padrão: PA, FC, FR, SatO2, IMC, AC, AR, SSVV, HDA, QP, AP, AF, HV, CID, MMII, MMSS, DM, HAS, IRC, DPOC, TCE, AVC, RCR, BNF, TC, RNM etc[...]
 
 Exames laboratoriais quando presentes devem seguir o formato:
