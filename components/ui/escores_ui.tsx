@@ -528,19 +528,23 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     }, [])
 
     useEffect(function() {
-        function doFetch(url: string, ref: React.MutableRefObject<ScoreQuestion[] | null>, setter: (q: ScoreQuestion[]) => void) {
-            fetch(url).then(function(r) { return r.json() }).then(function(data) {
-                if (Array.isArray(data)) {
-                    ref.current = data
-                    setter(data.map(function(q) { return { ...q, value: q.value ?? "" } }))
-                }
-            })
+        function doFetch(caminhos: string[], ref: React.MutableRefObject<ScoreQuestion[] | null>, setter: (q: ScoreQuestion[]) => void) {
+            function tentar(i: number): void {
+                if (i >= caminhos.length) return
+                fetch(caminhos[i]).then(function(r) { if (!r.ok) { throw new Error("HTTP " + r.status) } return r.json() }).then(function(data) {
+                    if (Array.isArray(data)) {
+                        ref.current = data
+                        setter(data.map(function(q) { return { ...q, value: q.value ?? "" } }))
+                    }
+                }).catch(function() { tentar(i + 1) })
+            }
+            tentar(0)
         }
-        doFetch("/contents/ipss.json", ipssRef, setIpssQuestions)
-        doFetch("/contents/gad7.json", gad7Ref, setGad7Questions)
-        doFetch("/contents/phq9.json", phq9Ref, setPhq9Questions)
-        doFetch("/contents/audit.json", auditRef, setAuditQuestions)
-        doFetch("/contents/fagerstrom.json", fagerstromRef, setFagerstromQuestions)
+        doFetch(["/contents/ipss.json", "contents/ipss.json", "public/contents/ipss.json"], ipssRef, setIpssQuestions)
+        doFetch(["/contents/gad7.json", "contents/gad7.json", "public/contents/gad7.json"], gad7Ref, setGad7Questions)
+        doFetch(["/contents/phq9.json", "contents/phq9.json", "public/contents/phq9.json"], phq9Ref, setPhq9Questions)
+        doFetch(["/contents/audit.json", "contents/audit.json", "public/contents/audit.json"], auditRef, setAuditQuestions)
+        doFetch(["/contents/fagerstrom.json", "contents/fagerstrom.json", "public/contents/fagerstrom.json"], fagerstromRef, setFagerstromQuestions)
     }, [])
 
     const scoreTool = useCallback((questions: ScoreQuestion[]) => {
@@ -1474,7 +1478,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                         )
                     })}
                 </div>
-                <div>
+                <div style={{ position: "sticky" as const, top: "48px" }}>
                     <div
                         className="prevent-result-card"
                         style={{
@@ -1945,7 +1949,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     </div>
                 </div>
 
-                <div>
+                <div style={{ position: "sticky" as const, top: "48px" }}>
                     {!resultado ? (
                         <div style={styles.empty}>
                             Insira os dados clínicos essenciais*.

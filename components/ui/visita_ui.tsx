@@ -47,6 +47,8 @@ const injectStyles = `
     padding: 20px;
     box-sizing: border-box;
     transition: background 0.3s ease, border 0.3s ease;
+    position: sticky;
+    top: 48px;
   }
 
   .visita-badge-risco {

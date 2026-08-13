@@ -33,6 +33,7 @@ const injectStyles = `
   @media (min-width: 900px) {
     .geriatria-root {
       grid-template-columns: 1.2fr 1fr;
+      min-height: calc(100vh - 80px);
     }
   }
   .geriatria-fields-grid {
@@ -49,6 +50,8 @@ const injectStyles = `
     box-sizing: border-box;
     transition: background 0.3s ease, border 0.3s ease;
     min-width: 0;
+    position: sticky;
+    top: 48px;
   }
 
   .geriatria-badge {
@@ -156,7 +159,6 @@ const styles = {
     borderRadius: "16px",
     width: "100%",
     boxSizing: "border-box" as const,
-    overflowX: "hidden" as const,
     maxWidth: "100%",
   },
   title: {
@@ -596,10 +598,15 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     if (e instanceof Error) { console.warn("[GeriatriaUI]", e) }
   }
   useEffect(function() {
-    fetch("/contents/geriatria.json", { cache: "no-store" })
-      .then(handleFetchResponse)
-      .then(handleFormData)
-      .catch(handleFetchError)
+    const caminhos = ["/contents/geriatria.json", "contents/geriatria.json", "public/contents/geriatria.json"]
+    function tentar(i: number): void {
+      if (i >= caminhos.length) return
+      fetch(caminhos[i], { cache: "no-store" })
+        .then(handleFetchResponse)
+        .then(handleFormData)
+        .catch(function(e) { if (i >= caminhos.length - 1) { handleFetchError(e) } else { tentar(i + 1) } })
+    }
+    tentar(0)
   }, [])
 
   useEffect(() => {
@@ -1086,7 +1093,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           )}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        <div style={{ position: "sticky" as const, top: "48px", minWidth: 0 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}>
           {formFields.length > 0 && (
             <>
               {/* Score cards row */}
@@ -1213,11 +1221,11 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                     style={{
                       ...styles.markdownOutput,
                       resize: "none",
-                      overflow: "hidden",
+                      overflowY: "auto",
                       display: "block",
                       width: "100%",
                       minHeight: "unset",
-                      maxHeight: "unset",
+                      maxHeight: "300px",
                       height: "auto",
                       boxSizing: "border-box",
                       marginTop: "12px",
@@ -1394,6 +1402,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
               )}
             </>
           )}
+          </div>
         </div>
       </div>
     </div>

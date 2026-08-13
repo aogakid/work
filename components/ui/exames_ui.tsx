@@ -52,6 +52,7 @@ const injectStyles = `
     .${EXAMES_PREFIX}-root {
       grid-template-columns: 1.2fr 1fr;
       align-items: start;
+      min-height: calc(100vh - 80px);
     }
   }
 
@@ -96,12 +97,13 @@ const injectStyles = `
     gap: 12px;
     min-width: 0;
     position: sticky;
-    top: 24px;
+    top: 48px;
   }
 
   .${EXAMES_PREFIX}-md-wrap {
-    position: relative;
-    marginTop: 12px;
+    position: sticky;
+    top: 48px;
+    margin-top: 12px;
   }
 
   .${EXAMES_PREFIX}-copy-icon {
@@ -143,7 +145,6 @@ function buildStyles() {
       width: "100%",
       boxSizing: "border-box" as const,
       maxWidth: "100%",
-      overflowX: "hidden" as const,
     },
     title: {
       fontSize: "20px",
@@ -693,7 +694,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
           </div>
         </div>
 
-        <div className={`${EXAMES_PREFIX}-right`}>
+        <div style={{ position: "sticky" as const, top: "48px", minWidth: 0 }}>
+          <div className={`${EXAMES_PREFIX}-right`} style={{ maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}>
           {Object.entries(values).some(([k, v]) => k !== "idade" && k !== "sexo" && v.trim() !== "") && (
             <div style={{ ...s.inputGroup, width: "100%" }}>
               <span style={s.label}>Outros</span>
@@ -722,6 +724,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
                 {copied ? <IconeCheck /> : <IconeCopiar />}
               </button>
             )}
+          </div>
           </div>
         </div>
       </div>
