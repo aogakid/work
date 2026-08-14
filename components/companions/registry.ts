@@ -69,6 +69,7 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "cage", label: "CAGE", targetSection: "objetivo" },
             { id: "gds15", label: "GDS-15", targetSection: "objetivo" },
             { id: "cfs", label: "CFS", targetSection: "objetivo" },
+            { id: "cdr", label: "CDR", targetSection: "objetivo" },
         ],
     },
     {

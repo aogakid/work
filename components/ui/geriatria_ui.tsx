@@ -298,6 +298,7 @@ const secoes = [
   { id: "cage", label: "CAGE" },
   { id: "gds15", label: "GDS-15" },
   { id: "cfs", label: "CFS" },
+  { id: "cdr", label: "CDR" },
 ]
 
 const IVCF_SCORE_MAP: Record<string, (val: string) => number> = {
@@ -570,12 +571,263 @@ function CFSWizard(props: {
   )
 }
 
+interface CdrDomain {
+  id: string
+  label: string
+  anchors: Record<number, string>
+}
+
+const CDR_LEVELS = [0, 0.5, 1, 2, 3]
+
+const CDR_DOMAINS: CdrDomain[] = [
+  {
+    id: "memoria",
+    label: "Memória",
+    anchors: {
+      0: "Sem perda de memória (esquecimentos leves e inconsistentes)",
+      0.5: "Esquecimento leve e consistente; recordação parcial de eventos",
+      1: "Perda moderada, mais evidente para eventos recentes; interfere no cotidiano",
+      2: "Perda grave; retém apenas material muito aprendido",
+      3: "Perda muito grave; apenas fragmentos",
+    },
+  },
+  {
+    id: "orientacao",
+    label: "Orientação",
+    anchors: {
+      0: "Totalmente orientado",
+      0.5: "Totalmente orientado, exceto leve dificuldade com relações temporais",
+      1: "Dificuldade moderada; desorientação no tempo",
+      2: "Dificuldade grave; geralmente desorientado (tempo, espaço e pessoas)",
+      3: "Apenas orientação pessoal",
+    },
+  },
+  {
+    id: "julgamento",
+    label: "Julgamento e resolução de problemas",
+    anchors: {
+      0: "Resolve bem problemas do cotidiano; bom julgamento",
+      0.5: "Leve dificuldade na solução de problemas e semelhanças/diferenças",
+      1: "Dificuldade moderada; julgamento socialmente inapropriado",
+      2: "Prejuízo grave no julgamento; incapaz de resolver problemas",
+      3: "Sem capacidade de julgamento ou solução de problemas",
+    },
+  },
+  {
+    id: "comunidade",
+    label: "Vida em comunidade",
+    anchors: {
+      0: "Função independente em trabalho, compras e relações sociais",
+      0.5: "Leve dificuldade nessas atividades",
+      1: "Incapaz de função independente, embora possa participar de algumas",
+      2: "Sem função independente fora de casa",
+      3: "Sem função comunitária; isolado",
+    },
+  },
+  {
+    id: "casa",
+    label: "Casa e passatempos",
+    anchors: {
+      0: "Vida em casa, hobbies e interesses intelectuais preservados",
+      0.5: "Vida em casa, hobbies e interesses levemente comprometidos",
+      1: "Comprometimento leve mas evidente; tarefas mais difíceis abandonadas",
+      2: "Apenas tarefas simples; interesses muito restritos e mal mantidos",
+      3: "Sem função significativa em casa",
+    },
+  },
+  {
+    id: "cuidado",
+    label: "Cuidado pessoal",
+    anchors: {
+      0: "Totalmente capaz de cuidar de si",
+      0.5: "Necessita de lembretes ocasionais",
+      1: "Necessita de auxílio para vestir, higiene e pertences",
+      2: "Requer muita ajuda no cuidado pessoal; incontinência frequente",
+      3: "Totalmente dependente para o cuidado pessoal",
+    },
+  },
+]
+
+const CDR_GLOBAL_LABELS: Record<number, string> = {
+  0: "Sem demência",
+  0.5: "Demência questionável (muito leve)",
+  1: "Demência leve",
+  2: "Demência moderada",
+  3: "Demência grave",
+}
+
+function cdrLevelColor(level: number): string {
+  if (level === 0) return "#00b849"
+  if (level === 0.5) return "#84cc16"
+  if (level === 1) return "#ca8a04"
+  if (level === 2) return "#ea580c"
+  return "#e02424"
+}
+
+function cdrColorFor(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "var(--geriatria-text-muted)"
+  return cdrLevelColor(value)
+}
+
+function cdrBgFor(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "var(--geriatria-input-bg)"
+  if (value === 0) return "rgba(0, 184, 73, 0.12)"
+  if (value === 0.5) return "rgba(132, 204, 22, 0.12)"
+  if (value === 1) return "rgba(234, 179, 8, 0.12)"
+  if (value === 2) return "rgba(234, 88, 12, 0.12)"
+  return "rgba(224, 36, 36, 0.12)"
+}
+
+function cdrMode(vals: number[]): number {
+  const seen: number[] = []
+  const counts: number[] = []
+  for (const v of vals) {
+    const i = seen.indexOf(v)
+    if (i >= 0) counts[i] += 1
+    else {
+      seen.push(v)
+      counts.push(1)
+    }
+  }
+  let best = seen[0]
+  let bestCount = 0
+  for (let i = 0; i < seen.length; i += 1) {
+    if (counts[i] > bestCount) {
+      bestCount = counts[i]
+      best = seen[i]
+    }
+  }
+  return best
+}
+
+function computeCDR(values: Record<string, number | null>): { global: number; sb: number } | null {
+  const mem = values["memoria"]
+  const ori = values["orientacao"]
+  const jul = values["julgamento"]
+  const com = values["comunidade"]
+  const casa = values["casa"]
+  const cuid = values["cuidado"]
+  if (mem == null || ori == null || jul == null || com == null || casa == null || cuid == null) return null
+
+  const sec = [ori, jul, com, casa, cuid]
+  const secLeft: number[] = []
+  const secRight: number[] = []
+  let sumSame = 0
+  let sumGreater = 0
+  let sumLesser = 0
+  let sumGE1 = 0
+  let sumImpairment = 0
+
+  for (const s of sec) {
+    if (s === mem) sumSame += 1
+    else if (s > mem) {
+      sumGreater += 1
+      secRight.push(s)
+    } else {
+      sumLesser += 1
+      secLeft.push(s)
+    }
+    if (s >= 1) sumGE1 += 1
+    if (s >= 0.5) sumImpairment += 1
+  }
+
+  let cdr = -1
+
+  if (sumSame >= 3) cdr = mem
+
+  const totsumDiff = sumGreater + sumLesser
+  if (totsumDiff >= 3) {
+    if (sumGreater > sumLesser) cdr = cdrMode(secRight)
+    else if (sumLesser > sumGreater) cdr = cdrMode(secLeft)
+  }
+
+  const threeTwo = totsumDiff === 5 && (sumGreater === 2 || sumGreater === 3) && (sumLesser === 2 || sumLesser === 3)
+  if (threeTwo) cdr = mem
+
+  if (mem === 0.5 && sumGE1 >= 3) cdr = 1
+  if (mem === 0.5 && cdr === 0) cdr = 0.5
+
+  if (mem === 0) cdr = 0
+  if (mem === 0 && sumImpairment >= 2) cdr = 0.5
+
+  if (sumLesser === 4) {
+    const uniq = [...new Set(secLeft)]
+    if (uniq.length === 2) {
+      const firstCount = secLeft.filter(v => v === uniq[0]).length
+      if (firstCount === 2) cdr = Math.max(uniq[0], uniq[1])
+    }
+  }
+
+  if (sumGreater === 4) {
+    const uniq = [...new Set(secRight)]
+    if (uniq.length === 2) {
+      const firstCount = secRight.filter(v => v === uniq[0]).length
+      if (firstCount === 2) cdr = Math.min(uniq[0], uniq[1])
+    }
+  }
+
+  if (sumSame === 1 || sumSame === 2) {
+    if (sumLesser <= 2 && sumGreater <= 2) cdr = mem
+  }
+
+  if (mem >= 1 && cdr === 0 && cdrMode(sec) === 0) cdr = 0.5
+
+  const sb = mem + ori + jul + com + casa + cuid
+  return { global: cdr, sb }
+}
+
+function CDRWizard(props: {
+  values: Record<string, number | null>
+  onChange: (id: string, value: number | null) => void
+}) {
+  const { values, onChange } = props
+  const handleChange = (id: string, level: number | null) => {
+    onChange(id, level)
+  }
+  return (
+    <>
+      {CDR_DOMAINS.map(domain => (
+        <div
+          key={domain.id}
+          style={{
+            gridColumn: "1 / -1",
+            background: "rgba(120, 120, 120, 0.04)",
+            padding: "14px",
+            borderRadius: "12px",
+            border: "1px dashed var(--geriatria-border)",
+            marginTop: "8px",
+            minWidth: 0,
+          }}
+        >
+          <div className="kl-slider-label" style={{ marginBottom: "8px" }}>{domain.label}</div>
+          <select
+            value={values[domain.id] === null || values[domain.id] === undefined ? "" : String(values[domain.id])}
+            onChange={e => handleChange(domain.id, e.target.value === "" ? null : Number(e.target.value))}
+            style={{
+              ...styles.select(cdrBgFor(values[domain.id]), cdrColorFor(values[domain.id])),
+              marginBottom: "8px",
+            }}
+          >
+            <option value="">Selecione…</option>
+            {CDR_LEVELS.map(level => (
+              <option key={level} value={level}>{domain.anchors[level]}</option>
+            ))}
+          </select>
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style }: Props, ref) {
   const [formFields, setFormFields] = useState<FormField[]>([])
   const [markdownOutput, setMarkdownOutput] = useState<string>("")
   const [copiado, setCopiado] = useState(false)
-  const [activeTab, setActiveTab] = useState<"avaliacao" | "ivcf20" | "katzlawton" | "cage" | "gds15" | "cfs">("avaliacao")
+  const [activeTab, setActiveTab] = useState<"avaliacao" | "ivcf20" | "katzlawton" | "cage" | "gds15" | "cfs" | "cdr">("avaliacao")
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
+
+  const [cdrValues, setCdrValues] = useState<Record<string, number | null>>({})
+  const cdrResult = computeCDR(cdrValues)
 
   const [cfsTerminal, setCfsTerminal] = useState<"sim" | "não" | null>(null)
   const [cfsAbvd, setCfsAbvd] = useState<Set<string>>(new Set())
@@ -641,6 +893,18 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const cfsScore = computeCFS()
 
   const generateSectionMarkdown = useCallback((sectionId: string, sectionLabel: string): string | null => {
+    const todayBR = new Date().toLocaleDateString("pt-BR")
+
+    if (sectionId === "cfs") {
+      if (cfsScore === null) return null
+      return `CFS (${todayBR}): ${cfsScore}/9 — ${CFS_LABELS[cfsScore]}`
+    }
+
+    if (sectionId === "cdr") {
+      if (cdrResult === null) return null
+      return `CDR (${todayBR}): ${cdrResult.global} — ${CDR_GLOBAL_LABELS[cdrResult.global]} (CDR-SB: ${cdrResult.sb}/18)`
+    }
+
     const campos = formFields.filter(f => (f.section || "geral") === sectionId && f.type !== "divider")
     if (campos.length === 0) return null
 
@@ -660,8 +924,6 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       if (valueMd === null) return
       md += `  - ${getLabelMd(field)}: ${valueMd}\n`
     })
-
-    const todayBR = new Date().toLocaleDateString("pt-BR")
 
     if (sectionId === "ivcf20") {
       const ivcfFilled = formFields.some(f => f.section === "ivcf20" && f.type !== "divider" && f.id !== "ivcf_total" && f.value && (typeof f.value === "string" ? f.value !== "" : (f.value as string[]).length > 0))
@@ -691,23 +953,18 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       const lawton = computeLawtonTotal(formFields)
       const katzCount = formFields.filter(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "").length
       const lawtonCount = formFields.filter(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "").length
-      let md = `- Katz/Lawton (${todayBR})\n`
-      if (katzCount > 0) md += `  - Katz: ${katz}/6\n`
-      if (lawtonCount > 0) md += `  - Lawton: ${lawton}/8\n`
-      return md.trimEnd()
-    }
-
-    if (sectionId === "cfs") {
-      if (cfsScore === null) return null
-      return `CFS (${todayBR}): ${cfsScore}/9 — ${CFS_LABELS[cfsScore]}`
+      let md = `(${todayBR})`
+      if (katzCount > 0) md += ` Katz: ${katz}/6`
+      if (lawtonCount > 0) md += `${katzCount > 0 ? " |" : ""} Lawton: ${lawton}/8`
+      return md
     }
 
     return md.trimEnd()
-  }, [formFields, cfsScore])
+  }, [formFields, cfsScore, cdrResult])
 
   const generateMarkdown = useCallback(() => {
     return secoes
-      .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton")
+      .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton" && s.id !== "cdr")
       .map(s => generateSectionMarkdown(s.id, s.label))
       .filter(Boolean)
       .join("\n\n")
@@ -717,7 +974,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   getOutputRef.current = (groupId: string): string | null => {
     if (groupId === "tudo") {
       return secoes
-        .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton")
+        .filter(s => s.id !== "ivcf20" && s.id !== "cage" && s.id !== "gds15" && s.id !== "cfs" && s.id !== "katzlawton" && s.id !== "cdr")
         .map(s => generateSectionMarkdown(s.id, s.label))
         .filter(Boolean)
         .join("\n\n") || null
@@ -731,6 +988,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     getOutput: (groupId: string) => getOutputRef.current(groupId),
     reset() {
       setCopiado(false)
+      setCdrValues({})
       setCfsTerminal(null)
       setCfsAbvd(new Set())
       setCfsAivd(new Set())
@@ -781,6 +1039,10 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
         return { ...field, value: newValues }
       })
     )
+  }
+
+  function updateCDRValue(id: string, value: number | null): void {
+    setCdrValues(prev => ({ ...prev, [id]: value }))
   }
 
   const copyToClipboard = async () => {
@@ -992,6 +1254,31 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
     )
   })() : null
 
+  const cdrCard = activeTab === "cdr" && cdrResult !== null ? (() => {
+    const cdrColor = cdrLevelColor(cdrResult.global)
+    return (
+    <div style={{
+      background: cdrResult.global === 0 ? "rgba(0, 184, 73, 0.08)" : cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.08)" : cdrResult.global === 1 ? "rgba(234, 179, 8, 0.08)" : cdrResult.global === 2 ? "rgba(234, 88, 12, 0.08)" : "rgba(224, 36, 36, 0.08)",
+      border: `1px solid ${
+        cdrResult.global === 0 ? "rgba(0, 184, 73, 0.35)" : cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.35)" : cdrResult.global === 1 ? "rgba(234, 179, 8, 0.35)" : cdrResult.global === 2 ? "rgba(234, 88, 12, 0.35)" : "rgba(224, 36, 36, 0.35)"
+      }`,
+      borderRadius: "12px",
+      padding: "12px 16px",
+      textAlign: "center" as const,
+    }}>
+      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+        CDR
+      </div>
+      <div style={{ fontSize: "28px", fontWeight: 800, color: cdrColor }}>
+        {cdrResult.global}
+      </div>
+      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
+        {CDR_GLOBAL_LABELS[cdrResult.global]}
+      </div>
+    </div>
+    )
+  })() : null
+
   const katzlawtonCard = activeTab === "katzlawton" && klFilled ? (() => {
     const hasKatz = formFields.some(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
     const hasLawton = formFields.some(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
@@ -1035,7 +1322,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       <div style={styles.subtitle}>baseado na caderneta da pessoa idosa</div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
-        {([["avaliacao", "Avaliação"], ["ivcf20", "IVCF-20"], ["katzlawton", "Katz/Lawton"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"]] as const).map(([key, label]) => (
+        {([["avaliacao", "Avaliação"], ["ivcf20", "IVCF-20"], ["katzlawton", "Katz/Lawton"], ["cage", "CAGE"], ["gds15", "GDS-15"], ["cfs", "CFS"], ["cdr", "CDR"]] as const).map(([key, label]) => (
           <div
             key={key}
             onClick={() => setActiveTab(key)}
@@ -1059,7 +1346,12 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
 
       <div className="geriatria-root">
         <div className="geriatria-fields-grid">
-          {activeTab === "cfs" ? (
+          {activeTab === "cdr" ? (
+            <CDRWizard
+              values={cdrValues}
+              onChange={updateCDRValue}
+            />
+          ) : activeTab === "cfs" ? (
             <CFSWizard
               terminal={cfsTerminal} setTerminal={setCfsTerminal}
               abvd={cfsAbvd} setAbvd={setCfsAbvd}
@@ -1080,7 +1372,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                       ? formFields.filter(f => f.section === "gds15")
                       : activeTab === "katzlawton"
                         ? formFields.filter(f => f.section === "katzlawton")
-                        : formFields.filter(f => f.section !== "cage" && f.section !== "gds15" && f.section !== "katzlawton" && f.section !== "ivcf20")
+                        : formFields.filter(f => f.section !== "cage" && f.section !== "gds15" && f.section !== "katzlawton" && f.section !== "ivcf20" && f.section !== "cdr")
               ).map(({ id, label, fields }) => (
                 <React.Fragment key={id}>
                   <div style={styles.sectionLabel}>{label}</div>
@@ -1152,6 +1444,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                 )}
                 {gds15Card}
                 {cfsCard}
+                {cdrCard}
                 {katzlawtonCard}
               </div>
 
@@ -1364,6 +1657,43 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   ) : (
                     <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
                       Responda as perguntas do IVCF-20 ao lado.
+                    </div>
+                  )}
+                </div>
+              </div>
+              ) : activeTab === "cdr" ? (
+              <div
+                className="geriatria-result-card"
+                style={{
+                  background: cdrResult === null ? "var(--geriatria-card-bg)" : cdrResult.global === 0 ? "rgba(0, 184, 73, 0.06)" : cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.06)" : cdrResult.global === 1 ? "rgba(234, 179, 8, 0.06)" : cdrResult.global === 2 ? "rgba(234, 88, 12, 0.06)" : "rgba(224, 36, 36, 0.06)",
+                  border: `1px solid ${
+                    cdrResult === null ? "var(--geriatria-border)" :
+                    cdrResult.global === 0 ? "rgba(0, 184, 73, 0.3)" :
+                    cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.3)" :
+                    cdrResult.global === 1 ? "rgba(234, 179, 8, 0.3)" :
+                    cdrResult.global === 2 ? "rgba(234, 88, 12, 0.3)" : "rgba(224, 36, 36, 0.3)"
+                  }`,
+                }}
+              >
+                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                  CDR
+                </div>
+                <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
+                  {cdrResult !== null ? (
+                    <>
+                      <div style={{ fontWeight: 700, fontSize: "24px", color: cdrLevelColor(cdrResult.global), marginBottom: "4px" }}>
+                        CDR {cdrResult.global} — {CDR_GLOBAL_LABELS[cdrResult.global]}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
+                        CDR-SB (soma das caixas): {cdrResult.sb}/18
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--geriatria-text-muted)" }}>
+                        {cdrResult.global === 0 ? "Sem evidência de demência" : cdrResult.global === 0.5 ? "Comprometimento questionável — monitorar evolução" : cdrResult.global === 1 ? "Demência leve — acompanhamento ambulatorial" : cdrResult.global === 2 ? "Demência moderada — encaminhamento especializado" : "Demência grave — suporte e cuidados intensivos"}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ color: "var(--geriatria-text-muted)", fontSize: "13px" }}>
+                      Preencha os seis domínios do CDR ao lado.
                     </div>
                   )}
                 </div>
