@@ -862,6 +862,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 .gas-responsive-footer-bar { position: absolute; bottom: 0px; left: 0px; right: 0px; padding: 16px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; pointer-events: none; z-index: 10; }
                 .gas-order-chars { margin-left: auto; }
+                .gas-section-progress { mix-blend-mode: multiply; }
+                @media (prefers-color-scheme: dark) {
+                    .gas-section-progress { mix-blend-mode: screen; }
+                }
                 @media (max-width: 520px) {
                     .gas-responsive-footer-bar { display: grid; grid-template-columns: auto 1fr; gap: 10px 0px; padding: 12px; }
                     .gas-order-progress { grid-row: 1; grid-column: span 2; justify-self: start; width: max-content !important; }
@@ -1099,7 +1103,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             {s.enabled && !s.collapsed && (
                                 <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: "4px 14px 0 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
                                     {cronometroAtivo && !arquivadoManualmente && (
-                                        <div style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: meta.color, opacity: 0.08, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
+                                        <div className="gas-section-progress" style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}55, ${meta.color}cc)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
                                     )}
                                     <div
                                         key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}
@@ -1123,7 +1127,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                         onKeyDown={e => handleSectionKeyDown(e, s.id)}
                                         onPaste={handleSectionPaste}
                                         onFocus={() => setFocusedSectionId(s.id)}
-                                        style={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? { color: "#ffffff" } : {}}
+                                        style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? { color: "#ffffff" } : {}) }}
                                     />
                                 </div>
                             )}
@@ -1267,9 +1271,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         <span>✓</span><span>salvo às {saveTime}</span>
                     </div>
                 )}
-                {/* Character count */}
-                <div className="gas-ui-blockout gas-order-chars" style={{ background: limiteAtingido ? "rgba(239,68,68,0.15)" : "var(--meta-bg)", backdropFilter: "blur(4px)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: limiteAtingido ? "var(--limite-text)" : "var(--meta-text)", border: limiteAtingido ? "1px solid rgba(239,68,68,0.3)" : "1px solid var(--meta-border)", fontWeight: limiteAtingido ? 600 : 400, pointerEvents: "auto" }}>
-                    {totalCaracteres} caracteres
+                {/* Copy all + character count */}
+                <div className="gas-ui-blockout gas-order-chars" style={{ display: "flex", alignItems: "center", gap: "8px", pointerEvents: "auto" }}>
+                    <button className="bloco-icon-btn gas-scale-hover" onClick={() => navigator.clipboard.writeText(limparTextoInvisivel(mergeSections(title, sections)))} title="copiar tudo" style={{ width: "28px", height: "28px", background: "var(--meta-bg)", backdropFilter: "blur(4px)", borderRadius: "6px", border: "1px solid var(--meta-border)", color: "var(--meta-text)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    </button>
+                    <div style={{ background: limiteAtingido ? "rgba(239,68,68,0.15)" : "var(--meta-bg)", backdropFilter: "blur(4px)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: limiteAtingido ? "var(--limite-text)" : "var(--meta-text)", border: limiteAtingido ? "1px solid rgba(239,68,68,0.3)" : "1px solid var(--meta-border)", fontWeight: limiteAtingido ? 600 : 400, whiteSpace: "nowrap" }}>
+                        {totalCaracteres} caracteres
+                    </div>
                 </div>
             </div>
             {companionToast && (
