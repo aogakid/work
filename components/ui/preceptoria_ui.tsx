@@ -54,6 +54,36 @@ const TIPOS: { id: string; label: string }[] = [
 type Graus = Record<string, number>;
 const GRAUS_DEFAULT: Graus = { S: 180, O: 216, A: 252, P: 360 }
 
+/* ── Simple timer clock ── */
+const pontoTempoRelogio = (cx: number, cy: number, r: number, graus: number): [number, number] => {
+    const rad = (graus * Math.PI) / 180
+    return [cx + r * Math.sin(rad), cy - r * Math.cos(rad)]
+}
+
+interface FatiaTempo {
+    d: string
+    op: number
+}
+
+const fatiasTempoGradiente = (graus: number): FatiaTempo[] => {
+    const fatias: FatiaTempo[] = []
+    const total = Math.max(1, Math.round(graus))
+    for (let i = 0; i < total; i += 1) {
+        const p0 = pontoTempoRelogio(42, 42, 38, i)
+        const p1 = pontoTempoRelogio(42, 42, 38, i + 1)
+        fatias.push({ d: `M 42 42 L ${p0[0]} ${p0[1]} A 38 38 0 0 1 ${p1[0]} ${p1[1]} Z`, op: 0.12 + 0.42 * (i / total) })
+    }
+    return fatias
+}
+
+const MARCAS_RELOGIO: { x1: number; y1: number; x2: number; y2: number; principal: boolean }[] = []
+for (let i = 0; i < 12; i += 1) {
+    const a = i * 30
+    const p1 = pontoTempoRelogio(42, 42, 38, a)
+    const p2 = pontoTempoRelogio(42, 42, 33, a)
+    MARCAS_RELOGIO.push({ x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], principal: i === 0 })
+}
+
 /* ── Template loading (per tipo / per section) ───────────────────── */
 type TemplatesData = { [tipo: string]: { [secId: string]: string } };
 
@@ -722,32 +752,21 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                 {/* ── CENTERED CONTENT ── */}
                 <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", minHeight: 0, boxSizing: "border-box" }}>
 
-                    {/* ── EMPTY STATE ── */}
-                    {sessoes.length === 0 && !mostrarSetupRelogio && (
-                        <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", textAlign: "center", maxWidth: "340px" }}>
-                            <div style={{ width: "72px", height: "72px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", fontSize: "28px" }}>⏱</div>
-                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "16px", fontWeight: 600, color: "#f5f5f4" }}>monitoramento de atendimento</div>
-                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", color: "var(--meta-text)", lineHeight: 1.5 }}>inicia o cronômetro para acompanhar o tempo de cada etapa do atendimento (S-O-A-P).</div>
-                            <button className="gas-scale-hover gas-ui-blockout" onClick={abrirSetup} style={{ marginTop: "8px", background: "#3b82f6", color: "#ffffff", border: "none", borderRadius: "8px", padding: "10px 22px", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', display: "flex", alignItems: "center", gap: "6px" }}>
-                                <span>▶</span> iniciar cronômetro
-                            </button>
-                        </div>
-                    )}
-
-                    {/* ── TIMER SETUP ── */}
-                    {mostrarSetupRelogio && (
+                    {/* ── TIMER SETUP (always shown when no sessions exist) ── */}
+                    {(mostrarSetupRelogio || sessoes.length === 0) && (
                         <>
-                            <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 19, background: "transparent", pointerEvents: "auto" }} onClick={() => { setRelogioExiting(true) }} />
                             <div className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`} onAnimationEnd={() => { if (relogioExiting) { setMostrarSetupRelogio(false); setRelogioExiting(false) } }} style={{ position: "relative", background: bgDinamicoPopup, backdropFilter: "blur(12px)", border: `1px solid ${borderDinamicaPopup}`, borderRadius: "12px", padding: "14px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", width: mostrarAvancado ? "210px" : "160px", transition: "width 0.2s ease" }}>
                                 <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", marginBottom: "10px" }}>
                                     <span style={{ fontSize: "9px", fontWeight: 700, color: corDinamicaPopup, letterSpacing: "0.8px" }}>TEMPO</span>
                                 </div>
                                 <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} style={{ width: "84px", height: "84px", cursor: "ew-resize", overflow: "visible" }}>
                                     <circle cx="42" cy="42" r="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                                    <line x1="42" y1="4" x2="42" y2="9" stroke="var(--editor-text)" strokeWidth="2" strokeLinecap="round" />
-                                    <line x1="80" y1="42" x2="75" y2="42" stroke="var(--meta-text)" strokeWidth="1.5" strokeLinecap="round" />
-                                    <line x1="42" y1="80" x2="42" y2="75" stroke="var(--meta-text)" strokeWidth="1.5" strokeLinecap="round" />
-                                    <line x1="4" y1="42" x2="9" y2="42" stroke="var(--meta-text)" strokeWidth="1.5" strokeLinecap="round" />
+                                    {fatiasTempoGradiente(tempoLimite * 6).map((f, i) => (
+                                        <path key={i} d={f.d} fill={corDinamicaPopup} fillOpacity={f.op} />
+                                    ))}
+                                    {MARCAS_RELOGIO.map(m => (
+                                        <line key={`${m.x1}-${m.y1}`} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke={m.principal ? "var(--editor-text)" : "var(--meta-text)"} strokeWidth={m.principal ? 2 : 1.5} strokeLinecap="round" />
+                                    ))}
                                     <circle cx="42" cy="42" r="38" fill="none" stroke="var(--meta-text)" strokeWidth="1.5" strokeDasharray={`${2 * Math.PI * 38}`} strokeDashoffset={`${2 * Math.PI * 38 * (1 - tempoLimite / 60)}`} style={{ opacity: 0.15 }} />
                                     <g transform={`rotate(${tempoLimite * 6}, 42, 42)`}>
                                         <line x1="42" y1="42" x2="42" y2="8" stroke="var(--editor-text)" strokeWidth="2" strokeLinecap="round" />
