@@ -6,6 +6,7 @@
   <title>Preview TSX</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f0; }
@@ -52,7 +53,7 @@
 <body>
   <div id="controls" class="expanded">
     <div id="controls-expanded">
-      <input type="text" id="filename" placeholder="arquivo.tsx" value="components/ui/preceptoria_ui.tsx" />
+      <input type="text" id="filename" placeholder="arquivo.tsx" value="components/ui/bloco_ui.tsx" />
       <button onclick="loadComponent()">Carregar</button>
     </div>
     <div id="controls-minimized" style="display:none;">
@@ -84,6 +85,7 @@
     return function req(moduleName) {
       if (moduleName === 'react') return React;
       if (moduleName === 'react-dom') return ReactDOM;
+      if (moduleName === '@supabase/supabase-js') return window.supabase;
 
       if (moduleName.startsWith('.')) {
         const resolvedPath = resolveRelativePath(baseDir, moduleName);
