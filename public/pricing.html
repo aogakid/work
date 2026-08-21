@@ -135,6 +135,35 @@
   .paint-sub.show{ display:block; }
   .paint-sub .field{ margin-bottom:8px; font-size:12px; }
   .paint-sub .field:last-child{ margin-bottom:0; }
+  .paint-sub .toggle-row.sub-toggle{ margin-bottom:8px; font-size:12px; }
+
+  .mode-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .mode-opt{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    font-family:inherit;
+    font-size:11px;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    background:#fff;
+    padding:5px 4px;
+    cursor:pointer;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .mode-opt.active{
+    border-color:var(--accent);
+    color:var(--ink);
+  }
+  .mode-block{ display:none; }
+  .mode-block.show{ display:block; }
 
   details#advanced{ margin-bottom:12px; }
   details#advanced summary{
@@ -193,6 +222,22 @@
     font-weight:700;
     font-size:24px;
     color:var(--accent);
+  }
+
+  .per-copy-row{
+    display:none;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .per-copy-row.show{ display:flex; }
+  .per-copy-row span:last-child{
+    color:var(--ink);
+    font-weight:700;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:14px;
   }
 
   .margin-field{
@@ -325,6 +370,12 @@
     <span class="unit">min</span>
   </div>
 
+  <div class="field">
+    <label for="qty">Cópias no lote</label>
+    <input type="number" id="qty" value="1" min="1" step="1">
+    <span class="unit">un</span>
+  </div>
+
   <hr class="divider">
 
   <div class="toggle-row">
@@ -332,10 +383,32 @@
     <button class="switch" id="originalToggle" aria-pressed="false" style="left: -1px;"></button>
   </div>
   <div class="paint-sub" id="originalSub">
-    <div class="field">
-      <label for="modelingTime">Tempo de modelagem</label>
-      <input type="number" id="modelingTime" value="1" min="0" step="0.1">
-      <span class="unit">h</span>
+    <div class="mode-row">
+      <button type="button" class="mode-opt active" id="modeTimeOpt" data-mode="time">Tempo</button>
+      <button type="button" class="mode-opt" id="modeComplexityOpt" data-mode="complexity">Complexidade</button>
+    </div>
+    <div class="toggle-row sub-toggle">
+      <label>Reuso de modelo</label>
+      <button class="switch" id="reuseToggle" aria-pressed="false"></button>
+    </div>
+    <div class="mode-block show" id="modelingByTime">
+      <div class="field">
+        <label for="modelingTime">Tempo de modelagem</label>
+        <input type="number" id="modelingTime" value="1" min="0" step="0.1">
+        <span class="unit">h</span>
+      </div>
+    </div>
+    <div class="mode-block" id="modelingByComplexity">
+      <div class="field">
+        <label for="surfaceArea">Área da superfície</label>
+        <input type="number" id="surfaceArea" value="0" min="0" step="1">
+        <span class="unit">mm²</span>
+      </div>
+      <div class="field">
+        <label for="volume">Volume</label>
+        <input type="number" id="volume" value="0" min="0" step="1">
+        <span class="unit">mm³</span>
+      </div>
     </div>
   </div>
 
@@ -365,6 +438,10 @@
   <div class="total-row">
     <span class="label">PREÇO FINAL</span>
     <span class="value" id="totalValue">R$ 0,00</span>
+  </div>
+  <div class="per-copy-row" id="perCopyRow">
+    <span>Por cópia (<span id="qtyLabel">1</span> un)</span>
+    <span id="perCopyValue"></span>
   </div>
 
   <canvas id="barcodeCanvas" class="barcode"></canvas>
@@ -402,6 +479,21 @@
       <label for="originalRate">Custo de modelagem</label>
       <input type="number" id="originalRate" value="40" min="0" step="5">
       <span class="unit">R$/h</span>
+    </div>
+    <div class="field">
+      <label for="reuseRate">Valor de reuso</label>
+      <input type="number" id="reuseRate" value="30" min="0" step="5">
+      <span class="unit">%</span>
+    </div>
+    <div class="field">
+      <label for="baseMinutes">Tempo mínimo de modelagem</label>
+      <input type="number" id="baseMinutes" value="15" min="0" step="5">
+      <span class="unit">min</span>
+    </div>
+    <div class="field">
+      <label for="perUnitMinutes">Tempo por complexidade</label>
+      <input type="number" id="perUnitMinutes" value="20" min="0" step="1">
+      <span class="unit">min</span>
     </div>
     <div class="field">
       <label for="paintMat">Taxa de pintura</label>
@@ -458,7 +550,29 @@ originalToggle.addEventListener('click', () => {
   applyJaggedClip();
 });
 
-const inputs = ['pieceName','weight','time','filprice','waste','power','kwh','labor','modelingTime','paintTime','originalRate','paintMat','margin','postTime'];
+let modelingMode = 'time';
+let reused = false;
+const reuseToggle = $('reuseToggle');
+reuseToggle.addEventListener('click', () => {
+  reused = !reused;
+  reuseToggle.classList.toggle('on', reused);
+  reuseToggle.setAttribute('aria-pressed', reused);
+  calculate();
+  applyJaggedClip();
+});
+
+document.querySelectorAll('.mode-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    modelingMode = btn.dataset.mode;
+    document.querySelectorAll('.mode-opt').forEach(b => b.classList.toggle('active', b === btn));
+    $('modelingByTime').classList.toggle('show', modelingMode === 'time');
+    $('modelingByComplexity').classList.toggle('show', modelingMode === 'complexity');
+    calculate();
+    applyJaggedClip();
+  });
+});
+
+const inputs = ['pieceName','weight','time','qty','filprice','waste','power','kwh','labor','modelingTime','paintTime','originalRate','reuseRate','baseMinutes','perUnitMinutes','paintMat','margin','postTime','surfaceArea','volume'];
 inputs.forEach(id => $(id).addEventListener('input', calculate));
 
 // on-page jagged edge: same tooth/amp geometry as the shared canvas,
@@ -502,6 +616,19 @@ try {
   console.error('Falha ao gerar código de barras', e);
 }
 
+function getCompactness(surfaceArea, volume){
+  if (volume <= 0) return 0;
+  const equivRadius = Math.cbrt((3 * volume) / (4 * Math.PI));
+  const equivSurfaceArea = 4 * Math.PI * Math.pow(equivRadius, 2);
+  return surfaceArea / equivSurfaceArea;
+}
+
+function estimateModelingMinutes(surfaceArea, volume, baseMinutes, perUnitMinutes){
+  const compactness = getCompactness(surfaceArea, volume);
+  if (compactness <= 0) return 0;
+  return baseMinutes + perUnitMinutes * (compactness - 1);
+}
+
 function calculate(){
   const pieceName = $('pieceName').value.trim();
   const weight = parseFloat($('weight').value) || 0;
@@ -515,8 +642,14 @@ function calculate(){
   const paintMat = parseFloat($('paintMat').value) || 0;
   const modelingTime = parseFloat($('modelingTime').value) || 0;
   const originalRate = parseFloat($('originalRate').value) || 0;
+  const reuseRate = parseFloat($('reuseRate').value) || 0;
+  const baseMinutes = parseFloat($('baseMinutes').value) || 0;
+  const perUnitMinutesCfg = parseFloat($('perUnitMinutes').value) || 0;
   const postTime = parseFloat($('postTime').value) || 0;
   const margin = parseFloat($('margin').value) || 0;
+  const qty = Math.max(1, Math.round(parseFloat($('qty').value) || 1));
+  const surfaceArea = parseFloat($('surfaceArea').value) || 0;
+  const volume = parseFloat($('volume').value) || 0;
 
   const weightWithWaste = weight * (1 + waste/100);
   const materialCost = (weightWithWaste / 1000) * filprice;
@@ -531,19 +664,30 @@ function calculate(){
   }
   const laborCost = (laborMinutes/60) * labor;
 
-  const designCost = original ? modelingTime * originalRate : 0;
+  const designHours = original
+    ? (modelingMode === 'time'
+        ? modelingTime
+        : estimateModelingMinutes(surfaceArea, volume, baseMinutes, perUnitMinutesCfg) / 60)
+    : 0;
+  const designRate = reused ? originalRate * (reuseRate / 100) : originalRate;
+  const designCost = designHours * designRate;
 
   const subtotal = materialCost + energyCost + laborCost + paintCost + designCost;
   const total = subtotal * (1 + margin/100);
 
   const lines = [];
-  lines.push(['Material (' + weightWithWaste.toFixed(1) + 'g)', materialCost]);
-  if (original) lines.push(['Modelagem (' + modelingTime.toFixed(2) + 'h × ' + fmt(originalRate) + '/h)', designCost]);
-  lines.push(['Energia (' + time.toFixed(0) + ' min @ ' + power + 'W)', energyCost]);
-  if (laborMinutes > 0) lines.push(['Mão de obra (' + laborMinutes.toFixed(0) + ' min)', laborCost]);
-  if (postProcessing && paintTime > 0) lines.push(['Taxa de pintura', paintCost]);
-  lines.push(['Subtotal', subtotal]);
-  lines.push(['Lucro (' + margin.toFixed(0) + '%)', total - subtotal]);
+  lines.push(['Material (' + (weightWithWaste / qty).toFixed(1) + 'g)', materialCost / qty]);
+  if (original){
+    const designLabel = modelingMode === 'time'
+      ? 'Modelagem (' + designHours.toFixed(2) + 'h × ' + fmt(designRate) + '/h)'
+      : 'Modelagem (est. ' + (designHours * 60).toFixed(0) + ' min × ' + fmt(designRate) + '/h)';
+    lines.push([designLabel, designCost / qty]);
+  }
+  lines.push(['Energia (' + (time / qty).toFixed(0) + ' min @ ' + power + 'W)', energyCost / qty]);
+  if (laborMinutes > 0) lines.push(['Mão de obra (' + (laborMinutes / qty).toFixed(0) + ' min)', laborCost / qty]);
+  if (postProcessing && paintTime > 0) lines.push(['Taxa de pintura', paintCost / qty]);
+  lines.push([qty > 1 ? 'Subtotal (por cópia)' : 'Subtotal', subtotal / qty]);
+  lines.push(['Lucro (' + margin.toFixed(0) + '%)', (total - subtotal) / qty]);
 
   $('lineItems').innerHTML = lines.map(([label, val]) =>
     (label.startsWith('Subtotal') ? '<hr class="line-divider">' : '') +
@@ -551,18 +695,24 @@ function calculate(){
   ).join('');
 
   $('totalValue').textContent = fmt(total);
+  $('perCopyRow').classList.toggle('show', qty > 1);
+  if (qty > 1){
+    $('qtyLabel').textContent = qty;
+    $('perCopyValue').textContent = fmt(total / qty);
+  }
 
   // stash values for the customer-facing share image (margin folded into "Mão de obra";
-  // paint cost folded into "Material" since it's a manual finish, not a separate cost)
+  // paint cost folded into "Material" since it's a manual finish, not a separate cost);
+  // everything is per-copy when printing a batch
   current.pieceName = pieceName;
-  current.weight = weight;
-  current.materialEnergy = materialCost + energyCost + paintCost;
+  current.weight = weight / qty;
+  current.materialEnergy = (materialCost + energyCost + paintCost) / qty;
   current.painted = postProcessing && paintTime > 0;
-  current.designCost = designCost;
+  current.designCost = designCost / qty;
   current.original = original;
-  current.modelingTime = modelingTime;
-  current.production = total - materialCost - energyCost - paintCost - designCost;
-  current.total = total;
+  current.modelingTime = designHours;
+  current.production = (total - materialCost - energyCost - paintCost - designCost) / qty;
+  current.total = total / qty;
 
   applyJaggedClip();
 }
