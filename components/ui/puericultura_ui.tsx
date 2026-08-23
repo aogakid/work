@@ -1042,7 +1042,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
           <div style={{
             gridColumn: "1 / -1",
             display: "grid",
-            gridTemplateColumns: mobile ? "1fr" : "auto minmax(140px, 1fr) minmax(0, 1fr)",
+            gridTemplateColumns: mobile ? "1fr" : "auto minmax(140px, 1fr) auto minmax(0, 1fr)",
             gap: "10px",
             alignItems: "end",
             minWidth: 0,
@@ -1075,6 +1075,14 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
                 style={{ ...styles.input(), minWidth: 0, width: "100%" }}
               />
             </div>
+
+            <span style={{
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "var(--puericultura-text-muted)",
+              paddingBottom: mobile ? "0" : "14px",
+              textAlign: "center" as const,
+            }}>ou</span>
 
             {/* Coluna da Direita: Campos de Idade Manual divididos igualmente internamente */}
             <div style={styles.inputGroup}>

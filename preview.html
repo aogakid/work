@@ -68,6 +68,10 @@
   // Cache de módulos carregados via require relativo
   const moduleCache = {};
 
+  // Cache-busting: http.server não envia cache-control, então o browser
+  // pode servir o .tsx antigo. Um timestamp por carregamento resolve.
+  const CACHE_BUST = 't=' + Date.now();
+
   // Resolve caminho relativo a partir de um diretório base
   function resolveRelativePath(baseDir, relativePath) {
     const parts = (baseDir || '').split('/').filter(Boolean);
@@ -97,13 +101,11 @@
           const filePath = resolvedPath + ext;
           try {
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', filePath, false);
+            xhr.open('GET', filePath + '?' + CACHE_BUST, false);
             xhr.send();
             if (xhr.status !== 200) continue;
 
             let code = xhr.responseText;
-            code = code.replace(/(?:export\s+)?interface\s+[^{]+\{[\s\S]*?\}/g, '');
-            code = code.replace(/(?:export\s+)?type\s+\w+\s*=\s*[^;]+;/g, '');
 
             const moduleDir = resolvedPath.includes('/')
               ? resolvedPath.substring(0, resolvedPath.lastIndexOf('/'))
@@ -140,14 +142,10 @@
     const rootDiv = document.getElementById('root');
 
     try {
-      const response = await fetch(filename);
+      const response = await fetch(filename + '?' + CACHE_BUST);
       if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
 
       let tsxCode = await response.text();
-
-      // Limpa tipos e interfaces isoladas de alto nível
-      tsxCode = tsxCode.replace(/(?:export\s+)?interface\s+[^{]+\{[\s\S]*?\}/g, '');
-      tsxCode = tsxCode.replace(/(?:export\s+)?type\s+\w+\s*=\s*[^;\n]+;/g, '');
 
       const { code } = Babel.transform(tsxCode, {
         presets: [

@@ -262,29 +262,44 @@ const injectStyles = `
 
   .gest-inputs-row {
     display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
   }
 
-  .gest-inputs-row .gest-field {
+  .gest-inputs-line {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    min-width: 0;
+  }
+
+  .gest-inputs-line .gest-field {
     display: flex;
     flex-direction: column;
     gap: 4px;
     min-width: 0;
   }
 
-  .gest-inputs-row .gest-field--date {
-    flex: 1.2 1 160px;
+  /* US date stays compact so semanas + dias fit beside it on the line */
+  .gest-inputs-line .gest-field--date {
+    flex: 0 1 190px;
   }
 
-  .gest-inputs-row .gest-field--narrow {
+  /* DUM is alone on its row, so it stretches */
+  .gest-inputs-line .gest-field--full {
+    flex: 1 1 100%;
+  }
+
+  .gest-inputs-line .gest-field--narrow {
     flex: 0 1 64px;
   }
 
-  .gest-inputs-row input {
+  .gest-inputs-line input {
     width: 100%;
     box-sizing: border-box;
+    min-width: 0;
   }
 
   .gest-inputs-row .gest-field-label {
@@ -304,15 +319,6 @@ const injectStyles = `
     flex-shrink: 0;
   }
 
-  @media (max-width: 540px) {
-    .gest-inputs-row .gest-field--date {
-      flex: 1 1 100%;
-    }
-    .gest-inputs-row .gest-field--narrow {
-      flex: 1 1 60px;
-    }
-  }
-
   .gest-dating-card {
     margin-top: 16px;
     border-radius: 10px;
@@ -321,6 +327,208 @@ const injectStyles = `
     border: 1px solid var(--gest-border);
     font-size: 13px;
     line-height: 1.5;
+  }
+
+  /* Rotina pré-natal (MS) */
+  .gest-routine {
+    margin-top: 16px;
+  }
+
+  .gest-routine-item {
+    background: var(--gest-card-bg);
+    border: 1px solid var(--gest-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .gest-routine-item + .gest-routine-item {
+    margin-top: 8px;
+  }
+
+  /* grupos já totalmente passados */
+  .gest-routine-item--done {
+    opacity: 0.55;
+  }
+
+  .gest-routine-item--past .gest-routine-item-title,
+  .gest-routine-item--past .gest-routine-li {
+    opacity: 0.6;
+  }
+
+  /* cores por trimestre — mesmas da barra de progresso.
+     Aplicadas só quando o trimestre é o atual (--cur) ou
+     contém a próxima consulta (--next). */
+  .gest-routine-item--t1.gest-routine-item--cur,
+  .gest-routine-item--t1.gest-routine-item--next {
+    background: rgba(0, 184, 73, 0.16);
+    border-color: rgba(0, 184, 73, 0.5);
+  }
+
+  .gest-routine-item--t2.gest-routine-item--cur,
+  .gest-routine-item--t2.gest-routine-item--next {
+    background: rgba(59, 130, 246, 0.16);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+
+  .gest-routine-item--t3.gest-routine-item--cur,
+  .gest-routine-item--t3.gest-routine-item--next {
+    background: rgba(147, 51, 234, 0.16);
+    border-color: rgba(147, 51, 234, 0.5);
+  }
+
+  .gest-routine-item-title {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gest-text);
+    margin-bottom: 2px;
+  }
+
+  .gest-routine-item-desc {
+    display: block;
+    font-size: 12px;
+    color: var(--gest-text-muted);
+    line-height: 1.5;
+  }
+
+  .gest-routine-list {
+    margin-top: 2px;
+  }
+
+  .gest-routine-li {
+    position: relative;
+    padding: 2px 0 2px 13px;
+    font-size: 12.5px;
+    color: var(--gest-text);
+    line-height: 1.45;
+  }
+
+  .gest-routine-li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9.5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gest-progress-marker);
+  }
+
+  .gest-routine-source {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gest-border);
+    font-size: 10.5px;
+    color: var(--gest-text-muted);
+    line-height: 1.45;
+  }
+
+  .gest-routine-callout {
+    background: var(--gest-milestone-now-bg);
+    border: 1px solid var(--gest-milestone-now-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+
+  .gest-routine-callout-label {
+    display: block;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gest-text-muted);
+    margin-bottom: 2px;
+  }
+
+  .gest-routine-callout-value {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gest-text);
+  }
+
+  .gest-routine-weeks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .gest-routine-week {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--gest-border);
+    background: var(--gest-input-bg);
+    color: var(--gest-text-muted);
+    white-space: nowrap;
+  }
+
+  .gest-routine-week--done {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+
+  /* o trimestre da próxima consulta colore o chip (--tN vem depois e vence) */
+  .gest-routine-week--next {
+    opacity: 1;
+    color: var(--gest-text);
+  }
+
+  .gest-routine-chip {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  .gest-routine-chip--done {
+    background: rgba(120, 120, 120, 0.15);
+    color: var(--gest-text-muted);
+  }
+
+  .gest-routine-chip--t1 {
+    background: rgba(0, 184, 73, 0.14);
+    color: #007a30;
+  }
+
+  .gest-routine-chip--t2 {
+    background: rgba(59, 130, 246, 0.14);
+    color: #2563eb;
+  }
+
+  .gest-routine-chip--t3 {
+    background: rgba(147, 51, 234, 0.14);
+    color: #9333ea;
+  }
+
+  .gest-routine-janela {
+    color: var(--gest-text-muted);
+    font-size: 11.5px;
+  }
+
+  .gest-routine-flag {
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+
+  .gest-routine-flag--ok {
+    color: #007a30;
+  }
+
+  .gest-routine-flag--late {
+    color: #b45309;
   }
 
   .gest-dating-card-title {
@@ -434,6 +642,8 @@ const styles = {
         height: "42px",
         boxSizing: "border-box" as const,
         width: "100%",
+        minWidth: 0,
+        appearance: "none" as const,
         transition: "all 0.2s ease",
     },
     badge: {
@@ -848,6 +1058,79 @@ function startOfDay(d: Date) {
     return copy
 }
 
+/** Agenda mínima de consultas — Manual de Pré-Natal de Baixo Risco (MS) */
+const AGENDA_CONSULTAS_MS: {
+    titulo: string
+    descricao: string
+    semanas: number[]
+}[] = [
+    {
+        titulo: "1ª consulta",
+        descricao: "O quanto antes — idealmente até a 12ª semana",
+        semanas: [],
+    },
+    {
+        titulo: "Retornos mensais",
+        descricao: "A cada 4 semanas até a 28ª semana",
+        semanas: [16, 20, 24],
+    },
+    {
+        titulo: "Retornos quinzenais",
+        descricao: "Da 28ª à 36ª semana",
+        semanas: [28, 30, 32, 34, 36],
+    },
+    {
+        titulo: "Retornos semanais",
+        descricao: "Após a 36ª semana até o parto",
+        semanas: [37, 38, 39, 40, 41],
+    },
+]
+
+/** Exames de rotina recomendados pelo MS, por trimestre.
+ *  `de`/`ate` definem a janela gestacional ideal do exame (em semanas). */
+const EXAMES_MS: {
+    periodo: string
+    tri: 1 | 2 | 3
+    itens: { nome: string; de?: number; ate?: number }[]
+}[] = [
+    {
+        periodo: "1º trimestre · 1ª consulta",
+        tri: 1,
+        itens: [
+            { nome: "Tipagem sanguínea ABO/Rh" },
+            { nome: "Hemograma completo" },
+            { nome: "VDRL (sífilis)" },
+            { nome: "HIV 1 e 2" },
+            { nome: "Hepatite B (HBsAg) e Hepatite C" },
+            { nome: "EAS + urocultura" },
+            { nome: "Parasitológico de fezes" },
+            { nome: "Glicemia de jejum" },
+            { nome: "Toxoplasmose (IgG e IgM)" },
+            { nome: "TSH" },
+        ],
+    },
+    {
+        periodo: "2º trimestre",
+        tri: 2,
+        itens: [
+            { nome: "Ultrassom obstétrico (morfológica)", de: 18, ate: 24 },
+            { nome: "Hemograma completo (repetir)" },
+            { nome: "TOTG 75 g — rastreio diabetes gestacional", de: 24, ate: 28 },
+            { nome: "Coombs indireto (gestante Rh negativo)", de: 28 },
+        ],
+    },
+    {
+        periodo: "3º trimestre",
+        tri: 3,
+        itens: [
+            { nome: "Repetir VDRL, HIV e hemograma" },
+            { nome: "Repetir EAS/urocultura" },
+            { nome: "Anti-D (gestante Rh negativo)", de: 28 },
+            { nome: "Swab para estreptococo B", de: 35, ate: 37 },
+        ],
+    },
+]
+
 function addDays(d: Date, days: number) {
     const copy = new Date(d)
     copy.setDate(copy.getDate() + days)
@@ -1261,6 +1544,176 @@ function CardMarco({ marco, tipo }: { marco: Marco; tipo: "now" | "soon" }) {
     )
 }
 
+function formatDiaMes(d: Date) {
+    const dia = String(d.getDate()).padStart(2, "0")
+    const mes = String(d.getMonth() + 1).padStart(2, "0")
+    return `${dia}/${mes}`
+}
+
+function RotinaPreNatal({ dum, semanas }: { dum: Date; semanas: number }) {
+    const dataSemana = (sem: number) => formatDiaMes(addDays(dum, sem * 7))
+    const triAtual = semanas < 14 ? 1 : semanas < 28 ? 2 : 3
+
+    // próxima consulta agendada (semana mais próxima acima da atual)
+    const todasSemanas = AGENDA_CONSULTAS_MS.flatMap((a) => a.semanas)
+    const proximaSemana = todasSemanas
+        .filter((s) => s > semanas)
+        .sort((a, b) => a - b)[0]
+    const triProxima =
+        proximaSemana === undefined
+            ? 0
+            : proximaSemana < 14
+              ? 1
+              : proximaSemana < 28
+                ? 2
+                : 3
+
+    // estado de um exame com janela gestacional
+    const estadoJanela = (de?: number, ate?: number) => {
+        if (de === undefined && ate === undefined) return null
+        const inicio = de ?? 4
+        const fim = ate ?? 42
+        if (semanas > fim) return "passou"
+        if (semanas >= inicio) return "agora"
+        return "vai"
+    }
+
+    return (
+        <>
+            <div className="gest-card gest-routine">
+                <div style={styles.cardTitle}>Consultas</div>
+                <div className="gest-routine-items">
+                        {AGENDA_CONSULTAS_MS.map((item) => (
+                            <div
+                                className={`gest-routine-item${item.semanas.length > 0 && item.semanas.every((s) => s <= semanas) ? " gest-routine-item--done" : ""}${proximaSemana !== undefined && item.semanas.includes(proximaSemana) ? " gest-routine-item--next gest-routine-item--t" + triProxima : ""}`}
+                                key={item.titulo}
+                            >
+                                <span className="gest-routine-item-title">
+                                    {item.titulo}
+                                    {item.semanas.length > 0 &&
+                                        item.semanas.every(
+                                            (s) => s <= semanas
+                                        ) && (
+                                            <span className="gest-routine-chip gest-routine-chip--done">
+                                                concluído
+                                            </span>
+                                        )}
+                                </span>
+                                <span className="gest-routine-item-desc">
+                                    {item.descricao}
+                                    {(item.semanas.length > 0 ||
+                                        item.titulo === "1ª consulta") && (
+                                        <span className="gest-routine-weeks">
+                                            {item.semanas.map((s) => (
+                                                <span
+                                                    key={s}
+                                                    className={`gest-routine-week${s <= semanas ? " gest-routine-week--done" : ""}${s === proximaSemana ? " gest-routine-week--next gest-routine-chip--t" + triProxima : ""}`}
+                                                >
+                                                    {s}s ({dataSemana(s)})
+                                                </span>
+                                            ))}
+                                            {item.titulo === "1ª consulta" && (
+                                                <span
+                                                    className={`gest-routine-week${semanas > 12 ? " gest-routine-week--done" : ""}`}
+                                                >
+                                                    idealmente até{" "}
+                                                    {formatDateCurta(
+                                                        addDays(dum, 84)
+                                                    )}
+                                                </span>
+                                            )}
+                                        </span>
+                                    )}
+                                </span>
+                            </div>
+                        ))}
+                </div>
+            </div>
+
+            <div className="gest-card gest-routine">
+                <div style={styles.cardTitle}>Exames recomendados</div>
+                    {EXAMES_MS.map((grupo) => {
+                        const estadoTri =
+                            grupo.tri < triAtual
+                                ? "done"
+                                : grupo.tri === triAtual
+                                  ? "now"
+                                  : "todo"
+                        const chipLabel =
+                            estadoTri === "done"
+                                ? "período concluído"
+                                : estadoTri === "now"
+                                  ? "em curso"
+                                  : "à frente"
+                        return (
+                            <div
+                                className={`gest-routine-item gest-routine-item--t${grupo.tri}${estadoTri === "now" ? " gest-routine-item--cur" : ""}${estadoTri === "done" ? " gest-routine-item--past" : ""}`}
+                                key={grupo.periodo}
+                            >
+                                <span className="gest-routine-item-title">
+                                    {grupo.periodo}
+                                    <span
+                                        className={`gest-routine-chip gest-routine-chip--t${grupo.tri}`}
+                                    >
+                                        {chipLabel}
+                                    </span>
+                                </span>
+                                <div className="gest-routine-list">
+                                    {grupo.itens.map((exame) => {
+                                        const estado = estadoJanela(
+                                            exame.de,
+                                            exame.ate
+                                        )
+                                        return (
+                                            <div
+                                                className="gest-routine-li"
+                                                key={exame.nome}
+                                            >
+                                                {exame.nome}
+                                                {exame.de !== undefined && (
+                                                    <span className="gest-routine-janela">
+                                                        {" "}
+                                                        ({exame.de}
+                                                        {exame.ate !== undefined
+                                                            ? `–${exame.ate}`
+                                                            : ""}
+                                                        s ·{" "}
+                                                        {dataSemana(exame.de)}
+                                                        {exame.ate !== undefined
+                                                            ? `–${dataSemana(exame.ate)}`
+                                                            : ""}
+                                                        )
+                                                    </span>
+                                                )}
+                                                {estado === "agora" && (
+                                                    <span className="gest-routine-flag gest-routine-flag--ok">
+                                                        agora
+                                                    </span>
+                                                )}
+                                                {estado === "passou" && (
+                                                    <span className="gest-routine-flag gest-routine-flag--late">
+                                                        janela passou
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        )
+                    })}
+
+                    <div className="gest-routine-source">
+                        Fonte: Ministério da Saúde — Manual de Pré-Natal de
+                        Baixo Risco e Caderneta da Gestante. Datas estimadas a
+                        partir da DUM; confirme o calendário com o profissional
+                        de saúde.
+                    </div>
+            </div>
+        </>
+    )
+}
+
 export default forwardRef<CompanionActions, Props>(function CalculadoraGestacional({ style }: Props, ref) {
     const [dum, setDum] = useState("")
     const [usDate, setUsDate] = useState("")
@@ -1328,50 +1781,54 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
             </div>
 
             <div className="gest-inputs-row">
-                <div className="gest-field gest-field--date">
-                    <span className="gest-field-label">DUM</span>
-                    <input
-                        type="date"
-                        value={dum}
-                        max={new Date().toISOString().split("T")[0]}
-                        onChange={(e) => setDum(e.target.value)}
-                        style={styles.input}
-                    />
+                <div className="gest-inputs-line">
+                    <div className="gest-field gest-field--date gest-field--full">
+                        <span className="gest-field-label">DUM</span>
+                        <input
+                            type="date"
+                            value={dum}
+                            max={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => setDum(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
                 </div>
-                <span className="gest-ou">ou</span>
-                <div className="gest-field gest-field--date">
-                    <span className="gest-field-label">Data do US</span>
-                    <input
-                        type="date"
-                        value={usDate}
-                        max={new Date().toISOString().split("T")[0]}
-                        onChange={(e) => setUsDate(e.target.value)}
-                        style={styles.input}
-                    />
-                </div>
-                <div className="gest-field gest-field--narrow">
-                    <span className="gest-field-label">Semanas</span>
-                    <input
-                        type="number"
-                        min={0}
-                        max={41}
-                        placeholder="0"
-                        value={usSemanas}
-                        onChange={(e) => setUsSemanas(e.target.value)}
-                        style={styles.input}
-                    />
-                </div>
-                <div className="gest-field gest-field--narrow">
-                    <span className="gest-field-label">Dias</span>
-                    <input
-                        type="number"
-                        min={0}
-                        max={6}
-                        placeholder="0"
-                        value={usDias}
-                        onChange={(e) => setUsDias(e.target.value)}
-                        style={styles.input}
-                    />
+                <div className="gest-inputs-line">
+                    <span className="gest-ou">ou</span>
+                    <div className="gest-field gest-field--date">
+                        <span className="gest-field-label">Data do US</span>
+                        <input
+                            type="date"
+                            value={usDate}
+                            max={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => setUsDate(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
+                    <div className="gest-field gest-field--narrow">
+                        <span className="gest-field-label">Semanas</span>
+                        <input
+                            type="number"
+                            min={0}
+                            max={41}
+                            placeholder="0"
+                            value={usSemanas}
+                            onChange={(e) => setUsSemanas(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
+                    <div className="gest-field gest-field--narrow">
+                        <span className="gest-field-label">Dias</span>
+                        <input
+                            type="number"
+                            min={0}
+                            max={6}
+                            placeholder="0"
+                            value={usDias}
+                            onChange={(e) => setUsDias(e.target.value)}
+                            style={styles.input}
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -1523,6 +1980,12 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                         </div>
                     </div>
                 </div>
+
+                {/* Rotina MS: consultas, exames e suplementação */}
+                <RotinaPreNatal
+                    dum={resultado.dum}
+                    semanas={resultado.semanas}
+                />
 
                 {/* Dating info card below results */}
                 {resolucao && dum && usDate && (parseInt(usSemanas) > 0 || parseInt(usDias) > 0) && (

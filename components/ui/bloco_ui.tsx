@@ -288,6 +288,24 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
     const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+
+    /* ── Sticky header stuck-state (masks rounded top corners while stuck) ── */
+    const scrollContentRef = React.useRef<HTMLDivElement | null>(null)
+    const stickyIoRef = React.useRef<IntersectionObserver | null>(null)
+    const observeStickySentinel = (el: HTMLDivElement | null) => {
+        const root = scrollContentRef.current
+        if (!el || !root || typeof IntersectionObserver === "undefined") return
+        if (!stickyIoRef.current) {
+            stickyIoRef.current = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    const head = entry.target.nextElementSibling
+                    if (head) head.classList.toggle("is-stuck", !entry.isIntersecting)
+                })
+            }, { root, rootMargin: "-20px 0px 0px 0px", threshold: 0 })
+        }
+        stickyIoRef.current.observe(el)
+    }
+
     const DIRETOS: Record<string, React.ElementType> = {
         escores: CalculadoraPREVENT,
         exames: ExamesUI,
@@ -1182,6 +1200,20 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-scale-hover:active:not(:disabled) { transform: scale(0.95); }
                 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
                 input[type="number"] { -moz-appearance: textfield; }
+                /* Sticky headers: 1px sentinel before the bar reports stuck state via IO
+                   (rootMargin -20px top = the scroller's padding-top, so the flag flips
+                   exactly when the bar pins 20px below the panel top). While stuck,
+                   a bg-colored strip paints above the bar's own background (z -1)
+                   covering the 20px padding band so scrolled text can't show through
+                   (extended 8px past each side so card borders don't peek out), and
+                   the bar's rounded top corners go square for a seamless look. */
+                .bloco-sticky-sentinel { height: 1px; margin-top: -1px; pointer-events: none; }
+                .bloco-sticky-head.is-stuck::before {
+                    content: ""; position: absolute; top: -20px; left: -8px; right: -8px;
+                    height: 20px; background: var(--editor-bg); z-index: -1;
+                }
+                .bloco-sticky-head.is-stuck,
+                .bloco-sticky-head.is-stuck > div { border-radius: 0 !important; }
                 .gas-btn-pause-bars { font-weight: 700 !important; font-size: 8px !important; letter-spacing: 0.5px !important; transform: scaleY(0.95); }
 
                 .gas-responsive-footer-bar { position: absolute; bottom: 0px; left: 0px; right: 0px; padding: 16px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; pointer-events: none; z-index: 10; }
@@ -1318,20 +1350,21 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             {/* ════════════════════════════════════════════════════════════ */}
             {/* SECTIONS EDITOR                                            */}
             {/* ════════════════════════════════════════════════════════════ */}
-            <div style={{ width: "100%", height: "100%", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: "20px 24px 94px 24px" }} onPaste={handleGlobalPaste}>
+            <div ref={scrollContentRef} style={{ width: "100%", height: "100%", overflowY: "auto", overflowX: "hidden", boxSizing: "border-box", padding: "20px 24px 94px 24px" }} onPaste={handleGlobalPaste}>
                 {/* Title bar */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", marginBottom: "20px" }}>
                     {plaintext ? (
-                        <div style={{ fontFamily: '"Playfair Display", serif', fontSize: "24px", fontWeight: 900, color: "var(--editor-text)", padding: 0, minWidth: 0, flex: 1 }}>bloco de notas</div>
+                        <div style={{ fontFamily: '"Playfair Display", serif', fontSize: "24px", fontWeight: 900, color: "var(--editor-text)", padding: 0, minWidth: "160px", flex: 1 }}>bloco de notas</div>
                     ) : (
                         <input
                             type="text"
                             value={title}
                             onChange={e => setTitle(e.target.value)}
                             placeholder="título"
-                            style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontFamily: '"Playfair Display", serif', fontSize: "24px", fontWeight: 900, color: "var(--editor-text)", padding: 0, minWidth: 0 }}
+                            style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontFamily: '"Playfair Display", serif', fontSize: "24px", fontWeight: 900, color: "var(--editor-text)", padding: 0, minWidth: "160px" }}
                         />
                     )}
+                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", gap: "8px" }}>
                     <button className="bloco-icon-btn" onClick={() => {
                         if (plaintext) {
                             const doToggle = () => {
@@ -1414,6 +1447,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
 
                 {/* ═══ Plaintext editor ═══ */}
@@ -1469,7 +1503,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     return (
                         <div key={s.id} style={{ marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
                             {/* ── Section Header (sticky) ── */}
-                            <div style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
+                            <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
+                            <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
                                 <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
                                 <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>{meta.letter}</span>
                                 <span className="bloco-section-title" style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{s.title}</span>
@@ -1547,14 +1582,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     const shouldMount = isOpen || !!companionEverOpened.current[c.id]
                     return (
                         <div key={c.id} style={{ marginTop: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
-                            <div style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                                <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
-                                <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>+</span>
+                            <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
+                            <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
+                                <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
+                                <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center", flexShrink: 0 }}>+</span>
                                 <span style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
-                                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
+                                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px" }}>
                                     {isOpen && c.outputGroups.map(og => (
                                         <button key={og.id} onClick={e => { e.stopPropagation(); handleAppendOutput(c.id, og.id, og.targetSection) }} className="gas-scale-hover" style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontSize: "10px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
-                                            + {og.label}
+                                            ↑ {og.label}
                                         </button>
                                     ))}
                                 </div>
@@ -1663,7 +1699,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 {/* Timer trigger */}
                 {!cronometroAtivo && (
                     <button className="gas-ui-blockout gas-hover-btn gas-order-time" onClick={() => { setPopupDispensado(false); setMostrarSetupRelogio(true); setMostrarPopupSugestao(false) }} style={{ background: "rgba(120,113,108,0.1)", backdropFilter: "blur(6px)", padding: "6px 14px", borderRadius: "6px", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--editor-text)", border: "1px solid rgba(120,113,108,0.2)", pointerEvents: "auto", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, width: "auto", height: "auto" }}>
-                        <span style={{ fontSize: "14px" }}>⏱</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="10" x2="14" y1="2" y2="2" /><line x1="12" x2="15" y1="14" y2="11" /><circle cx="12" cy="14" r="8" /></svg>
                         Cronômetro
                     </button>
                 )}
