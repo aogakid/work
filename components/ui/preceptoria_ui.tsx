@@ -155,10 +155,11 @@ interface CronometroDashboardProps {
     onAbrirTemplate: (secId: string) => void
     onSecaoChange: (secao: string) => void
     onReiniciar: () => void
+    onExtrapolacaoChange?: (extrapolada: boolean) => void
 }
 
 const CronometroDashboard = (props: CronometroDashboardProps) => {
-    const { tempoLimite, graus, mostrarBurocracia, tempoBurocracia, tipoSelecionado, onAbrirTemplate, onSecaoChange, onReiniciar } = props
+    const { tempoLimite, graus, mostrarBurocracia, tempoBurocracia, tipoSelecionado, onAbrirTemplate, onSecaoChange, onReiniciar, onExtrapolacaoChange } = props
 
     /* ── Timer state ── */
     const [segundosDecorridos, setSegundosDecorridos] = React.useState<number>(0)
@@ -197,6 +198,10 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
     }, [secaoAtual]) // eslint-disable-line react-hooks/exhaustive-deps
 
     React.useEffect(() => {
+        onExtrapolacaoChange?.(secaoExtrapolada)
+    }, [secaoExtrapolada]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    React.useEffect(() => {
         if (isPaused || arquivadoManualmente || totalSegundosLimite <= 0) return
         const p = Math.floor((segundosDecorridos / totalSegundosLimite) * 10)
         if (p > ultimoPercentualRef.current && p <= 10 && p > 0) { ultimoPercentualRef.current = p; setShakeTimeCount(c => c + 1) }
@@ -215,6 +220,52 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
         }
         return () => clearInterval(interval)
     }, [isPaused, arquivadoManualmente])
+
+    /* ── Section change: vibration + notification ── */
+    const prevSecaoRef = React.useRef<string>(secaoAtual)
+    const alarmeTocouRef = React.useRef<boolean>(false)
+    React.useEffect(() => {
+        if (prevSecaoRef.current !== secaoAtual && !arquivadoManualmente) {
+            try { navigator.vibrate(80) } catch { /* ignore */ }
+            if ("Notification" in window && Notification.permission === "granted") {
+                const meta = secaoAtual === "B" ? BUROCRACIA_META : SECTION_META.find(m => m.letter === secaoAtual)
+                new Notification(secaoAtual === "FIM" ? "tempo extrapolado" : `${meta?.title || "seção"} concluída`, { body: secaoAtual === "FIM" ? "o tempo da consulta foi extrapolado" : `início da seção ${meta?.letter || ""}`, icon: "/favicon.ico" })
+            }
+            prevSecaoRef.current = secaoAtual
+        }
+    }, [secaoAtual, arquivadoManualmente])
+
+    /* ── Timer done: vibration + notification + sound (once) ── */
+    React.useEffect(() => {
+        if (!arquivadoManualmente && !alarmeTocouRef.current && segundosDecorridos >= totalSegundosLimite && totalSegundosLimite > 0) {
+            alarmeTocouRef.current = true
+            try { navigator.vibrate([200, 100, 200, 100, 200]) } catch { /* ignore */ }
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("tempo esgotado", { body: "o tempo alocado para a consulta acabou", icon: "/favicon.ico" })
+            }
+            try {
+                const AudioCtxClass = window.AudioContext || ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
+                const ctx = new AudioCtxClass()
+                const beepPattern = [[0, 880], [0.35, 880], [0.7, 1100]]
+                const cycleLen = 1.05
+                const totalDur = 3
+                for (let t = 0; t < totalDur; t += cycleLen) {
+                    for (const [offset, freq] of beepPattern) {
+                        const osc = ctx.createOscillator()
+                        const gain = ctx.createGain()
+                        osc.type = "sine"
+                        osc.frequency.value = freq
+                        gain.gain.setValueAtTime(0.3, ctx.currentTime + t + offset)
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + offset + 0.3)
+                        osc.connect(gain)
+                        gain.connect(ctx.destination)
+                        osc.start(ctx.currentTime + t + offset)
+                        osc.stop(ctx.currentTime + t + offset + 0.3)
+                    }
+                }
+            } catch { /* ignore */ }
+        }
+    }, [segundosDecorridos, totalSegundosLimite, arquivadoManualmente])
 
     /* Timer colors */
     let chipTextColor = "#3b82f6"
@@ -276,11 +327,7 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
             progress: progressoVaoB / 100,
         })
     }
-    if (secaoExtrapolada) {
-        for (const item of clusterItems) {
-            if (item.meta.letter === "P") item.active = true
-        }
-    }
+
 
     const renderCircle = (item: ClusterItem) => {
         const ehExtrapoladoP = secaoExtrapolada && item.meta.letter === "P"
@@ -291,7 +338,7 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
         let circleBg = item.meta.bg
         let circleBorder = item.meta.border
         let circleColor = item.meta.color
-        let letter = item.meta.letter
+        const letter = item.meta.letter
         let slotOpacity = 1
 
         if (arquivadoManualmente) {
@@ -300,19 +347,31 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
             circleBorder = "rgba(120,113,108,0.18)"
             circleColor = "var(--meta-text)"
             slotOpacity = 0.6
-        } else if (ehExtrapoladoP) {
-            ringColor = "#ef4444"
+        } else if (secaoExtrapolada && item.done) {
             ringProgress = 1
-            circleBg = "#ef4444"
-            circleBorder = "#ef4444"
+            strokeWidth = 6
+            circleBg = item.meta.color
+            circleBorder = item.meta.color
             circleColor = "#ffffff"
-            letter = "!"
+        } else if (secaoExtrapolada && item.reached) {
+            strokeWidth = 6
+            circleBg = item.meta.color
+            circleBorder = item.meta.color
+            circleColor = "#ffffff"
         } else if (isActive) {
             ringProgress = item.progress
+            if (item.done) {
+                circleBg = item.meta.color
+                circleBorder = item.meta.color
+                circleColor = "#ffffff"
+            }
         } else if (item.done) {
             ringProgress = 1
             strokeWidth = 3
             slotOpacity = 0.75
+            circleBg = item.meta.color
+            circleBorder = item.meta.color
+            circleColor = "#ffffff"
         } else if (item.reached) {
             strokeWidth = 3
             slotOpacity = 0.4
@@ -335,8 +394,8 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
                     <div style={{ width: `${TAM_CIRCULO_LETRA}px`, height: `${TAM_CIRCULO_LETRA}px`, boxSizing: "border-box", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: circleBg, border: `2px solid ${circleBorder}`, color: circleColor, fontSize: "40px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', transition: "all 0.3s", position: "relative", zIndex: 1 }}>
                         {letter}
                     </div>
-                    {item.done && !isActive && !arquivadoManualmente && (
-                        <span style={{ position: "absolute", top: "6px", right: "22px", zIndex: 2, width: "22px", height: "22px", borderRadius: "50%", background: item.meta.color, color: "#ffffff", fontSize: "11px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
+                    {(item.done || ehExtrapoladoP) && !arquivadoManualmente && (
+                        <span style={{ position: "absolute", top: "2px", right: "16px", zIndex: 2, width: "36px", height: "36px", borderRadius: "50%", background: item.meta.color, color: "#ffffff", fontSize: "16px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
                     )}
                 </div>
             </div>
@@ -386,12 +445,16 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
         <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "26px", width: "100%", maxWidth: "520px" }}>
             {/* SOAP circles */}
             {!arquivadoManualmente && (
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
-                    {clusterItems.map(renderCircle)}
+                <div className="soap-grid">
+                    {clusterItems.map(item => (
+                        <div key={item.meta.letter + "-cell"} className="soap-grid-cell">
+                            {renderCircle(item)}
+                        </div>
+                    ))}
                 </div>
             )}
             {!arquivadoManualmente && (
-                <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "15px", fontWeight: 600, color: arquivadoManualmente ? "var(--meta-text)" : (secaoExtrapolada ? "#ef4444" : (metaAtual?.color || "#f5f5f4")), letterSpacing: "0.02em", textAlign: "center" }}>
+                <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "15px", fontWeight: 600, color: arquivadoManualmente ? "var(--meta-text)" : (secaoExtrapolada ? "rgba(255,255,255,0.65)" : (metaAtual?.color || "#f5f5f4")), letterSpacing: "0.02em", textAlign: "center" }}>
                     {displayTitle}
                 </div>
             )}
@@ -406,25 +469,25 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
                         <div className="gas-ui-blockout" style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", fontWeight: 700, color: "var(--meta-text)", letterSpacing: "0.5px", background: "rgba(255,255,255,0.06)", padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.12)" }}>PAUSADO</div>
                     )}
                     <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
-                        meta: {metaTotal} min{mostrarBurocracia ? " · burocracia incluída" : ""}
+                        meta: {metaTotal} min{mostrarBurocracia ? " com burocracia" : ""}
                     </div>
                 </div>
             )}
 
             {/* Controls */}
             {!arquivadoManualmente && (
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <button className="gas-scale-hover" onClick={() => setArquivadoManualmente(true)} title="concluir atendimento" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#ffffff", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✓</button>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
                     {secaoAtual !== "FIM" && (
-                        <button className="gas-scale-hover" onClick={pularSecao} title="pular seção (tempo restante vai para a próxima)" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#f5f5f4", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>⏭</button>
+                        <button className="gas-scale-hover" onClick={pularSecao} title="pular seção (tempo restante vai para a próxima)" style={{ display: "flex", alignItems: "center", gap: "5px", borderRadius: "10px", border: "none", background: "rgba(255,255,255,0.1)", color: "#f5f5f4", fontSize: "13px", fontWeight: 700, cursor: "pointer", padding: "8px 14px", fontFamily: '"Google Sans Flex", sans-serif' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>próxima</button>
                     )}
                     {secaoAtual !== "FIM" && (
-                        <button className="gas-scale-hover" onClick={adicionarBonus} title="adicionar 10% do tempo à seção atual" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: "#4ade80", fontSize: "11px", fontWeight: 800, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>+10%</button>
+                        <button className="gas-scale-hover" onClick={adicionarBonus} title="adicionar 10% do tempo à seção atual" style={{ display: "flex", alignItems: "center", gap: "5px", borderRadius: "10px", border: "none", background: "rgba(255,255,255,0.1)", color: "#f5f5f4", fontSize: "13px", fontWeight: 700, cursor: "pointer", padding: "8px 14px", fontFamily: '"Google Sans Flex", sans-serif' }}>+10% mais tempo</button>
                     )}
-                    <button className={`gas-scale-hover ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={() => setIsPaused(!isPaused)} title={isPaused ? "retomar" : "pausar"} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)", color: chipTextColor, fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>
-                        {isPaused ? "▶" : "❚❚"}
+                    <button className="gas-scale-hover" onClick={() => { if (window.confirm("finalizar este atendimento?")) { alarmeTocouRef.current = false; setArquivadoManualmente(true); onExtrapolacaoChange?.(false) } }} title="concluir atendimento" style={{ display: "flex", alignItems: "center", gap: "5px", borderRadius: "10px", border: "none", background: "rgba(255,255,255,0.1)", color: "#ffffff", fontSize: "13px", fontWeight: 700, cursor: "pointer", padding: "8px 14px", fontFamily: '"Google Sans Flex", sans-serif' }}>✓ finalizar</button>
+                    <button className={`gas-scale-hover ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={() => setIsPaused(!isPaused)} title={isPaused ? "retomar" : "pausar"} style={{ display: "flex", alignItems: "center", gap: "5px", borderRadius: "10px", border: "none", background: "rgba(255,255,255,0.1)", color: chipTextColor, fontSize: "13px", fontWeight: 700, cursor: "pointer", padding: "8px 14px", fontFamily: '"Google Sans Flex", sans-serif' }}>
+                        {isPaused ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>retomar</> : <><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>pausar</>}
                     </button>
-                    <button className="gas-scale-hover" onClick={onReiniciar} title="encerrar" style={{ width: "44px", height: "44px", borderRadius: "50%", border: "none", background: "rgba(239,68,68,0.14)", color: "#ef4444", fontSize: "16px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>✕</button>
+                    <button className="gas-scale-hover" onClick={() => { if (window.confirm("reiniciar cronômetro? todo o progresso será perdido")) { alarmeTocouRef.current = false; onReiniciar() } }} title="encerrar" style={{ display: "flex", alignItems: "center", gap: "5px", borderRadius: "10px", border: "none", background: secaoExtrapolada ? "rgba(255,255,255,0.2)" : "rgba(239,68,68,0.14)", color: secaoExtrapolada ? "#ffffff" : "#ef4444", fontSize: "13px", fontWeight: 700, cursor: "pointer", padding: "8px 14px", fontFamily: '"Google Sans Flex", sans-serif' }}>✕ reiniciar</button>
                 </div>
             )}
 
@@ -450,7 +513,7 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
                         ))}
                     </div>
                     <div style={{ padding: "10px 16px", borderTop: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
-                        <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: "var(--meta-text)" }}>
+                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "11px", color: secaoExtrapolada ? "rgba(255,255,255,0.7)" : "var(--meta-text)" }}>
                             usou <b style={{ color: corUsado(segundosDecorridos, totalSegundosLimite), fontWeight: 700 }}>{formatarTempo(segundosDecorridos)}</b> / {formatarTempo(totalSegundosLimite)}
                         </div>
                     </div>
@@ -469,6 +532,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const [sessaoAtivaId, setSessaoAtivaId] = React.useState<number | null>(null)
     const [renomeandoId, setRenomeandoId] = React.useState<number | null>(null)
     const [renomeandoTexto, setRenomeandoTexto] = React.useState<string>("")
+    const [sessaoExtrapolada, setSessaoExtrapolada] = React.useState<boolean>(false)
     const proximoIdRef = React.useRef<number>(1)
 
     /* ── Setup editor state ── */
@@ -483,6 +547,14 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const relogioRef = React.useRef<SVGSVGElement>(null)
     const relogioAvancadoRef = React.useRef<SVGSVGElement>(null)
     const grausRef = React.useRef<Graus>(GRAUS_DEFAULT)
+
+    /* ── Responsive sizing ── */
+    const [isMobile, setIsMobile] = React.useState<boolean>(() => typeof window !== "undefined" && window.innerWidth <= 500)
+    React.useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth <= 500)
+        window.addEventListener("resize", check)
+        return () => window.removeEventListener("resize", check)
+    }, [])
 
     /* ── Preceptoria state ── */
     const [mostrarTemplate, setMostrarTemplate] = React.useState<boolean>(false)
@@ -560,10 +632,10 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     }
 
     /* Timer colors */
-    let corDinamicaPopup = "#3b82f6", bgDinamicoPopup = "rgba(59,130,246,0.12)", borderDinamicaPopup = "rgba(59,130,246,0.25)"
-    if (tempoLimite > 15 && tempoLimite <= 30) { corDinamicaPopup = "#22c55e"; bgDinamicoPopup = "rgba(34,197,94,0.12)"; borderDinamicaPopup = "rgba(34,197,94,0.25)" }
-    else if (tempoLimite > 30 && tempoLimite <= 45) { corDinamicaPopup = "#eab308"; bgDinamicoPopup = "rgba(234,179,8,0.12)"; borderDinamicaPopup = "rgba(234,179,8,0.25)" }
-    else if (tempoLimite > 45) { corDinamicaPopup = "#ef4444"; bgDinamicoPopup = "rgba(239,68,68,0.12)"; borderDinamicaPopup = "rgba(239,68,68,0.25)" }
+    let corDinamicaPopup = "#3b82f6"
+    if (tempoLimite > 15 && tempoLimite <= 30) { corDinamicaPopup = "#22c55e" }
+    else if (tempoLimite > 30 && tempoLimite <= 45) { corDinamicaPopup = "#eab308" }
+    else if (tempoLimite > 45) { corDinamicaPopup = "#ef4444" }
 
     const fatiasAvancado = [
         { key: "S", meta: SECTION_META[0], inicio: 0, fim: graus.S },
@@ -602,9 +674,13 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const abrirSetup = () => {
         setMostrarSetupRelogio(true)
         setRelogioExiting(false)
+        setSessaoExtrapolada(false)
     }
 
     const iniciarSessao = () => {
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission()
+        }
         const nova: SessaoTimer = {
             id: proximoIdRef.current,
             nome: `atendimento ${proximoIdRef.current}`,
@@ -686,7 +762,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     })) // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
-        <div className="preceptoria-root framer-editor-container" style={{ width: "100%", height: "100%", borderRadius: "10px", boxSizing: "border-box", overflow: "hidden", position: "relative", overflowX: "hidden" }}>
+        <div className="preceptoria-root framer-editor-container" style={{ width: "100%", height: "100%", borderRadius: "10px", boxSizing: "border-box", overflow: "hidden", position: "relative", overflowX: "hidden", background: sessaoExtrapolada ? "#dc2626" : undefined, transition: "background 0.4s" }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
                 .preceptoria-root {
@@ -718,6 +794,10 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
                 input[type="number"] { -moz-appearance: textfield; }
                 .gas-btn-pause-bars { font-weight: 700 !important; font-size: 8px !important; letter-spacing: 0.5px !important; transform: scaleY(0.95); }
+                .soap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; justify-items: center; }
+                .soap-grid-cell { width: 100%; display: flex; align-items: center; justify-content: center; }
+                @media (min-width: 600px) { .soap-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; } }
+                @media (max-width: 360px) { .soap-grid-cell svg { width: 100px !important; height: 100px !important; } .soap-grid-cell > div { width: 100px !important; height: 100px !important; } .soap-grid-cell > div svg { width: 100px !important; height: 100px !important; } .soap-grid-cell > div > div { width: 94px !important; height: 94px !important; font-size: 28px !important; } }
             `}</style>
 
             {/* ── MAIN ── */}
@@ -750,87 +830,93 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                 )}
 
                 {/* ── CENTERED CONTENT ── */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", minHeight: 0, boxSizing: "border-box" }}>
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 8px", minHeight: 0, boxSizing: "border-box" }}>
 
                     {/* ── TIMER SETUP (always shown when no sessions exist) ── */}
                     {(mostrarSetupRelogio || sessoes.length === 0) && (
                         <>
-                            <div className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`} onAnimationEnd={() => { if (relogioExiting) { setMostrarSetupRelogio(false); setRelogioExiting(false) } }} style={{ position: "relative", background: bgDinamicoPopup, backdropFilter: "blur(12px)", border: `1px solid ${borderDinamicaPopup}`, borderRadius: "12px", padding: "14px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", width: mostrarAvancado ? "210px" : "160px", transition: "width 0.2s ease" }}>
-                                <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", marginBottom: "10px" }}>
-                                    <span style={{ fontSize: "9px", fontWeight: 700, color: corDinamicaPopup, letterSpacing: "0.8px" }}>TEMPO</span>
-                                </div>
-                                <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} style={{ width: "84px", height: "84px", cursor: "ew-resize", overflow: "visible" }}>
-                                    <circle cx="42" cy="42" r="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                                    {fatiasTempoGradiente(tempoLimite * 6).map((f, i) => (
-                                        <path key={i} d={f.d} fill={corDinamicaPopup} fillOpacity={f.op} />
-                                    ))}
-                                    {MARCAS_RELOGIO.map(m => (
-                                        <line key={`${m.x1}-${m.y1}`} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke={m.principal ? "var(--editor-text)" : "var(--meta-text)"} strokeWidth={m.principal ? 2 : 1.5} strokeLinecap="round" />
-                                    ))}
-                                    <circle cx="42" cy="42" r="38" fill="none" stroke="var(--meta-text)" strokeWidth="1.5" strokeDasharray={`${2 * Math.PI * 38}`} strokeDashoffset={`${2 * Math.PI * 38 * (1 - tempoLimite / 60)}`} style={{ opacity: 0.15 }} />
-                                    <g transform={`rotate(${tempoLimite * 6}, 42, 42)`}>
-                                        <line x1="42" y1="42" x2="42" y2="8" stroke="var(--editor-text)" strokeWidth="2" strokeLinecap="round" />
-                                        <circle cx="42" cy="8" r="3" fill="var(--editor-text)" />
-                                    </g>
-                                    <circle cx="42" cy="42" r="3" fill="var(--meta-text)" />
-                                </svg>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px", marginBottom: "10px" }}>
-                                    <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.max(1, p - 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>-15</button>
-                                    <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--editor-text)", display: "flex", alignItems: "baseline", gap: "2px" }}>
-                                        {tempoLimite}<span style={{ fontSize: "10px", fontWeight: 500, color: "var(--meta-text)" }}>minutos</span>
-                                    </div>
-                                    <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.min(60, p + 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>+15</button>
-                                </div>
-                                <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", marginTop: "8px" }}>
-                                    <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.5px" }}>burocracia</span>
-                                    <button className="gas-scale-hover" onClick={() => setMostrarBurocracia(!mostrarBurocracia)} style={{ width: "36px", height: "20px", borderRadius: "10px", background: mostrarBurocracia ? corDinamicaPopup : "rgba(120,113,108,0.2)", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s, transform 0.2s ease-in-out" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#ffffff", position: "absolute", top: "2px", left: mostrarBurocracia ? "18px" : "2px", transition: "left 0.2s" }} />
-                                    </button>
-                                </div>
-                                {mostrarBurocracia && (
-                                    <div style={{ width: "100%", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
-                                        <input type="number" value={tempoBurocracia} onChange={e => setTempoBurocracia(Math.max(1, Math.min(60, Number(e.target.value) || 1)))} onWheel={e => e.currentTarget.blur()} style={{ width: "50px", padding: "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", textAlign: "center" }} />
-                                        <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--meta-text)" }}>min</span>
-                                        <div style={{ fontSize: "9px", fontWeight: 600, color: corDinamicaPopup, marginLeft: "auto" }}>total: {tempoLimite + tempoBurocracia} min</div>
-                                    </div>
-                                )}
-                                <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", marginTop: "8px" }}>
-                                    <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.5px" }}>avançado</span>
-                                    <button className="gas-scale-hover" onClick={() => setMostrarAvancado(!mostrarAvancado)} title="editar divisão da circunferência" style={{ width: "36px", height: "20px", borderRadius: "10px", background: mostrarAvancado ? corDinamicaPopup : "rgba(120,113,108,0.2)", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s, transform 0.2s ease-in-out" }}>
-                                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: "#ffffff", position: "absolute", top: "2px", left: mostrarAvancado ? "18px" : "2px", transition: "left 0.2s" }} />
-                                    </button>
-                                </div>
-                                {mostrarAvancado && (
-                                    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", marginBottom: "8px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                                        <svg ref={relogioAvancadoRef} width="132" height="132" viewBox="0 0 128 128" style={{ overflow: "visible", cursor: "ew-resize" }}>
-                                            {ticksAvancado.map(t => <line key={`tick-${t.x1}-${t.y1}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="rgba(255,255,255,0.16)" strokeWidth="1" />)}
-                                            {fatiasRender.map(s => (
-                                                <g key={s.key}>
-                                                    <path d={s.d} fill={s.color} fillOpacity="0.22" stroke={s.border} strokeWidth="1" />
-                                                    <text x={s.textoX} y={s.textoY} fill={s.color} fontSize="10" fontWeight="700" textAnchor="middle" style={{ fontFamily: '"Google Sans Flex", sans-serif', pointerEvents: "none" }}>{s.rotulo}</text>
-                                                </g>
+                            {(() => {
+                                const m = isMobile
+                                const clockPx = m ? Math.min(Math.round(window.innerWidth * 0.52), 140) : 84
+                                return (
+                                    <div className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`} onAnimationEnd={() => { if (relogioExiting) { setMostrarSetupRelogio(false); setRelogioExiting(false) } }} style={{ position: "relative", backdropFilter: "blur(12px)", borderRadius: "12px", padding: m ? "22px 20px" : "14px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", alignItems: "center", gap: m ? "14px" : "6px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)", width: "fit-content", maxWidth: m ? "min(280px, calc(100vw - 32px))" : (mostrarAvancado ? 210 : 160), minWidth: m ? "min(280px, calc(100vw - 32px))" : undefined, margin: "0 auto" }}>
+                                        <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center" }}>
+                                            <span style={{ fontSize: m ? "13px" : "9px", fontWeight: 700, color: corDinamicaPopup, letterSpacing: m ? "1.2px" : "0.8px" }}>TEMPO</span>
+                                        </div>
+                                        <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} viewBox="0 0 84 84" style={{ width: `${clockPx}px`, height: `${clockPx}px`, cursor: "ew-resize", overflow: "visible" }}>
+                                            <circle cx="42" cy="42" r="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
+                                            {fatiasTempoGradiente(tempoLimite * 6).map((f, i) => (
+                                                <path key={i} d={f.d} fill={corDinamicaPopup} fillOpacity={f.op} />
                                             ))}
-                                            {handlesRender.map(h => (
-                                                <circle key={`handle-${h.key}`} cx={h.cx} cy={h.cy} r="6" fill={h.fill} stroke="#000000" strokeWidth="1.5" onMouseDown={e => iniciarArrastoFronteira(h.key, e)} style={{ cursor: "ew-resize" }} />
+                                            {MARCAS_RELOGIO.map(m2 => (
+                                                <line key={`${m2.x1}-${m2.y1}`} x1={m2.x1} y1={m2.y1} x2={m2.x2} y2={m2.y2} stroke={m2.principal ? "var(--editor-text)" : "var(--meta-text)"} strokeWidth={m2.principal ? 2 : 1.5} strokeLinecap="round" />
                                             ))}
+                                            <circle cx="42" cy="42" r="38" fill="none" stroke="var(--meta-text)" strokeWidth="1.5" strokeDasharray={`${2 * Math.PI * 38}`} strokeDashoffset={`${2 * Math.PI * 38 * (1 - tempoLimite / 60)}`} style={{ opacity: 0.15 }} />
+                                            <g transform={`rotate(${tempoLimite * 6}, 42, 42)`}>
+                                                <line x1="42" y1="42" x2="42" y2="8" stroke="var(--editor-text)" strokeWidth="2" strokeLinecap="round" />
+                                                <circle cx="42" cy="8" r="3" fill="var(--editor-text)" />
+                                            </g>
+                                            <circle cx="42" cy="42" r="3" fill="var(--meta-text)" />
                                         </svg>
-                                        <div style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.3px", textAlign: "center" }}>{resumoAvancado}</div>
+                                        <div style={{ display: "flex", alignItems: "center", gap: m ? "14px" : "8px" }}>
+                                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.max(1, p - 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: m ? "8px" : "5px", padding: m ? "8px 14px" : "3px 7px", fontSize: m ? "14px" : "10px", fontWeight: 700, cursor: "pointer" }}>-15</button>
+                                            <div style={{ fontSize: m ? "26px" : "14px", fontWeight: 700, color: "var(--editor-text)", display: "flex", alignItems: "baseline", gap: "2px" }}>
+                                                {tempoLimite}<span style={{ fontSize: m ? "14px" : "10px", fontWeight: 500, color: "var(--meta-text)" }}>minutos</span>
+                                            </div>
+                                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.min(60, p + 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: m ? "8px" : "5px", padding: m ? "8px 14px" : "3px 7px", fontSize: m ? "14px" : "10px", fontWeight: 700, cursor: "pointer" }}>+15</button>
+                                        </div>
+                                        <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                            <span style={{ fontSize: m ? "13px" : "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.5px" }}>burocracia</span>
+                                            <button className="gas-scale-hover" onClick={() => setMostrarBurocracia(!mostrarBurocracia)} style={{ width: m ? "48px" : "36px", height: m ? "28px" : "20px", borderRadius: "10px", background: mostrarBurocracia ? corDinamicaPopup : "rgba(120,113,108,0.2)", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s, transform 0.2s ease-in-out" }}>
+                                                <div style={{ width: m ? "24px" : "16px", height: m ? "24px" : "16px", borderRadius: "50%", background: "#ffffff", position: "absolute", top: "2px", left: mostrarBurocracia ? (m ? "22px" : "18px") : "2px", transition: "left 0.2s" }} />
+                                            </button>
+                                        </div>
+                                        {mostrarBurocracia && (
+                                            <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "4px" }}>
+                                                <input type="number" value={tempoBurocracia} onChange={e => setTempoBurocracia(Math.max(1, Math.min(60, Number(e.target.value) || 1)))} onWheel={e => e.currentTarget.blur()} style={{ width: m ? "64px" : "50px", padding: m ? "10px" : "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: m ? "15px" : "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", textAlign: "center" }} />
+                                                <span style={{ fontSize: m ? "15px" : "11px", fontWeight: 500, color: "var(--meta-text)" }}>min</span>
+                                                <div style={{ fontSize: m ? "13px" : "9px", fontWeight: 600, color: corDinamicaPopup, marginLeft: "auto" }}>total: {tempoLimite + tempoBurocracia} min</div>
+                                            </div>
+                                        )}
+                                        <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                                            <span style={{ fontSize: m ? "13px" : "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.5px" }}>avançado</span>
+                                            <button className="gas-scale-hover" onClick={() => setMostrarAvancado(!mostrarAvancado)} title="editar divisão da circunferência" style={{ width: m ? "48px" : "36px", height: m ? "28px" : "20px", borderRadius: "10px", background: mostrarAvancado ? corDinamicaPopup : "rgba(120,113,108,0.2)", border: "none", cursor: "pointer", position: "relative", transition: "background 0.2s, transform 0.2s ease-in-out" }}>
+                                                <div style={{ width: m ? "24px" : "16px", height: m ? "24px" : "16px", borderRadius: "50%", background: "#ffffff", position: "absolute", top: "2px", left: mostrarAvancado ? (m ? "22px" : "18px") : "2px", transition: "left 0.2s" }} />
+                                            </button>
+                                        </div>
+                                        {mostrarAvancado && (
+                                            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                                                <svg ref={relogioAvancadoRef} width="132" height="132" viewBox="0 0 128 128" style={{ overflow: "visible", cursor: "ew-resize" }}>
+                                                    {ticksAvancado.map(t => <line key={`tick-${t.x1}-${t.y1}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="rgba(255,255,255,0.16)" strokeWidth="1" />)}
+                                                    {fatiasRender.map(s => (
+                                                        <g key={s.key}>
+                                                            <path d={s.d} fill={s.color} fillOpacity="0.22" stroke={s.border} strokeWidth="1" />
+                                                            <text x={s.textoX} y={s.textoY} fill={s.color} fontSize="10" fontWeight="700" textAnchor="middle" style={{ fontFamily: '"Google Sans Flex", sans-serif', pointerEvents: "none" }}>{s.rotulo}</text>
+                                                        </g>
+                                                    ))}
+                                                    {handlesRender.map(h => (
+                                                        <circle key={`handle-${h.key}`} cx={h.cx} cy={h.cy} r="6" fill={h.fill} stroke="#000000" strokeWidth="1.5" onMouseDown={e => iniciarArrastoFronteira(h.key, e)} style={{ cursor: "ew-resize" }} />
+                                                    ))}
+                                                </svg>
+                                                <div style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.3px", textAlign: "center" }}>{resumoAvancado}</div>
+                                            </div>
+                                        )}
+                                        <select value={tipoSelecionado} onChange={e => setTipoSelecionado(e.target.value)} style={{ width: "100%", padding: m ? "12px 14px" : "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: m ? "15px" : "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", cursor: "pointer" }}>
+                                            {TIPOS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                                        </select>
+                                        <button className="gas-scale-hover" onClick={iniciarSessao} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: m ? "14px 0" : "6px 0", fontSize: m ? "15px" : "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
+                                            <span>▶</span> iniciar
+                                        </button>
                                     </div>
-                                )}
-                                <select value={tipoSelecionado} onChange={e => setTipoSelecionado(e.target.value)} style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", marginBottom: "10px", marginTop: "4px", cursor: "pointer" }}>
-                                    {TIPOS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                                </select>
-                                <button className="gas-scale-hover" onClick={iniciarSessao} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: "6px 0", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
-                                    <span>▶</span> iniciar
-                                </button>
-                            </div>
+                                )
+                            })()}
                         </>
                     )}
 
                     {/* ── DASHBOARDS ── */}
                     {!mostrarSetupRelogio && sessoes.map(s => (
                         <div key={s.id} style={{ display: sessaoAtivaId === s.id ? "flex" : "none", flexDirection: "column", alignItems: "center", width: "100%" }}>
-                            <CronometroDashboard tempoLimite={s.tempoLimite} graus={s.graus} mostrarBurocracia={s.mostrarBurocracia} tempoBurocracia={s.tempoBurocracia} tipoSelecionado={s.tipoSelecionado} onAbrirTemplate={abrirTemplate} onSecaoChange={secao => atualizarSecaoSessao(s.id, secao)} onReiniciar={() => { encerrarSessao(s.id); abrirSetup() }} />
+                            <CronometroDashboard tempoLimite={s.tempoLimite} graus={s.graus} mostrarBurocracia={s.mostrarBurocracia} tempoBurocracia={s.tempoBurocracia} tipoSelecionado={s.tipoSelecionado} onAbrirTemplate={abrirTemplate} onSecaoChange={secao => atualizarSecaoSessao(s.id, secao)} onReiniciar={() => { encerrarSessao(s.id); abrirSetup() }} onExtrapolacaoChange={setSessaoExtrapolada} />
                         </div>
                     ))}
                 </div>
@@ -846,7 +932,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                 <span style={{ width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: templateMeta.bg, border: `1px solid ${templateMeta.border}`, color: templateMeta.color, fontSize: "13px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>{templateMeta.letter}</span>
                                 <div style={{ flex: 1, minWidth: 0 }}>
                                     <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "13px", fontWeight: 600, color: "#f5f5f4" }}>{templateTitulo}</div>
-                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>modelo de preceptoria</div>
+                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>modelo</div>
                                 </div>
                                 <button className="gas-scale-hover" onClick={() => setMostrarTemplate(false)} style={{ width: "28px", height: "28px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.06)", color: "#a3a3a3", cursor: "pointer", fontSize: "13px", fontWeight: 700, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>✕</button>
                             </div>
