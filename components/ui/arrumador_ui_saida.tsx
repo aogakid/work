@@ -11,7 +11,7 @@ Transformar o texto em estrutura SOAP preservando o máximo possível do conteú
 
 Regras obrigatórias:
 - Manter espaços de indentação das listas
-- Não resumir ou omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final
+- Não resumir ou omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final do subjetivo
 - Não sintetizar sintomas, inferir diagnósticos ou definir condutas
 - Não inventar conteúdo
 - A Id (identificação) deve conter todas as informações da ID original
@@ -23,10 +23,10 @@ Regras obrigatórias:
 
 CAPITALIZAÇÃO
 - Deve seguir a norma culta do português obrigatoriamente: capitalizar a primeira letra de frases, listas e nomes próprios
-- Siglas clássicas e clínicas devem permanecer manter seu padrão: PA, FC, FR, SatO2, IMC, AC, AR, SSVV, HDA, QP, AP, AF, HV, CID, MMII, MMSS, DM, HAS, IRC, DPOC, TCE, AVC, RCR, BNF, TC, RNM etc[...]
+- Siglas clínicas clássicas e abreviações devem manter o padrão usado no texto original
 
 Exames laboratoriais quando presentes devem seguir o formato:
-(DD/MM/AAAA): Hb 99 | Ht 99 | etc.
+(DD/MM/AAAA): Hb 99 // Ht 99 // etc.
 
 Modelo de output:
 
@@ -36,8 +36,6 @@ Modelo de output:
 - Id: 
 - QP: 
 - HDA
-  - 
-- Queixas adicionais
   - 
 - Antecedentes pessoais
   - Condições
@@ -61,8 +59,6 @@ Modelo de output:
   - Sono: 
   - Humor: 
   - Lazer: 
-- Pendências anteriores
-  - 
 
 ## Objetivo
 - Exame físico
@@ -81,14 +77,14 @@ Modelo de output:
   - Imagem
     - 
   - Escores
-    - `
+    - 
+- Pendências anteriores
+  - `
 
 const TEMPLATE_APPENDIX = `
 
 ## Avaliação
 - QP
-  - 
-- Queixas adicionais
   - 
 - Condições crônicas
   - 
@@ -97,8 +93,6 @@ const TEMPLATE_APPENDIX = `
 
 ## Plano
 - QP
-  - 
-- Queixas adicionais
   - 
 - Condições crônicas
   - 
