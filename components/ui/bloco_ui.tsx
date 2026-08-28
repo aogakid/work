@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
 import { COMPANIONS, type CompanionRef } from "../companions/registry"
 import GeriatriaUI from "./geriatria_ui"
+import PsiquiatriaUI from "./psiquiatria_ui"
 import CalculadoraPREVENT from "./escores_ui"
 import ExamesUI from "./exames_ui"
 import RastreiosPreventivos from "./rastreios_ui"
@@ -311,6 +312,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         exames: ExamesUI,
         rastreios: RastreiosPreventivos,
         geriatria: GeriatriaUI,
+        psiquiatria: PsiquiatriaUI,
         puericultura: PuericulturaUI,
         prenatal: CalculadoraGestacional,
     }

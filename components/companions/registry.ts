@@ -29,6 +29,7 @@ import CalculadoraGestacional from "../ui/prenatal_ui"
 import ExamesUI from "../ui/exames_ui"
 import RastreiosPreventivos from "../ui/rastreios_ui"
 import GeriatriaUI from "../ui/geriatria_ui"
+import PsiquiatriaUI from "../ui/psiquiatria_ui"
 
 export const COMPANIONS: CompanionConfig[] = [
     {
@@ -70,6 +71,14 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "gds15", label: "GDS-15", targetSection: "objetivo" },
             { id: "cfs", label: "CFS", targetSection: "objetivo" },
             { id: "cdr", label: "CDR", targetSection: "objetivo" },
+        ],
+    },
+    {
+        id: "psiquiatria",
+        label: "Psiquiatria",
+        component: PsiquiatriaUI,
+        outputGroups: [
+            { id: "tudo", label: "exame do estado mental", targetSection: "objetivo" },
         ],
     },
     {

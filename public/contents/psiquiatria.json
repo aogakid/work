@@ -1,0 +1,1745 @@
+{
+  "titulo": "exame do estado mental",
+  "notas_de_uso": {
+    "estrutura": "Cada função psíquica contém uma ou mais 'axes' (eixos independentes de alteração). Cada eixo tem um 'selectionType' (single = escolha única, incluindo o estado normal; multi = zero ou mais achados podem coexistir) e uma lista de 'options'. Algumas options são hierárquicas e contêm 'subtypes' — selecionar um subtype substitui a frase do pai; selecionar apenas o pai (sem subtype) usa a frase genérica do pai.",
+    "montagem_do_paragrafo": "Para cada função, na ordem do array 'funcoes', concatenar as frases dos eixos selecionados (ou o 'default' de cada eixo não tocado) em uma sentença. Modo 'conciso' pode agrupar funções cujo estado é 100% default em um bloco único de normalidade no início do parágrafo, detalhando apenas as funções com achados selecionados.",
+    "campos": {
+      "id": "identificador único, usado internamente pelo seletor",
+      "label": "rótulo exibido na interface",
+      "phrase": "fragmento de frase (sem sujeito) usado na montagem do parágrafo de saída",
+      "definition": "definição resumida, para uso como tooltip/referência — não entra no parágrafo final"
+    }
+  },
+  "funcoes": [
+    {
+      "id": "aparencia",
+      "label": "Aparência",
+      "axes": [
+        {
+          "id": "aparencia",
+          "label": "Aparência",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "aparência cuidada, adequada à idade e ao contexto"
+          },
+          "options": [
+            {
+              "id": "descuidada",
+              "label": "Descuidada",
+              "phrase": "aparência descuidada, com desleixo na higiene corporal e nas roupas",
+              "definition": "Desleixo em relação à higiene corporal, ou à limpeza e alinho das roupas."
+            },
+            {
+              "id": "bizarra",
+              "label": "Bizarra",
+              "phrase": "aparência bizarra, com extravagância ou excentricidade em relação aos padrões culturais",
+              "definition": "Extravagância ou excentricidade; exagero ou desarmonia quanto aos padrões culturais."
+            },
+            {
+              "id": "exibicionista",
+              "label": "Exibicionista",
+              "phrase": "aparência exibicionista, com exposição excessiva do corpo",
+              "definition": "Exposição excessiva do corpo, como no uso de roupas muito decotadas ou curtas."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atitude",
+      "label": "Atitude",
+      "axes": [
+        {
+          "id": "atitude",
+          "label": "Atitude",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "atitude cooperativa e colaborativa com o exame"
+          },
+          "options": [
+            {
+              "id": "nao_cooperante",
+              "label": "Não cooperante",
+              "phrase": "atitude não cooperante, sem colaboração com o exame",
+              "definition": "Ausência de colaboração com o exame."
+            },
+            {
+              "id": "oposicao",
+              "label": "De oposição (negativista)",
+              "phrase": "atitude de oposição, com recusa explícita a participar da entrevista",
+              "definition": "Recusa explícita a participar da entrevista ou a responder às perguntas."
+            },
+            {
+              "id": "hostil",
+              "label": "Hostil",
+              "phrase": "atitude hostil, com ofensas e/ou ameaças ao examinador",
+              "definition": "Ofensas, ameaças ou agressões."
+            },
+            {
+              "id": "fuga",
+              "label": "De fuga",
+              "phrase": "atitude de fuga, deixando às pressas o local da entrevista",
+              "definition": "Com medo, o paciente sai às pressas do local da entrevista."
+            },
+            {
+              "id": "suspicaz",
+              "label": "Suspicaz",
+              "phrase": "atitude suspicaz, com desconfiança em relação ao examinador",
+              "definition": "Desconfiança em relação ao examinador."
+            },
+            {
+              "id": "querelante",
+              "label": "Querelante",
+              "phrase": "atitude querelante, sentindo-se prejudicado e discutindo com o examinador",
+              "definition": "O paciente se sente prejudicado ou ofendido e discute ou briga com o examinador."
+            },
+            {
+              "id": "reivindicativa",
+              "label": "Reivindicativa",
+              "phrase": "atitude reivindicativa, com solicitações apresentadas insistentemente",
+              "definition": "Solicitações ou exigências apresentadas insistentemente."
+            },
+            {
+              "id": "arrogante",
+              "label": "Arrogante",
+              "phrase": "atitude arrogante, tratando o examinador como inferior",
+              "definition": "O paciente trata os demais como se fossem inferiores a ele."
+            },
+            {
+              "id": "evasiva",
+              "label": "Evasiva",
+              "phrase": "atitude evasiva, evitando responder a determinadas perguntas",
+              "definition": "O paciente evita responder determinadas perguntas, sem recusa explícita."
+            },
+            {
+              "id": "invasiva",
+              "label": "Invasiva",
+              "phrase": "atitude invasiva, abordando aspectos íntimos do examinador",
+              "definition": "O paciente insiste em abordar aspectos íntimos do examinador ou mexe em seus objetos pessoais."
+            },
+            {
+              "id": "esquiva",
+              "label": "De esquiva",
+              "phrase": "atitude de esquiva, evitando o contato social",
+              "definition": "Evita o contato social."
+            },
+            {
+              "id": "inibida",
+              "label": "Inibida",
+              "phrase": "atitude inibida, com desconforto diante do examinador",
+              "definition": "Em função de timidez, demonstra pouco conforto diante do examinador."
+            },
+            {
+              "id": "desinibida",
+              "label": "Desinibida",
+              "phrase": "atitude desinibida, com perda das inibições sociais e impulsividade",
+              "definition": "Perda das inibições sociais do comportamento, com impulsividade."
+            },
+            {
+              "id": "jocosa",
+              "label": "Jocosa",
+              "phrase": "atitude jocosa, com piadas e brincadeiras em excesso",
+              "definition": "Piadas e brincadeiras em excesso."
+            },
+            {
+              "id": "ironica",
+              "label": "Irônica",
+              "phrase": "atitude irônica, com sarcasmo e agressividade velada",
+              "definition": "Arrogância e agressividade expressas em piadas sarcásticas ou no tom de voz."
+            },
+            {
+              "id": "lamuriosa",
+              "label": "Lamuriosa",
+              "phrase": "atitude lamuriosa, com queixas recorrentes quanto ao próprio sofrimento",
+              "definition": "Recorrentes queixas quanto aos próprios problemas ou sofrimento."
+            },
+            {
+              "id": "dramatica",
+              "label": "Dramática",
+              "phrase": "atitude dramática, com expressão emocional intensa",
+              "definition": "Relatos acompanhados de expressão emocional intensa demais."
+            },
+            {
+              "id": "teatral",
+              "label": "Teatral",
+              "phrase": "atitude teatral, com exagero e desejo de chamar a atenção",
+              "definition": "Comportamentos ou relatos que expressam fingimento, exagero ou desejo de chamar atenção."
+            },
+            {
+              "id": "sedutora",
+              "label": "Sedutora",
+              "phrase": "atitude sedutora, com elogios excessivos ou provocação sexual ao examinador",
+              "definition": "O paciente faz muitos elogios ao examinador ou o provoca sexualmente."
+            },
+            {
+              "id": "pueril",
+              "label": "Pueril",
+              "phrase": "atitude pueril, com comportamento infantilizado",
+              "definition": "O comportamento lembra o de uma criança."
+            },
+            {
+              "id": "gliscroide",
+              "label": "Gliscroide",
+              "phrase": "atitude gliscroide, tentando prolongar indefinidamente o contato",
+              "definition": "O paciente é \"viscoso\", \"grudento\", e tenta prolongar indefinidamente o contato."
+            },
+            {
+              "id": "simuladora",
+              "label": "Simuladora",
+              "phrase": "atitude simuladora, relatando sintomas que de fato não possui",
+              "definition": "Relata ou exibe um sintoma ou doença que de fato não tem."
+            },
+            {
+              "id": "dissimuladora",
+              "label": "Dissimuladora",
+              "phrase": "atitude dissimuladora, ocultando sintomas presentes",
+              "definition": "Tenta ocultar ou disfarçar um sintoma ou doença presente."
+            },
+            {
+              "id": "indiferente",
+              "label": "Indiferente",
+              "phrase": "atitude indiferente, com distanciamento afetivo em relação ao examinador",
+              "definition": "Distanciamento afetivo em relação ao examinador ou à situação."
+            },
+            {
+              "id": "manipuladora",
+              "label": "Manipuladora",
+              "phrase": "atitude manipuladora, impondo sua vontade por ameaças ou chantagem emocional",
+              "definition": "Tenta impor sua vontade por meio de ameaças ou chantagem emocional."
+            },
+            {
+              "id": "submissa",
+              "label": "Submissa",
+              "phrase": "atitude submissa, aceitando passivamente as demandas do examinador",
+              "definition": "Aceita passivamente todas ou quase todas as demandas do examinador."
+            },
+            {
+              "id": "expansiva",
+              "label": "Expansiva",
+              "phrase": "atitude expansiva, com busca constante por contato social e intimidade excessiva",
+              "definition": "Constante busca por contato social, tratando os demais com excessiva intimidade."
+            },
+            {
+              "id": "amaneirada",
+              "label": "Amaneirada",
+              "phrase": "atitude amaneirada, com comportamento exagerado e caricatural",
+              "definition": "Comportamento exagerado, pouco natural, caricatural."
+            },
+            {
+              "id": "reacao_ultimo_momento",
+              "label": "Reação de último momento",
+              "phrase": "reação de último momento, respondendo apenas quando o examinador já desistia da entrevista",
+              "definition": "Após longo período sem cooperação, responde justamente quando o examinador desiste."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consciencia",
+      "label": "Consciência (vigilância)",
+      "axes": [
+        {
+          "id": "nivel",
+          "label": "Nível de consciência (quantitativa)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "vígil, sem rebaixamento do nível de consciência"
+          },
+          "options": [
+            {
+              "id": "rebaixamento",
+              "label": "Rebaixamento da consciência",
+              "phrase": "nível de consciência rebaixado",
+              "definition": "Nível de consciência verticalmente reduzido, entre a lucidez e o coma.",
+              "subtypes": [
+                {
+                  "id": "obnubilacao_simples",
+                  "label": "Obnubilação simples",
+                  "phrase": "obnubilação simples, com rebaixamento do nível de consciência sem sintomas psicóticos e inibição da psicomotricidade",
+                  "definition": "Rebaixamento sem delírios ou alucinações; em geral com inibição psicomotora."
+                },
+                {
+                  "id": "obnubilacao_oniroide",
+                  "label": "Obnubilação oniroide",
+                  "phrase": "obnubilação oniroide, com rebaixamento do nível de consciência associado a sintomas psicóticos e agitação psicomotora",
+                  "definition": "Rebaixamento acompanhado de sintomas psicóticos; em geral com agitação psicomotora."
+                }
+              ]
+            },
+            {
+              "id": "coma",
+              "label": "Coma",
+              "phrase": "em coma, com abolição da consciência e ausência de resposta a estímulos externos",
+              "definition": "Abolição da consciência; não há captação dos estímulos externos ou atividade motora voluntária."
+            }
+          ]
+        },
+        {
+          "id": "amplitude",
+          "label": "Amplitude do campo da consciência (qualitativa)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "sem estreitamento do campo da consciência"
+          },
+          "options": [
+            {
+              "id": "estreitamento",
+              "label": "Estreitamento da consciência",
+              "phrase": "estreitamento do campo da consciência, limitado a um número reduzido de elementos do ambiente",
+              "definition": "Diminuição, em dimensão horizontal, da amplitude do campo da consciência."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atencao",
+      "label": "Atenção",
+      "axes": [
+        {
+          "id": "quantitativa",
+          "label": "Quantitativa",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "atenção quantitativamente preservada"
+          },
+          "options": [
+            {
+              "id": "hipoprosexia",
+              "label": "Hipoprosexia",
+              "phrase": "hipoprosexia, com diminuição global da tenacidade e da mobilidade da atenção",
+              "definition": "Diminuição global da atenção, afetando concentração e capacidade de desviar a atenção."
+            },
+            {
+              "id": "aprosexia",
+              "label": "Aprosexia",
+              "phrase": "aprosexia, com abolição da atenção",
+              "definition": "Abolição da atenção; pode estar associada ao coma."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "sem rigidez ou labilidade da atenção"
+          },
+          "options": [
+            {
+              "id": "rigidez",
+              "label": "Rigidez da atenção",
+              "phrase": "rigidez da atenção, com tenacidade aumentada e mobilidade reduzida",
+              "definition": "Aumento da tenacidade com redução da mobilidade; associada a estreitamento da consciência."
+            },
+            {
+              "id": "labilidade",
+              "label": "Labilidade da atenção",
+              "phrase": "labilidade da atenção, com mobilidade aumentada e tenacidade reduzida",
+              "definition": "Aumento da mobilidade com redução da tenacidade."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sensopercepcao",
+      "label": "Sensopercepção",
+      "axes": [
+        {
+          "id": "quantitativa",
+          "label": "Quantitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sensopercepção sem alterações quantitativas"
+          },
+          "options": [
+            {
+              "id": "agnosia",
+              "label": "Agnosia",
+              "phrase": "agnosia, com perda da capacidade de reconhecer objetos na ausência de déficit sensorial",
+              "definition": "Estímulos sensoriais de um objeto não são integrados nem comparados a registros de memória."
+            },
+            {
+              "id": "hiperestesia",
+              "label": "Hiperestesia",
+              "phrase": "hiperestesia, com aumento global da intensidade na captação de estímulos",
+              "definition": "Cores mais brilhantes, cheiros mais intensos, comida mais saborosa, etc."
+            },
+            {
+              "id": "hipoestesia",
+              "label": "Hipoestesia",
+              "phrase": "hipoestesia, com diminuição global da intensidade na captação de estímulos",
+              "definition": "Percepção acinzentada, comida sem sabor, sons abafados, etc."
+            },
+            {
+              "id": "anestesia",
+              "label": "Anestesia (sensoperceptiva)",
+              "phrase": "anestesia sensoperceptiva, com abolição da captação de estímulos",
+              "definition": "Nenhum estímulo é captado."
+            },
+            {
+              "id": "alucinacao_negativa",
+              "label": "Alucinação negativa",
+              "phrase": "alucinação negativa, com ausência de percepção de um objeto presente no campo sensorial",
+              "definition": "O sujeito não percebe um objeto específico presente no ambiente."
+            },
+            {
+              "id": "macropsia",
+              "label": "Macropsia",
+              "phrase": "macropsia, vendo objetos presentes com tamanho maior que o real",
+              "definition": "Visão de um objeto presente com tamanho maior do que o verdadeiro."
+            },
+            {
+              "id": "micropsia",
+              "label": "Micropsia",
+              "phrase": "micropsia, vendo objetos presentes com tamanho menor que o real",
+              "definition": "Visão de um objeto presente com tamanho menor do que o verdadeiro."
+            },
+            {
+              "id": "dismegalopsia",
+              "label": "Dismegalopsia",
+              "phrase": "dismegalopsia, com distorção do formato de objetos realmente presentes",
+              "definition": "Visão de um objeto presente com o formato distorcido."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem ilusões ou alucinações"
+          },
+          "options": [
+            {
+              "id": "ilusao",
+              "label": "Ilusão",
+              "phrase": "ilusões, com distorção da percepção de objetos realmente presentes",
+              "definition": "Distorção não intencional que faz outro objeto ausente ser percebido no lugar do real."
+            },
+            {
+              "id": "pareidolia",
+              "label": "Pareidolia",
+              "phrase": "pareidolias (fenômeno não patológico, sem convicção de realidade)",
+              "definition": "Imagem criada a partir de estímulos incompletos, nunca tida como real. Nunca é patológica."
+            },
+            {
+              "id": "alucinacao",
+              "label": "Alucinação",
+              "phrase": "alucinações",
+              "definition": "Percepção de um objeto que na verdade não está presente.",
+              "subtypes": [
+                {
+                  "id": "verdadeira",
+                  "label": "Alucinação verdadeira",
+                  "phrase": "alucinações verdadeiras, com corporeidade e localização no espaço objetivo externo",
+                  "definition": "Vivência com as mesmas características da imagem perceptiva normal, incluindo corporeidade."
+                },
+                {
+                  "id": "pseudoalucinacao",
+                  "label": "Pseudoalucinação",
+                  "phrase": "pseudoalucinações, sem corporeidade, localizadas no espaço subjetivo interno",
+                  "definition": "Vivência semelhante à imagem representativa, sem corporeidade e sem localização externa."
+                },
+                {
+                  "id": "alucinose",
+                  "label": "Alucinose",
+                  "phrase": "alucinose, com crítica preservada quanto à irrealidade do fenômeno",
+                  "definition": "Vivência alucinatória localizada externamente, mas prontamente reconhecida como irreal."
+                }
+              ]
+            },
+            {
+              "id": "sinestesia",
+              "label": "Sinestesia",
+              "phrase": "sinestesias, com percepção cruzada entre modalidades sensoriais",
+              "definition": "Um estímulo de uma modalidade sensorial é percebido como de outra."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memoria",
+      "label": "Memória",
+      "axes": [
+        {
+          "id": "fixacao",
+          "label": "Fixação (anterógrada)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "memória de fixação preservada"
+          },
+          "options": [
+            {
+              "id": "hipomnesia_anterograda",
+              "label": "Amnésia/hipomnésia anterógrada",
+              "phrase": "amnésia/hipomnésia anterógrada, com dificuldade em fixar novas memórias de longo prazo",
+              "definition": "Perda ou diminuição da capacidade de adquirir novas informações."
+            },
+            {
+              "id": "hipermnesia_anterograda",
+              "label": "Hipermnésia anterógrada",
+              "phrase": "hipermnésia anterógrada, com facilidade acima do normal para fixar novas memórias",
+              "definition": "Habilidade acima do normal de formar novas memórias de longo prazo."
+            }
+          ]
+        },
+        {
+          "id": "evocacao",
+          "label": "Evocação (retrógrada)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "memória de evocação preservada"
+          },
+          "options": [
+            {
+              "id": "hipomnesia_retrograda",
+              "label": "Amnésia/hipomnésia retrógrada",
+              "phrase": "amnésia/hipomnésia retrógrada, com dificuldade em evocar memórias previamente fixadas",
+              "definition": "Perda ou diminuição da capacidade de recuperar memórias de longo prazo já fixadas."
+            },
+            {
+              "id": "hipermnesia_retrograda",
+              "label": "Hipermnésia retrógrada",
+              "phrase": "hipermnésia retrógrada, com evocação exacerbada de recordações",
+              "definition": "Recuperação excessiva de recordações, ou lembrança específica mais vívida e detalhada que o habitual."
+            }
+          ]
+        },
+        {
+          "id": "mista",
+          "label": "Mista",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "sem comprometimento misto da memória"
+          },
+          "options": [
+            {
+              "id": "retroanterograda",
+              "label": "Amnésia/hipomnésia retroanterógrada",
+              "phrase": "amnésia/hipomnésia retroanterógrada, com prejuízo simultâneo da fixação e da evocação",
+              "definition": "Forma mista em que tanto a memória de fixação como a de evocação estão prejudicadas."
+            }
+          ]
+        },
+        {
+          "id": "extensao",
+          "label": "Extensão e conteúdo",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem alterações quanto à extensão do comprometimento mnêmico"
+          },
+          "options": [
+            {
+              "id": "generalizada",
+              "label": "Amnésia/hipomnésia generalizada",
+              "phrase": "amnésia/hipomnésia generalizada, com perda de grande extensão do passado",
+              "definition": "Perda ou diminuição da capacidade de recordar uma grande extensão do passado."
+            },
+            {
+              "id": "lacunar_hipo",
+              "label": "Amnésia/hipomnésia lacunar",
+              "phrase": "amnésia/hipomnésia lacunar, restrita a um período específico e bem delimitado",
+              "definition": "Perda ou diminuição da capacidade de recordar eventos de um período específico."
+            },
+            {
+              "id": "lacunar_hiper",
+              "label": "Hipermnésia lacunar",
+              "phrase": "hipermnésia lacunar, com recordação exacerbada de um período específico",
+              "definition": "Recordação exacerbada de eventos ocorridos em um período específico."
+            },
+            {
+              "id": "seletiva_hipo",
+              "label": "Amnésia/hipomnésia seletiva",
+              "phrase": "amnésia/hipomnésia seletiva, relacionada a conteúdo de significado afetivo específico",
+              "definition": "Perda ou diminuição da capacidade de recordar informações relacionadas por conteúdo/significado afetivo."
+            },
+            {
+              "id": "seletiva_hiper",
+              "label": "Hipermnésia seletiva",
+              "phrase": "hipermnésia seletiva, com recordação exacerbada de conteúdo de significado afetivo específico",
+              "definition": "Recordação exacerbada de informações relacionadas por conteúdo/significado afetivo."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem paramnésias"
+          },
+          "options": [
+            {
+              "id": "alomnesia",
+              "label": "Alomnésia",
+              "phrase": "alomnésia, com distorção involuntária da lembrança de um fato",
+              "definition": "Distorção ou deturpação involuntária da lembrança de um fato."
+            },
+            {
+              "id": "paramnesia",
+              "label": "Paramnésia",
+              "phrase": "paramnésia, com recordação de algo que não aconteceu",
+              "definition": "Recordação de algo que não aconteceu."
+            },
+            {
+              "id": "deja_vu",
+              "label": "Déjà vu",
+              "phrase": "déjà vu, com falso reconhecimento de familiaridade",
+              "definition": "Sentimento de familiaridade em relação a algo com que se tem contato pela primeira vez."
+            },
+            {
+              "id": "jamais_vu",
+              "label": "Jamais vu",
+              "phrase": "jamais vu, com falso desconhecimento de algo já vivenciado",
+              "definition": "Ausência de sentimento de familiaridade em relação a algo já vivenciado."
+            },
+            {
+              "id": "criptomnesia",
+              "label": "Criptomnésia",
+              "phrase": "criptomnésia, tomando uma recordação como ideia original",
+              "definition": "Súbita recordação não reconhecida como tal, parecendo uma ideia nova."
+            },
+            {
+              "id": "ecmnesia",
+              "label": "Ecmnésia",
+              "phrase": "ecmnésia, revivendo uma situação passada como se estivesse ocorrendo no presente",
+              "definition": "Recordação tão intensa que faz reviver o passado como presente."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "linguagem",
+      "label": "Linguagem",
+      "axes": [
+        {
+          "id": "quantitativa",
+          "label": "Quantitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "linguagem fluente, com volume, ritmo e velocidade de fala adequados"
+          },
+          "options": [
+            {
+              "id": "afasia",
+              "label": "Afasia",
+              "phrase": "afasia",
+              "definition": "Perda da capacidade linguística; distúrbio adquirido na expressão ou compreensão da linguagem.",
+              "subtypes": [
+                {
+                  "id": "motora",
+                  "label": "Motora (de Broca)",
+                  "phrase": "afasia motora (de Broca), com perda da capacidade de produzir os sons da fala",
+                  "definition": "Perda da capacidade de realizar os movimentos musculares da fala."
+                },
+                {
+                  "id": "sensorial",
+                  "label": "Sensorial (de Wernicke)",
+                  "phrase": "afasia sensorial (de Wernicke), com perda da capacidade de compreender a linguagem",
+                  "definition": "Perda da capacidade de compreender a linguagem e reconhecer palavras."
+                },
+                {
+                  "id": "conducao",
+                  "label": "De condução",
+                  "phrase": "afasia de condução, com perda da capacidade de repetição e nomeação",
+                  "definition": "Perda da capacidade de repetição das palavras e de nomeação de objetos."
+                },
+                {
+                  "id": "global",
+                  "label": "Global",
+                  "phrase": "afasia global, com perda de expressão, compreensão e repetição",
+                  "definition": "Perda da capacidade de expressão, compreensão e repetição das palavras."
+                },
+                {
+                  "id": "transcortical",
+                  "label": "Transcortical",
+                  "phrase": "afasia transcortical, com perda da expressão mas preservação da repetição",
+                  "definition": "Perda da capacidade de expressão linguística com preservação da repetição."
+                },
+                {
+                  "id": "anomica",
+                  "label": "Anômica",
+                  "phrase": "afasia anômica, com perda da capacidade de nomear objetos",
+                  "definition": "Perda da capacidade de nomeação dos objetos."
+                }
+              ]
+            },
+            {
+              "id": "agrafia",
+              "label": "Agrafia",
+              "phrase": "agrafia, com perda da capacidade de escrever",
+              "definition": "Perda da capacidade de escrever."
+            },
+            {
+              "id": "alexia",
+              "label": "Alexia",
+              "phrase": "alexia, com perda da capacidade de ler",
+              "definition": "Perda da capacidade de ler."
+            },
+            {
+              "id": "aprosodia",
+              "label": "Aprosódia/hipoprosódia",
+              "phrase": "aprosódia/hipoprosódia, com fala monótona e monocórdica",
+              "definition": "Perda ou diminuição da modulação afetiva/musicalidade da fala."
+            },
+            {
+              "id": "hiperprosodia",
+              "label": "Hiperprosódia",
+              "phrase": "hiperprosódia, com fala enfática e loquaz",
+              "definition": "Exacerbação da modulação afetiva da fala."
+            },
+            {
+              "id": "mutismo",
+              "label": "Mutismo",
+              "phrase": "mutismo, com ausência da fala",
+              "definition": "Ausência da fala."
+            },
+            {
+              "id": "logorreia",
+              "label": "Logorreia",
+              "phrase": "logorreia, falando em excesso",
+              "definition": "Falar muito."
+            },
+            {
+              "id": "oligolalia",
+              "label": "Oligolalia",
+              "phrase": "oligolalia, falando pouco",
+              "definition": "Falar pouco."
+            },
+            {
+              "id": "hiperfonia",
+              "label": "Hiperfonia",
+              "phrase": "hiperfonia, falando em volume alto",
+              "definition": "Falar em volume alto."
+            },
+            {
+              "id": "hipofonia",
+              "label": "Hipofonia",
+              "phrase": "hipofonia, falando em volume baixo",
+              "definition": "Falar em volume baixo."
+            },
+            {
+              "id": "taquilalia",
+              "label": "Taquilalia",
+              "phrase": "taquilalia, falando rápido",
+              "definition": "Falar rápido."
+            },
+            {
+              "id": "bradilalia",
+              "label": "Bradilalia",
+              "phrase": "bradilalia, falando devagar",
+              "definition": "Falar devagar."
+            },
+            {
+              "id": "latencia_aumentada",
+              "label": "Latência de resposta aumentada",
+              "phrase": "latência de resposta aumentada",
+              "definition": "Demora para responder às perguntas."
+            },
+            {
+              "id": "latencia_diminuida",
+              "label": "Latência de resposta diminuída",
+              "phrase": "latência de resposta diminuída",
+              "definition": "Intervalo bastante curto entre pergunta e resposta."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem alterações qualitativas da linguagem"
+          },
+          "options": [
+            {
+              "id": "ecolalia",
+              "label": "Ecolalia",
+              "phrase": "ecolalia, repetindo como um eco as últimas palavras ouvidas",
+              "definition": "Repetição imediata das últimas palavras proferidas por outra pessoa."
+            },
+            {
+              "id": "palilalia",
+              "label": "Palilalia",
+              "phrase": "palilalia, repetindo involuntariamente as próprias últimas palavras",
+              "definition": "Repetição involuntária da última palavra ou palavras proferidas pelo próprio paciente."
+            },
+            {
+              "id": "logoclonia",
+              "label": "Logoclonia",
+              "phrase": "logoclonia, repetindo involuntariamente as últimas sílabas",
+              "definition": "Repetição involuntária da última sílaba ou sílabas proferidas pelo próprio paciente."
+            },
+            {
+              "id": "estereotipia_verbal",
+              "label": "Estereotipia verbal (verbigeração)",
+              "phrase": "estereotipia verbal (verbigeração)",
+              "definition": "Repetição frequente de palavras/frases sem objetivo comunicativo."
+            },
+            {
+              "id": "mussitacao",
+              "label": "Mussitação",
+              "phrase": "mussitação, falando sozinho em sussurro",
+              "definition": "Falar sozinho, sussurrando, quase sem movimentar os lábios."
+            },
+            {
+              "id": "neologismo",
+              "label": "Neologismo",
+              "phrase": "neologismos, com criação de palavras novas ou de significado idiossincrático",
+              "definition": "Criação de palavras novas ou uso de palavras com novo significado conhecido só pelo paciente."
+            },
+            {
+              "id": "jargonofasia",
+              "label": "Jargonofasia (salada de palavras)",
+              "phrase": "jargonofasia, com discurso ininteligível formado por palavras reconhecíveis em ordem caótica",
+              "definition": "Desestruturação completa do discurso, ininteligível."
+            },
+            {
+              "id": "parafasia",
+              "label": "Parafasia",
+              "phrase": "parafasias",
+              "definition": "Deformação ou troca de palavras.",
+              "subtypes": [
+                {
+                  "id": "literal",
+                  "label": "Literal (fonêmica)",
+                  "phrase": "parafasia literal (fonêmica), com troca de letras/fonemas",
+                  "definition": "Palavra substituída por outra de som semelhante."
+                },
+                {
+                  "id": "verbal",
+                  "label": "Verbal (semântica)",
+                  "phrase": "parafasia verbal (semântica), com troca por palavras de significado semelhante",
+                  "definition": "Palavra substituída por outra de significado semelhante."
+                }
+              ]
+            },
+            {
+              "id": "soliloquio",
+              "label": "Solilóquio",
+              "phrase": "solilóquio, falando consigo mesmo",
+              "definition": "Falar consigo mesmo."
+            },
+            {
+              "id": "coprolalia",
+              "label": "Coprolalia",
+              "phrase": "coprolalia, usando palavras de baixo calão",
+              "definition": "Usar palavras de baixo calão."
+            },
+            {
+              "id": "glossolalia",
+              "label": "Glossolalia",
+              "phrase": "glossolalia, com discurso formado por palavras inexistentes",
+              "definition": "Discurso formado unicamente por palavras inexistentes, com prosódia normal."
+            },
+            {
+              "id": "maneirismo_linguagem",
+              "label": "Maneirismo de linguagem",
+              "phrase": "maneirismo de linguagem, com fala rebuscada e pouco natural",
+              "definition": "Fala rebuscada, pouco natural ou caricatural na escolha de palavras/prosódia."
+            },
+            {
+              "id": "pedolalia",
+              "label": "Pedolalia",
+              "phrase": "pedolalia, com fala infantilizada",
+              "definition": "Fala infantilizada na escolha de palavras ou prosódia."
+            },
+            {
+              "id": "pararresposta",
+              "label": "Pararresposta",
+              "phrase": "pararrespostas, completamente incoerentes em relação à pergunta",
+              "definition": "Resposta completamente incoerente em relação à pergunta."
+            },
+            {
+              "id": "resposta_aproximada",
+              "label": "Resposta aproximada",
+              "phrase": "respostas aproximadas, intencionalmente erradas porém coerentes com a pergunta",
+              "definition": "Resposta intencionalmente errada, mas coerente, sugerindo doença mental."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pensamento",
+      "label": "Pensamento",
+      "axes": [
+        {
+          "id": "curso",
+          "label": "Curso",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "curso do pensamento normal"
+          },
+          "options": [
+            {
+              "id": "aceleracao",
+              "label": "Aceleração",
+              "phrase": "curso do pensamento acelerado",
+              "definition": "Falar rápido."
+            },
+            {
+              "id": "alentecimento",
+              "label": "Alentecimento (inibição)",
+              "phrase": "curso do pensamento alentecido (inibido)",
+              "definition": "Falar devagar."
+            },
+            {
+              "id": "interrupcao",
+              "label": "Interrupção (bloqueio)",
+              "phrase": "interrupção (bloqueio) súbita e incompreensível do curso do pensamento",
+              "definition": "Parada súbita e incompreensível da fala."
+            }
+          ]
+        },
+        {
+          "id": "forma",
+          "label": "Forma",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "forma do pensamento lógica e coerente"
+          },
+          "options": [
+            {
+              "id": "fuga_ideias",
+              "label": "Fuga de ideias",
+              "phrase": "fuga de ideias, com variação rápida do tema mas nexo lógico preservado",
+              "definition": "Variação rápida e contínua do tema, com preservação do nexo lógico."
+            },
+            {
+              "id": "desagregacao",
+              "label": "Desagregação (dissociação)",
+              "phrase": "desagregação do pensamento, com discurso incoerente e perda do nexo lógico",
+              "definition": "Perda do sentido lógico na associação entre ideias."
+            },
+            {
+              "id": "prolixidade",
+              "label": "Prolixidade",
+              "phrase": "pensamento prolixo, com discurso repleto de detalhes irrelevantes",
+              "definition": "Discurso repleto de detalhes irrelevantes, sem distinguir o essencial."
+            },
+            {
+              "id": "minuciosidade",
+              "label": "Minuciosidade",
+              "phrase": "pensamento minucioso, extremamente detalhista",
+              "definition": "Discurso extremamente detalhista por preocupação em não omitir informações."
+            },
+            {
+              "id": "perseveracao",
+              "label": "Perseveração",
+              "phrase": "perseveração, com recorrência frequente a um mesmo tema",
+              "definition": "Frequente recorrência a um mesmo tema ou incapacidade de abandoná-lo; inclui ideias obsessivas."
+            }
+          ]
+        },
+        {
+          "id": "conteudo",
+          "label": "Conteúdo",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "conteúdo do pensamento sem delírios ou ideias prevalentes"
+          },
+          "options": [
+            {
+              "id": "concretismo",
+              "label": "Concretismo (pensamento empobrecido)",
+              "phrase": "concretismo, com vocabulário pobre e uso limitado de conceitos abstratos",
+              "definition": "Discurso com vocabulário pobre e uso limitado de abstrações, metáforas e analogias."
+            },
+            {
+              "id": "delirio",
+              "label": "Delírio",
+              "phrase": "ideias delirantes",
+              "definition": "Juízo patologicamente falso, não influenciável, de convicção extraordinária (Jaspers); tema mais comum é o persecutório.",
+              "subtypes": [
+                {
+                  "id": "primario",
+                  "label": "Primário (ideia delirante)",
+                  "phrase": "delírio primário (ideia delirante), não decorrente de outra alteração psicopatológica",
+                  "definition": "Delírio que não decorre de outra alteração psicopatológica."
+                },
+                {
+                  "id": "secundario",
+                  "label": "Secundário (ideia deliroide)",
+                  "phrase": "delírio secundário (ideia deliroide), decorrente de outra alteração psicopatológica",
+                  "definition": "Delírio que decorre de outra alteração psicopatológica (ex.: humor na mania)."
+                }
+              ]
+            },
+            {
+              "id": "ideia_prevalente",
+              "label": "Ideia prevalente",
+              "phrase": "ideia prevalente, potencialmente corrigível com exposição adequada à realidade",
+              "definition": "Ideia falsa por forte influência emocional sobre o julgamento, corrigível quando o afeto diminui."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inteligencia",
+      "label": "Inteligência",
+      "axes": [
+        {
+          "id": "inteligencia",
+          "label": "Inteligência",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "inteligência compatível com o nível sociocultural/educacional"
+          },
+          "options": [
+            {
+              "id": "deficit_intelectivo",
+              "label": "Déficit intelectivo",
+              "phrase": "déficit intelectivo, com desempenho abaixo do esperado",
+              "definition": "Desempenho intelectivo diminuído em comparação a outras pessoas ou ao usual do próprio indivíduo."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "imaginacao",
+      "label": "Imaginação",
+      "axes": [
+        {
+          "id": "imaginacao",
+          "label": "Imaginação",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "imaginação preservada"
+          },
+          "options": [
+            {
+              "id": "exacerbacao",
+              "label": "Exacerbação",
+              "phrase": "imaginação exacerbada, com aumento da capacidade criativa",
+              "definition": "Aumento da capacidade imaginativa/criatividade."
+            },
+            {
+              "id": "inibicao",
+              "label": "Inibição",
+              "phrase": "imaginação inibida, com redução da capacidade criativa",
+              "definition": "Redução da capacidade imaginativa/criatividade."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "conacao",
+      "label": "Conação",
+      "axes": [
+        {
+          "id": "volicao",
+          "label": "Volição (quantitativa)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "volição preservada, sem hipo ou hiperbulia"
+          },
+          "options": [
+            {
+              "id": "hipobulia",
+              "label": "Hipobulia/abulia",
+              "phrase": "hipobulia/abulia, com diminuição da energia vital e da atividade direcionada à ação",
+              "definition": "Diminuição ou abolição da atividade mental direcionada à ação; expressa-se em inibição psicomotora."
+            },
+            {
+              "id": "hiperbulia",
+              "label": "Hiperbulia",
+              "phrase": "hiperbulia, com aumento da energia vital e da atividade direcionada à ação",
+              "definition": "Exacerbação da atividade mental direcionada à ação; expressa-se em aumento da psicomotricidade."
+            }
+          ]
+        },
+        {
+          "id": "impulsos",
+          "label": "Impulsos específicos",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem alterações de apetite, sede, sono ou libido"
+          },
+          "options": [
+            {
+              "id": "anorexia",
+              "label": "Anorexia",
+              "phrase": "anorexia (diminuição do apetite)",
+              "definition": "Perda ou diminuição do apetite."
+            },
+            {
+              "id": "diminuicao_sede",
+              "label": "Diminuição da sede",
+              "phrase": "diminuição da sede",
+              "definition": "Diminuição da sede."
+            },
+            {
+              "id": "insonia",
+              "label": "Insônia",
+              "phrase": "insônia, com redução do número total de horas de sono",
+              "definition": "Redução do número total de horas de sono."
+            },
+            {
+              "id": "diminuicao_libido",
+              "label": "Diminuição da libido",
+              "phrase": "diminuição da libido",
+              "definition": "Diminuição da libido."
+            },
+            {
+              "id": "bulimia",
+              "label": "Bulimia",
+              "phrase": "bulimia (aumento do apetite)",
+              "definition": "Aumento do apetite."
+            },
+            {
+              "id": "potomania",
+              "label": "Potomania",
+              "phrase": "potomania (aumento da sede)",
+              "definition": "Aumento da sede."
+            },
+            {
+              "id": "hipersonia",
+              "label": "Hipersonia",
+              "phrase": "hipersonia, com aumento das horas de sono ou sonolência diurna",
+              "definition": "Aumento do total de horas de sono ou sonolência diurna."
+            },
+            {
+              "id": "aumento_libido",
+              "label": "Aumento da libido (satiríase/ninfomania)",
+              "phrase": "aumento da libido (satiríase/ninfomania)",
+              "definition": "Aumento da libido no homem (satiríase) e na mulher (ninfomania)."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem atos impulsivos, compulsivos, negativismo ou obediência automática"
+          },
+          "options": [
+            {
+              "id": "ato_impulsivo",
+              "label": "Ato impulsivo",
+              "phrase": "atos impulsivos, sem deliberação prévia",
+              "definition": "Ato súbito e incoercível, sem etapas de deliberação/decisão."
+            },
+            {
+              "id": "ato_compulsivo",
+              "label": "Ato compulsivo",
+              "phrase": "atos compulsivos, realizados após intensa resistência interna",
+              "definition": "Ato que o indivíduo se sente compelido a realizar, após longa deliberação e resistência."
+            },
+            {
+              "id": "automutilacao",
+              "label": "Automutilação",
+              "phrase": "automutilação",
+              "definition": "Ato em que o indivíduo infringe a si próprio lesões corporais."
+            },
+            {
+              "id": "comportamento_suicida",
+              "label": "Comportamento suicida",
+              "phrase": "comportamento suicida (ideação, planejamento ou ação)",
+              "definition": "Pensamentos, planejamento ou ações direcionados a exterminar a própria vida."
+            },
+            {
+              "id": "alotriofagia",
+              "label": "Alotriofagia",
+              "phrase": "alotriofagia, com ingestão de substâncias inadequadas",
+              "definition": "Ingestão de coisas estranhas ou inadequadas (objetos, fezes, substâncias nocivas)."
+            },
+            {
+              "id": "parafilias",
+              "label": "Parafilias",
+              "phrase": "parafilias",
+              "definition": "Preferência por objetos, pessoas ou situações sexuais não usuais, necessárias à excitação/orgasmo."
+            },
+            {
+              "id": "ambitendencia",
+              "label": "Ambitendência",
+              "phrase": "ambitendência, com incapacidade de decidir entre tendências opostas",
+              "definition": "Incapacidade para decidir e agir por coexistência de tendências volitivas opostas e igualmente intensas."
+            },
+            {
+              "id": "negativismo",
+              "label": "Negativismo",
+              "phrase": "negativismo",
+              "definition": "Recusa incompreensível a atender as solicitações do examinador.",
+              "subtypes": [
+                {
+                  "id": "passivo",
+                  "label": "Passivo",
+                  "phrase": "negativismo passivo, não realizando o que lhe é solicitado",
+                  "definition": "O indivíduo simplesmente não faz o que lhe é pedido."
+                },
+                {
+                  "id": "ativo",
+                  "label": "Ativo",
+                  "phrase": "negativismo ativo, fazendo o oposto do que lhe é solicitado",
+                  "definition": "O indivíduo faz o oposto do solicitado."
+                }
+              ]
+            },
+            {
+              "id": "reacao_ultimo_momento_conacao",
+              "label": "Reação de último momento",
+              "phrase": "reação de último momento, com suspensão súbita do negativismo justamente quando o examinador desiste",
+              "definition": "Suspensão súbita e inesperada do negativismo no momento em que o examinador desiste."
+            },
+            {
+              "id": "sugestionabilidade_patologica",
+              "label": "Sugestionabilidade patológica",
+              "phrase": "sugestionabilidade patológica, com tendência exacerbada a atender as demandas do examinador",
+              "definition": "Tendência exacerbada a atender as demandas do examinador."
+            },
+            {
+              "id": "obediencia_automatica",
+              "label": "Obediência automática",
+              "phrase": "obediência automática, cumprindo passiva e imediatamente qualquer ordem do examinador",
+              "definition": "Cumprimento passivo e imediato de qualquer ordem, mesmo perigosa, sem deliberação."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "psicomotricidade",
+      "label": "Psicomotricidade",
+      "axes": [
+        {
+          "id": "quantitativa",
+          "label": "Quantitativa",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "psicomotricidade normal"
+          },
+          "options": [
+            {
+              "id": "apraxia",
+              "label": "Apraxia",
+              "phrase": "apraxia, com perda da capacidade de realizar ações motoras previamente aprendidas",
+              "definition": "Perda/diminuição da capacidade de realizar ações motoras aprendidas, sem déficit motor/sensorial."
+            },
+            {
+              "id": "hipocinesia",
+              "label": "Hipocinesia (inibição/alentecimento psicomotor)",
+              "phrase": "hipocinesia, com diminuição generalizada dos movimentos voluntários",
+              "definition": "Diminuição generalizada dos movimentos voluntários, mais lentos ou menos frequentes."
+            },
+            {
+              "id": "acinesia",
+              "label": "Acinesia (estupor)",
+              "phrase": "acinesia (estupor), com abolição dos movimentos voluntários",
+              "definition": "Abolição dos movimentos voluntários; se com rigidez muscular, chamada catalepsia."
+            },
+            {
+              "id": "hipercinesia",
+              "label": "Hipercinesia (agitação psicomotora)",
+              "phrase": "hipercinesia, com aumento generalizado dos movimentos voluntários",
+              "definition": "Aumento generalizado dos movimentos voluntários, mais rápidos e frequentes."
+            }
+          ]
+        },
+        {
+          "id": "qualitativa",
+          "label": "Qualitativa",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem estereotipias, maneirismos ou ecopraxia"
+          },
+          "options": [
+            {
+              "id": "ecopraxia",
+              "label": "Ecopraxia",
+              "phrase": "ecopraxia, repetindo automaticamente movimentos ou gestos alheios",
+              "definition": "Repetição imediata e automática de movimentos/gestos realizados por outra pessoa."
+            },
+            {
+              "id": "estereotipia_motora",
+              "label": "Estereotipia (motora)",
+              "phrase": "estereotipias motoras, com ações repetitivas sem finalidade aparente",
+              "definition": "Ação motora sem finalidade aparente, repetida sempre da mesma forma."
+            },
+            {
+              "id": "maneirismo_motor",
+              "label": "Maneirismo",
+              "phrase": "maneirismos, com movimentos exagerados e caricaturais",
+              "definition": "Movimento com finalidade adequada, mas realizado de forma exagerada/artificial."
+            },
+            {
+              "id": "flexibilidade_cerea",
+              "label": "Flexibilidade cérea",
+              "phrase": "flexibilidade cérea, com manutenção de posturas impostas pelo examinador",
+              "definition": "O corpo do paciente é amoldável, mantendo posições impostas por longo tempo."
+            },
+            {
+              "id": "interceptacao_cinetica",
+              "label": "Interceptação cinética",
+              "phrase": "interceptação cinética, com interrupção súbita do movimento atribuída a força externa",
+              "definition": "Movimento interrompido bruscamente, com vivência de influência por força externa."
+            },
+            {
+              "id": "perseveracao_motora",
+              "label": "Perseveração motora",
+              "phrase": "perseveração motora, repetindo continuamente uma ação sem propósito",
+              "definition": "Repetição contínua e sem propósito de uma ação motora inicialmente adequada."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pragmatismo",
+      "label": "Pragmatismo",
+      "axes": [
+        {
+          "id": "pragmatismo",
+          "label": "Pragmatismo",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "pragmatismo preservado, executando adequadamente o que planeja"
+          },
+          "options": [
+            {
+              "id": "hipopragmatismo",
+              "label": "Hipopragmatismo/apragmatismo",
+              "phrase": "hipopragmatismo/apragmatismo, com dificuldade em executar adequadamente o que planeja",
+              "definition": "Diminuição/abolição da capacidade de colocar em prática o que se planeja."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "afetividade",
+      "label": "Afetividade",
+      "axes": [
+        {
+          "id": "intensidade",
+          "label": "Intensidade",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "afeto de intensidade adequada"
+          },
+          "options": [
+            {
+              "id": "exaltacao",
+              "label": "Exaltação afetiva",
+              "phrase": "afeto exaltado, com aumento da intensidade da vivência/expressão afetiva",
+              "definition": "Aumento da intensidade afetiva; o afeto é contagiante ao examinador."
+            },
+            {
+              "id": "embotamento",
+              "label": "Embotamento afetivo",
+              "phrase": "embotamento afetivo, com diminuição da intensidade da expressão afetiva",
+              "definition": "Diminuição da intensidade afetiva; predomina humor indiferente."
+            }
+          ]
+        },
+        {
+          "id": "modulacao",
+          "label": "Modulação",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "modulação afetiva preservada"
+          },
+          "options": [
+            {
+              "id": "labilidade",
+              "label": "Labilidade afetiva",
+              "phrase": "labilidade afetiva, com mudanças súbitas e frequentes do humor",
+              "definition": "Mudanças súbitas e frequentes do estado de humor."
+            },
+            {
+              "id": "incontinencia",
+              "label": "Incontinência afetiva",
+              "phrase": "incontinência afetiva, com reações emocionais exageradas e prolongadas",
+              "definition": "Reações emocionais exageradas e longas, desencadeadas por estímulos leves, sem controle."
+            },
+            {
+              "id": "rigidez",
+              "label": "Rigidez afetiva",
+              "phrase": "rigidez afetiva, com humor inalterado frente aos eventos",
+              "definition": "Perda da flexibilidade afetiva; humor longamente inalterado, sem influência do ambiente."
+            }
+          ]
+        },
+        {
+          "id": "conteudo",
+          "label": "Conteúdo",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "afeto congruente com o conteúdo do pensamento e do discurso"
+          },
+          "options": [
+            {
+              "id": "paratimia",
+              "label": "Paratimia",
+              "phrase": "paratimia, com afeto em desacordo com a situação ou o que é verbalizado",
+              "definition": "Inadequação da expressão afetiva em relação à situação/discurso."
+            },
+            {
+              "id": "ambitimia",
+              "label": "Ambitimia (ambivalência afetiva)",
+              "phrase": "ambitimia, com estados afetivos opostos simultâneos e de mesma intensidade",
+              "definition": "Estados afetivos opostos, simultâneos, direcionados ao mesmo objeto/pessoa/situação."
+            },
+            {
+              "id": "neotimia",
+              "label": "Neotimia",
+              "phrase": "neotimia, com estado afetivo extravagante nunca antes vivenciado",
+              "definition": "Estado afetivo extravagante e inédito (elação, terror, êxtase, etc.)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "orientacao_alopsiquica",
+      "label": "Orientação alopsíquica",
+      "axes": [
+        {
+          "id": "orientacao_alopsiquica",
+          "label": "Orientação alopsíquica",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "orientado alopsiquicamente (tempo, espaço, situação e pessoas)"
+          },
+          "options": [
+            {
+              "id": "desorientacao",
+              "label": "Desorientação alopsíquica",
+              "phrase": "desorientado alopsiquicamente",
+              "definition": "Incapacidade parcial/total de se situar quanto a tempo, espaço, situação ou pessoas.",
+              "subtypes": [
+                {
+                  "id": "confusional",
+                  "label": "Confusional",
+                  "phrase": "desorientação confusional, decorrente de rebaixamento do nível de consciência",
+                  "definition": "Decorrente de rebaixamento do nível de consciência."
+                },
+                {
+                  "id": "amnesica",
+                  "label": "Amnésica",
+                  "phrase": "desorientação amnésica, decorrente de prejuízo na memória de fixação",
+                  "definition": "Decorrente de prejuízo na memória de fixação."
+                },
+                {
+                  "id": "apatica",
+                  "label": "Apática",
+                  "phrase": "desorientação apática, decorrente de alteração da afetividade ou conação",
+                  "definition": "Decorrente de desinteresse por alteração da afetividade/conação."
+                },
+                {
+                  "id": "delirante",
+                  "label": "Delirante",
+                  "phrase": "desorientação delirante, decorrente de uma crença delirante",
+                  "definition": "Decorrente de uma crença delirante."
+                },
+                {
+                  "id": "deficit_intelectivo",
+                  "label": "Por déficit intelectivo",
+                  "phrase": "desorientação por déficit intelectivo",
+                  "definition": "Decorrente de prejuízo na capacidade intelectiva."
+                },
+                {
+                  "id": "estreitamento",
+                  "label": "Por estreitamento da consciência",
+                  "phrase": "desorientação por estreitamento da consciência",
+                  "definition": "Decorrente de redução da amplitude do campo da consciência."
+                }
+              ]
+            },
+            {
+              "id": "falsa_orientacao",
+              "label": "Falsa orientação alopsíquica",
+              "phrase": "falsa orientação alopsíquica",
+              "definition": "Situar-se erroneamente quanto a tempo, espaço, situação ou pessoas.",
+              "subtypes": [
+                {
+                  "id": "confuso_oniroide",
+                  "label": "Confuso-oniroide",
+                  "phrase": "falsa orientação confuso-oniroide, decorrente de rebaixamento da consciência com sintomas psicóticos",
+                  "definition": "Decorrente de rebaixamento do nível de consciência com sintomas psicóticos."
+                },
+                {
+                  "id": "paramnesica",
+                  "label": "Paramnésica",
+                  "phrase": "falsa orientação paramnésica, decorrente de falsas memórias",
+                  "definition": "Decorrente de falsas memórias."
+                },
+                {
+                  "id": "delirante_falsa",
+                  "label": "Delirante",
+                  "phrase": "falsa orientação delirante",
+                  "definition": "Decorrente de um delírio."
+                },
+                {
+                  "id": "estreitamento_falsa",
+                  "label": "Por estreitamento da consciência",
+                  "phrase": "falsa orientação por estreitamento da consciência",
+                  "definition": "Decorrente de redução da amplitude do campo da consciência."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consciencia_do_eu",
+      "label": "Consciência do eu",
+      "axes": [
+        {
+          "id": "existencia",
+          "label": "Existência do eu",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "consciência da existência do eu preservada"
+          },
+          "options": [
+            {
+              "id": "diminuida",
+              "label": "Diminuída",
+              "phrase": "consciência da existência do eu diminuída, com prostração e desânimo (implica hipobulia)",
+              "definition": "Vivência de prostração, falta de energia, redução da vivacidade. Implica hipobulia."
+            },
+            {
+              "id": "abolida",
+              "label": "Abolida",
+              "phrase": "consciência da existência do eu abolida, com convicção de não mais existir (delírio niilista)",
+              "definition": "Convicção de não mais existir ou estar morto. Implica delírio niilista/de negação."
+            },
+            {
+              "id": "aumentada",
+              "label": "Aumentada",
+              "phrase": "consciência da existência do eu aumentada, com exacerbação do vigor e da vivacidade (implica hiperbulia)",
+              "definition": "Exacerbação do sentimento de vigor, ânimo, energia. Implica hiperbulia."
+            }
+          ]
+        },
+        {
+          "id": "identidade_orientacao",
+          "label": "Identidade (orientação autopsíquica)",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "orientado autopsiquicamente"
+          },
+          "options": [
+            {
+              "id": "desorientacao_autopsiquica",
+              "label": "Desorientação autopsíquica",
+              "phrase": "desorientação autopsíquica, com perda do conhecimento sobre os próprios dados de identificação",
+              "definition": "Diminuição da capacidade de se situar em relação a si próprio (nome, idade, profissão, etc.)."
+            }
+          ]
+        },
+        {
+          "id": "atividade",
+          "label": "Atividade do eu",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem vivências de influência sobre o pensamento ou o corpo"
+          },
+          "options": [
+            {
+              "id": "roubo_pensamento",
+              "label": "Roubo do pensamento",
+              "phrase": "roubo do pensamento, com frequente interrupção do curso do pensamento",
+              "definition": "Vivência de que um pensamento foi retirado da mente por outra pessoa/força externa."
+            },
+            {
+              "id": "insercao_pensamento",
+              "label": "Imposição (inserção) do pensamento",
+              "phrase": "imposição (inserção) do pensamento por força externa",
+              "definition": "Vivência de que um pensamento foi colocado na mente por outra pessoa/força externa."
+            },
+            {
+              "id": "sensacoes_impostas",
+              "label": "Sensações corporais impostas",
+              "phrase": "sensações corporais impostas, atribuídas a influência de força externa",
+              "definition": "Sensações viscerais atribuídas à ação/influência de outra pessoa ou força externa."
+            },
+            {
+              "id": "interceptacao_atencao",
+              "label": "Interceptação da atenção",
+              "phrase": "interceptação da atenção, atribuída a influência externa",
+              "definition": "Incapacidade de manter a atenção, atribuída a influência direta de outra pessoa/força externa."
+            }
+          ]
+        },
+        {
+          "id": "unidade",
+          "label": "Unidade do eu",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem dupla orientação"
+          },
+          "options": [
+            {
+              "id": "dupla_autopsiquica",
+              "label": "Dupla orientação autopsíquica",
+              "phrase": "dupla orientação autopsíquica, de caráter delirante",
+              "definition": "Coexistência da orientação autopsíquica verdadeira com uma falsa, geralmente delirante."
+            },
+            {
+              "id": "dupla_alopsiquica",
+              "label": "Dupla orientação alopsíquica",
+              "phrase": "dupla orientação alopsíquica, de caráter delirante",
+              "definition": "Coexistência da orientação alopsíquica verdadeira com uma falsa, geralmente delirante."
+            }
+          ]
+        },
+        {
+          "id": "identidade_delirante",
+          "label": "Identidade do eu (qualitativa)",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem despersonalização"
+          },
+          "options": [
+            {
+              "id": "falsa_autopsiquica_delirante",
+              "label": "Falsa orientação autopsíquica delirante",
+              "phrase": "falsa orientação autopsíquica delirante",
+              "definition": "Substituição da orientação autopsíquica verdadeira por uma falsa, geralmente delirante."
+            },
+            {
+              "id": "despersonalizacao",
+              "label": "Despersonalização",
+              "phrase": "despersonalização, com sentimento de estranheza em relação a si mesmo",
+              "definition": "Sentimento de estranheza em relação a si mesmo; vivência de transformação do eu."
+            }
+          ]
+        },
+        {
+          "id": "limites",
+          "label": "Limites do eu",
+          "selectionType": "multi",
+          "default": {
+            "id": "normal",
+            "phrase": "sem alterações dos limites do eu"
+          },
+          "options": [
+            {
+              "id": "transitivismo",
+              "label": "Transitivismo",
+              "phrase": "transitivismo, atribuindo vivências subjetivas próprias a outras pessoas",
+              "definition": "Atribuição de vivências subjetivas do indivíduo a outras pessoas."
+            },
+            {
+              "id": "apropriacao",
+              "label": "Apropriação",
+              "phrase": "apropriação, vivenciando como próprio o que acontece a outros",
+              "definition": "O que acontece a outros ou a objetos inanimados é experimentado como vivência subjetiva própria."
+            },
+            {
+              "id": "publicacao_pensamento",
+              "label": "Publicação (divulgação) do pensamento",
+              "phrase": "publicação (divulgação) do pensamento, sentindo que os pensamentos são lidos ou ouvidos por outros",
+              "definition": "Vivência de que os pensamentos são lidos ou ouvidos pelas demais pessoas."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "prospeccao",
+      "label": "Prospecção",
+      "axes": [
+        {
+          "id": "prospeccao",
+          "label": "Prospecção",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "prospecção presente, com planos futuros adequados e exequíveis"
+          },
+          "options": [
+            {
+              "id": "planos_ausentes",
+              "label": "Planos ausentes",
+              "phrase": "prospecção ausente, sem planos para o futuro",
+              "definition": "Ausência de planos."
+            },
+            {
+              "id": "planos_inadequados",
+              "label": "Planos inadequados ou inexequíveis",
+              "phrase": "planos inadequados ou inexequíveis para o futuro",
+              "definition": "Planos incompatíveis com a realidade ou impossíveis de executar."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "consciencia_de_morbidade",
+      "label": "Consciência de morbidade",
+      "axes": [
+        {
+          "id": "consciencia_de_morbidade",
+          "label": "Consciência de morbidade",
+          "selectionType": "single",
+          "default": {
+            "id": "normal",
+            "phrase": "consciência de morbidade presente, com crítica preservada quanto à doença"
+          },
+          "options": [
+            {
+              "id": "ausente",
+              "label": "Ausente",
+              "phrase": "consciência de morbidade ausente, não se reconhecendo doente",
+              "definition": "O paciente não se acha doente e não considera seus sintomas como tais."
+            },
+            {
+              "id": "parcial",
+              "label": "Parcial",
+              "phrase": "consciência de morbidade parcial, reconhecendo apenas alguns sintomas",
+              "definition": "Reconhece alguns sintomas, mas não todos, ou julga que são físicos e não mentais."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
