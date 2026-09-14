@@ -269,6 +269,25 @@ const styles = {
         borderLeft: "4px solid var(--prevent-text)",
         marginBottom: "12px",
     },
+    alvoSecundario: {
+        background: "var(--prevent-input-bg)",
+        padding: "6px 10px",
+        borderRadius: "6px",
+        fontSize: "12.5px",
+        fontWeight: 600,
+        color: "var(--prevent-text)",
+    },
+    legendaBox: {
+        marginTop: "12px",
+        padding: "10px 12px",
+        borderRadius: "8px",
+        border: "1px dashed var(--prevent-border)",
+        background: "var(--prevent-card-bg)",
+        fontSize: "12px",
+        color: "var(--prevent-text-muted)",
+        lineHeight: "1.45",
+        textAlign: "left" as const,
+    },
     empty: {
         color: "var(--prevent-text-muted)",
         fontSize: "14px",
@@ -324,6 +343,12 @@ const CONFIG_RISCOS: Record<
     string,
     { bg: string; t: string; border: string; limiteLdl: number }
 > = {
+    Extremo: {
+        bg: "rgba(180, 0, 60, 0.14)",
+        t: "#b4003c",
+        border: "rgba(180, 0, 60, 0.5)",
+        limiteLdl: 40,
+    },
     "Muito Alto": {
         bg: "rgba(245, 49, 39, 0.12)",
         t: "#e62219",
@@ -342,18 +367,156 @@ const CONFIG_RISCOS: Record<
         border: "rgba(242, 143, 0, 0.45)",
         limiteLdl: 100,
     },
-    Borderline: {
-        bg: "rgba(200, 160, 0, 0.09)",
-        t: "#cc9e00",
-        border: "rgba(200, 160, 0, 0.45)",
-        limiteLdl: 130,
-    },
     Baixo: {
         bg: "rgba(0, 184, 73, 0.09)",
         t: "#00cc52",
         border: "rgba(0, 184, 73, 0.45)",
-        limiteLdl: 130,
+        limiteLdl: 115,
     },
+}
+
+interface ItemLegenda {
+    id: string
+    label: string
+}
+interface GrupoLegenda {
+    sigla: string
+    grupo: GrupoEstrat
+    itens: ItemLegenda[]
+}
+function contarGrupo(check: Record<string, boolean>, grupo: string): number {
+    let c = 0
+    const sec = LEGENDA_ESTRAT.find((s) => s.grupo === grupo)
+    if (!sec) return 0
+    for (const it of sec.itens) {
+        if (check[it.id]) c++
+    }
+    return c
+}
+
+type GrupoEstrat = "ECVA" | "EAR" | "EMAR" | "AGRAVANTE" | "CONDICOES"
+type ItensAuto = { [G in GrupoEstrat]: string[] }
+
+function autoItensPorGrupo(a: {
+    idade: string
+    colTotal: string
+    tfg: string
+    hba1c: string
+    lpa: string
+    ldl: string
+    cac: string
+    diabetes: boolean
+    fumante: boolean
+    antiHipertensivos: boolean
+    checklist: Record<string, boolean>
+}): ItensAuto {
+    const valorHba1c = parseFloat(a.hba1c)
+    const temDiabetes =
+        a.diabetes || (!isNaN(valorHba1c) && valorHba1c >= 6.5)
+    const idade = parseInt(a.idade)
+    const tfg = parseInt(a.tfg)
+    const lpa = parseFloat(a.lpa)
+    const ldl = parseFloat(a.ldl)
+    const colTotal = parseInt(a.colTotal)
+
+    const ear: string[] = []
+    if (a.antiHipertensivos) ear.push("Hipertensão arterial (anti-hipertensivos)")
+    if (a.fumante) ear.push("Tabagismo ativo")
+    if (a.cac === "10-100" || a.cac === "100-300") ear.push("CAC 10-300 (do escore CAC)")
+
+    const nEar = contarGrupo(a.checklist, "EAR") + ear.length
+
+    const emar: string[] = []
+    if (nEar >= 3) emar.push("3 ou mais EAR")
+    if (ldl >= 190 || colTotal > 310) emar.push("CT > 310 mg/dL ou LDL-c > 190 mg/dL")
+
+    const cond: string[] = []
+    if (!isNaN(idade) && idade >= 65) cond.push("Idade ≥ 65 anos")
+    if (temDiabetes) cond.push("Diabetes")
+    if (a.antiHipertensivos) cond.push("Hipertensão")
+    if (!isNaN(tfg) && tfg < 60) cond.push("DRC (TFGe < 60)")
+    if (a.fumante) cond.push("Tabagismo atual")
+
+    const agrav: string[] = []
+    if (!isNaN(lpa) && lpa > 50) agrav.push("Lp(a) > 50 mg/dL")
+
+    return { ECVA: [], EAR: ear, EMAR: emar, AGRAVANTE: agrav, CONDICOES: cond }
+}
+
+const LEGENDA_ESTRAT: GrupoLegenda[] = [
+    {
+        sigla: "Eventos cardiovasculares ateroscleróticos maiores",
+        grupo: "ECVA",
+        itens: [
+            { id: "ecva_iam", label: "IAM no último ano" },
+            { id: "ecva_sca", label: "SCA no último ano" },
+            { id: "ecva_avci", label: "AVE isquêmico" },
+            { id: "ecva_dap", label: "DAOP sintomática (claudicação com ABI < 0,85, revascularização ou amputação)" },
+        ],
+    },
+    {
+        sigla: "Alto risco",
+        grupo: "EAR",
+        itens: [
+            { id: "ear_10a", label: "DM2 há mais de 10 anos" },
+            { id: "ear_dac", label: "História familiar de DAC prematura" },
+            { id: "ear_sm", label: "Síndrome metabólica" },
+            { id: "ear_drc", label: "Doença renal de risco alto" },
+            { id: "ear_placa", label: "Placa com estenose < 50% em carótida ou coronária" },
+            { id: "ear_aaa", label: "Aneurisma de aorta abdominal" },
+            { id: "ear_neuro", label: "Neuropatia autonômica CV incipiente" },
+            { id: "ear_retino", label: "Retinopatia diabética não proliferativa leve" },
+        ],
+    },
+    {
+        sigla: "Muito alto risco",
+        grupo: "EMAR",
+        itens: [
+            { id: "emar_sca", label: "SCA, IAM antigo ou angina estável" },
+            { id: "emar_avc", label: "AVE aterotrombótico ou AIT" },
+            { id: "emar_perif", label: "IVP ou amputação de membros" },
+            { id: "emar_estenose", label: "Estenose arterial > 50%" },
+            { id: "emar_revas", label: "Revascularização arterial" },
+            { id: "emar_dm1", label: "DM1 com duração > 20 anos e diagnosticado após os 18 anos de idade" },
+            { id: "emar_renal", label: "EMAR renal" },
+            { id: "emar_neuro", label: "Neuropatia autonômica CV instalada" },
+            { id: "emar_retino", label: "Retinopatia moderada-severa, severa, proliferativa ou evidência de progressão" },
+        ],
+    },
+    {
+        sigla: "Fatores agravantes de risco",
+        grupo: "AGRAVANTE",
+        itens: [
+            { id: "agrav_hf", label: "História familiar de DAC prematura" },
+            { id: "agrav_adip", label: "Adiposidade, MASLD e síndrome metabólica" },
+            { id: "agrav_inflam", label: "Condições inflamatórias crônicas" },
+            { id: "agrav_tx", label: "Transplante de órgãos" },
+            { id: "agrav_mulher", label: "Fatores agravantes de risco específicos das mulheres" },
+            { id: "agrav_pcr", label: "PCR ultrassensível ≥ 2,0 mg/L" },
+        ],
+    },
+    {
+        sigla: "Condições de alto risco",
+        grupo: "CONDICOES",
+        itens: [
+            { id: "cond_hf", label: "Hipercolesterolemia familiar" },
+            { id: "cond_revas", label: "Revascularização cirúrgica ou percutânea em momento diferente do evento maior" },
+            { id: "cond_ldl", label: "LDL-c persistentemente ≥ 100 mg/dL apesar de estatina em dose máxima tolerada e ezetimiba" },
+        ],
+    },
+]
+
+const GRUPOS_DM2 = LEGENDA_ESTRAT.filter(function (g) {
+    return g.grupo === "EAR" || g.grupo === "EMAR"
+})
+
+function legivelSobre(hex: string): string {
+    const h = hex.replace("#", "")
+    const r = parseInt(h.slice(0, 2), 16) / 255
+    const g = parseInt(h.slice(2, 4), 16) / 255
+    const b = parseInt(h.slice(4, 6), 16) / 255
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+    return lum > 0.42 ? "#161513" : "#ffffff"
 }
 
 interface Props {
@@ -365,8 +528,11 @@ interface ResultadoEscore {
     idadeVascular: string | number;
     categoriaRisco: string;
     alvoLdl: string;
+    alvoNaoHdl: string;
+    alvoApoB: string;
     estatinaSugerida: string;
     seguimento: string;
+    criterios: string[];
 }
 
 interface ScoreQuestion {
@@ -429,12 +595,15 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [ldl, setLdl] = useState("")
     const [hba1c, setHba1c] = useState("")
     const [rac, setRac] = useState("")
-    const [prevSecundaria, setPrevSecundaria] = useState(false)
-    const [hiperFam, setHiperFam] = useState(false)
     const [diabetes, setDiabetes] = useState(false)
     const [fumante, setFumante] = useState(false)
     const [antiHipertensivos, setAntiHipertensivos] = useState(false)
     const [usoEstatinas, setUsoEstatinas] = useState(false)
+    const [subclinica, setSubclinica] = useState(false)
+    const [doencaAtero, setDoencaAtero] = useState(false)
+    const [cac, setCac] = useState("")
+    const [lpa, setLpa] = useState("")
+    const [checklistEstrat, setChecklistEstrat] = useState<Record<string, boolean>>({})
     const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
 
     const [escuro, setEscuro] = useState(false)
@@ -604,8 +773,9 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset: () => (
-            setIdade(""), setSexo(""), setCreatinina(""), setPeso(""), setAltura(""), setImc(""), setAsc(""), setTfg(""), setPas(""), setColTotal(""), setHdl(""), setTriglicerideos(""), setLdl(""), setHba1c(""), setRac(""),
-            setPrevSecundaria(false), setHiperFam(false), setDiabetes(false), setFumante(false), setAntiHipertensivos(false), setUsoEstatinas(false),
+            setIdade(""), setSexo(""), setCreatinina(""), setPeso(""), setAltura(""), setImc(""), setAsc(""), setTfg(""), setPas(""), setColTotal(""), setHdl(""), setTriglicerideos(""), setLdl(""), setHba1c(""), setRac(""), setLpa(""), setCac(""), setChecklistEstrat({}),
+            setDiabetes(false), setFumante(false), setAntiHipertensivos(false), setUsoEstatinas(false),
+            setSubclinica(false), setDoencaAtero(false),
             setResultado(null),
             setCamposTocados({ idade: false, peso: false, altura: false, imc: false, creatinina: false, pas: false, rac: false, colTotal: false, hdl: false, triglicerideos: false, hba1c: false }),
             resetAllTools()
@@ -889,6 +1059,98 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         }
     }
 
+    // Itens derivados automaticamente dos chips de Modificadores e dos inputs
+    const autoItens = autoItensPorGrupo({
+        idade,
+        colTotal,
+        tfg,
+        hba1c,
+        lpa,
+        ldl,
+        cac,
+        diabetes,
+        fumante,
+        antiHipertensivos,
+        checklist: checklistEstrat,
+    })
+
+    // EAR/EMAR vivem na seção de Modificadores (condicionados ao DM2);
+    // Condições de alto risco dependem de um ECVAM
+    const temEvento = contarGrupo(checklistEstrat, "ECVA") > 0
+    const gruposVisiveis = LEGENDA_ESTRAT.filter(function (item) {
+        if (item.grupo === "EAR" || item.grupo === "EMAR") return false
+        if (item.grupo === "CONDICOES" && !temEvento) return false
+        return true
+    })
+
+    const renderGrupoEstrat = function (item: GrupoLegenda, ultimo: boolean) {
+        const marcados = contarGrupo(checklistEstrat, item.grupo)
+        const automarcados = autoItens[item.grupo]
+        const total = marcados + automarcados.length
+        return (
+            <div style={{ marginBottom: ultimo ? 0 : "12px" }}>
+                <div style={{ fontWeight: 600, color: "var(--prevent-text)", marginBottom: "8px" }}>
+                    {item.sigla}
+                    {total > 0 ? (
+                        <span
+                            style={{
+                                fontWeight: 700,
+                                marginLeft: "6px",
+                                fontSize: 12,
+                                color: "var(--prevent-text)",
+                                background: total > marcados
+                                    ? "rgba(37, 99, 235, 0.14)"
+                                    : "rgba(224, 36, 36, 0.15)",
+                                border: total > marcados
+                                    ? "1px solid rgba(37, 99, 235, 0.45)"
+                                    : "1px solid rgba(224, 36, 36, 0.45)",
+                                borderRadius: 10,
+                                padding: "0 7px",
+                            }}
+                        >
+                            {total} marcado{total === 1 ? "" : "s"}
+                        </span>
+                    ) : null}
+                </div>
+                {automarcados.length > 0 ? (
+                    <div
+                        style={{
+                            fontSize: 11,
+                            lineHeight: 1.4,
+                            marginBottom: "6px",
+                            color: "var(--prevent-text)",
+                            opacity: 0.7,
+                        }}
+                    >
+                        ✓ Derivados automaticamente:{" "}
+                        {automarcados.join(" · ")}
+                    </div>
+                ) : null}
+                <div className="prevent-chips-grid">
+                    {item.itens.map(function (it, j) {
+                        const ativo =
+                            checklistEstrat[it.id] ===
+                            true
+                        return (
+                            <div
+                                key={j}
+                                style={styles.chip(ativo)}
+                                onClick={() =>
+                                    setChecklistEstrat({
+                                        ...checklistEstrat,
+                                        [it.id]: !ativo,
+                                    })
+                                }
+                            >
+                                {it.label}
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
+        )
+    }
+
     // Algoritmo PREVENT Dinâmico Conforme os Biomarcadores Preenchidos
     useEffect(() => {
         const i = parseInt(idade)
@@ -898,17 +1160,59 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         const valorTfg = parseInt(tfg)
         const valorHba1c = parseFloat(hba1c)
         const valorRac = parseFloat(rac)
+        const valorLdl = parseFloat(ldl)
+        const valorLpa = parseFloat(lpa)
 
         const examesOk = i && sexo && p && ct && h
-        const sobrescritaImediata = prevSecundaria || hiperFam
 
-        if (!examesOk && !sobrescritaImediata) {
+        const temDiabetes = diabetes || (!isNaN(valorHba1c) && valorHba1c >= 6.5)
+        const limiarDm2 = sexo === "F" ? 56 : 50
+        const dm2AcimaLimiar = temDiabetes && !isNaN(i) && i >= limiarDm2
+        const earAuto =
+            (antiHipertensivos ? 1 : 0) +
+            (fumante ? 1 : 0) +
+            (cac === "10-100" || cac === "100-300" ? 1 : 0)
+        const nEar = contarGrupo(checklistEstrat, "EAR") + earAuto
+        const emarAuto =
+            (nEar >= 3 ? 1 : 0) +
+            (ct > 310 || valorLdl >= 190 ? 1 : 0)
+        const emar = contarGrupo(checklistEstrat, "EMAR") + emarAuto > 0
+        const nEventos = contarGrupo(checklistEstrat, "ECVA")
+        const condAuto =
+            (!isNaN(i) && i >= 65 ? 1 : 0) +
+            (temDiabetes ? 1 : 0) +
+            (antiHipertensivos ? 1 : 0) +
+            (!isNaN(valorTfg) && valorTfg < 60 ? 1 : 0) +
+            (fumante ? 1 : 0)
+        const nCondicoesBase = contarGrupo(checklistEstrat, "CONDICOES") + condAuto
+        const nCondicoes = nCondicoesBase
+        const agravante = contarGrupo(checklistEstrat, "AGRAVANTE") +
+            (!isNaN(valorLpa) && valorLpa > 50 ? 1 : 0) > 0
+        const ldlConhecido = ldl !== "" && !isNaN(valorLdl) && valorLdl > 0
+        const ldlMuitoAlto = ldlConhecido && valorLdl >= 190
+        const ldlIntermediario = ldlConhecido && valorLdl >= 160 && valorLdl < 190
+        const lpaAlto = !isNaN(valorLpa) && valorLpa > 180
+
+        const temCriterioDefinidor =
+            nEventos >= 2 ||
+            (nEventos === 1 && nCondicoes >= 2) ||
+            doencaAtero ||
+            cac === ">300" ||
+            (temDiabetes && (nEar >= 3 || emar)) ||
+            subclinica ||
+            cac === "100-300" ||
+            ldlMuitoAlto ||
+            lpaAlto ||
+            (temDiabetes && dm2AcimaLimiar) ||
+            (temDiabetes && (nEar === 1 || nEar === 2) && !emar) ||
+            (temDiabetes && !dm2AcimaLimiar && nEar === 0 && !emar)
+
+        if (!examesOk && !temCriterioDefinidor) {
             setResultado(null)
             return
         }
 
         let riscoCalculado = 0
-        let categoriaRisco = "Baixo"
 
         if (examesOk) {
             const X_id = (i - 55) / 10
@@ -1182,7 +1486,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
 
         // Calculate vascular age (tenYearRisk) based on cvd.js formula
         let idadeVascular = ""
-        if (examesOk && !sobrescritaImediata) {
+        if (examesOk && nEventos === 0) {
             if (sexo === "F") {
                 idadeVascular = Math.round(
                     45.03746 + 11.27498 * Math.log((riscoCalculado / 100) * 100)
@@ -1194,61 +1498,112 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             }
         }
 
-        // Bloco de Diretrizes e Critérios Clínicos Brasileiros (SBC)
-        if (prevSecundaria) categoriaRisco = "Muito Alto"
-        else if (hiperFam) categoriaRisco = "Alto"
-        else if (examesOk) {
-            const temDiabetes = diabetes || valorHba1c >= 6.5
-            if (
-                (!isNaN(valorTfg) && valorTfg < 45) ||
-                valorRac > 300 ||
-                (temDiabetes && (parseInt(idade) >= 50 || fumante))
-            ) {
-                categoriaRisco = "Alto"
-            } else {
-                if (riscoCalculado < 5) categoriaRisco = "Baixo"
-                else if (riscoCalculado < 7.5) categoriaRisco = "Borderline"
-                else if (riscoCalculado < 20) categoriaRisco = "Intermediário"
-                else categoriaRisco = "Alto"
-            }
+        // Estratificação clínica em 5 categorias (Risco Baixo → Extremo)
+        const criterios: string[] = []
+        let categoriaRisco = "Baixo"
+
+        if (nEventos >= 2) {
+            categoriaRisco = "Extremo"
+            criterios.push("2 ou mais eventos cardiovasculares ateroscleróticos maiores")
+        } else if (nEventos === 1 && nCondicoes >= 2) {
+            categoriaRisco = "Extremo"
+            criterios.push("1 evento cardiovascular aterosclerótico maior + 2 ou mais condições de alto risco")
+        } else if (doencaAtero) {
+            categoriaRisco = "Muito Alto"
+            criterios.push("Carga significativa de doença aterosclerótica ou obstrução ≥ 50% em qualquer território arterial")
+        } else if (cac === ">300") {
+            categoriaRisco = "Muito Alto"
+            criterios.push("Escore de cálcio coronariano (CAC) > 300 UA")
+        } else if (temDiabetes && (nEar >= 3 || emar)) {
+            categoriaRisco = "Muito Alto"
+            criterios.push("DM2 com 3 ou mais estratificadores de alto risco (EAR) ou com EMAR")
+        } else if (examesOk && riscoCalculado >= 20) {
+            categoriaRisco = "Alto"
+            criterios.push("Risco estimado ≥ 20% em 10 anos")
+        } else if (examesOk && riscoCalculado >= 5 && agravante) {
+            categoriaRisco = "Alto"
+            criterios.push("Risco estimado entre 5 e <20% com fator agravante de risco")
+        } else if (subclinica || cac === "100-300") {
+            categoriaRisco = "Alto"
+            criterios.push("Aterosclerose subclínica (placas, CAC entre 100-300 UA ou percentil > 75, aneurisma de aorta)")
+        } else if (ldlMuitoAlto) {
+            categoriaRisco = "Alto"
+            criterios.push("LDL-c ≥ 190 mg/dL")
+        } else if (lpaAlto) {
+            categoriaRisco = "Alto"
+            criterios.push("Lp(a) > 180 mg/dL (> 390 nmol/L)")
+        } else if (temDiabetes && dm2AcimaLimiar) {
+            categoriaRisco = "Alto"
+            criterios.push(`DM2 com idade ≥ ${limiarDm2} anos`)
+        } else if (temDiabetes && (nEar === 1 || nEar === 2) && !emar) {
+            categoriaRisco = "Alto"
+            criterios.push("DM2 com 1 a 2 estratificadores de alto risco (EAR), sem EMAR")
+        } else if (examesOk && riscoCalculado < 5 && (agravante || ldlIntermediario)) {
+            categoriaRisco = "Intermediário"
+            criterios.push("Risco estimado < 5% com fator agravante de risco ou LDL-c 160-189 mg/dL")
+        } else if (examesOk && riscoCalculado >= 5 && !agravante) {
+            categoriaRisco = "Intermediário"
+            criterios.push("Risco estimado entre 5 e <20% sem fator agravante de risco")
+        } else if (temDiabetes && !dm2AcimaLimiar && nEar === 0 && !emar) {
+            categoriaRisco = "Intermediário"
+            criterios.push(`DM2 com idade < ${limiarDm2} anos, sem EAR ou EMAR`)
+        } else if (examesOk) {
+            categoriaRisco = "Baixo"
+            criterios.push("Risco estimado < 5% em 10 anos, sem fator agravante, LDL-c < 160 mg/dL e ausência de DM2")
+        } else {
+            categoriaRisco = "Baixo"
+            criterios.push("Mantém risco baixo conforme os dados informados")
         }
 
         let alvoLdl = "",
+            alvoNaoHdl = "",
+            alvoApoB = "",
             estatinaSugerida = "",
             seguimento = ""
         switch (categoriaRisco) {
-            case "Muito Alto":
-                alvoLdl = "< 50 mg/dL (e redução ≥ 50% do valor basal)"
+            case "Extremo":
+                alvoLdl = "< 40 mg/dL (redução ≥ 50% do basal)"
+                alvoNaoHdl = "Não-HDL < 70 mg/dL"
+                alvoApoB = "ApoB < 45 mg/dL"
                 estatinaSugerida =
-                    "Alta Intensidade: atorvastatina 40-80mg OU rosuvastatina 20-40mg. Se não atingir alvo, associar ezetimiba 10mg."
+                    "Alta intensidade + ezetimiba e, se necessário, iPCSK9 ou inclisiran para atingir o alvo. Não reduzir intensidade."
                 seguimento =
-                    "Prevenção Secundária mandatória. Controle estrito de fatores metabólicos. Repetir perfil lipídico em 4 a 8 semanas para ajuste de dose."
+                    "Risco extremo: controle periódico do perfil lipídico, adesão estrita e reavaliação farmacológica até alcançar a meta."
+                break
+            case "Muito Alto":
+                alvoLdl = "< 50 mg/dL (redução ≥ 50% do basal)"
+                alvoNaoHdl = "Não-HDL < 80 mg/dL"
+                alvoApoB = "ApoB < 55 mg/dL"
+                estatinaSugerida = usoEstatinas
+                    ? "Intensificar: alta intensidade (atorvastatina 40-80mg ou rosuvastatina 20-40mg) + ezetimiba 10mg se fora da meta."
+                    : "Alta intensidade: atorvastatina 40-80mg OU rosuvastatina 20-40mg. Se não atingir alvo, associar ezetimiba 10mg."
+                seguimento =
+                    "Doença aterosclerótica ou DM2 de muito alto risco. Controle estrito de fatores metabólicos. Repetir perfil lipídico em 4 a 8 semanas."
                 break
             case "Alto":
-                alvoLdl = "< 70 mg/dL (e redução ≥ 50% do valor basal)"
+                alvoLdl = "< 70 mg/dL (redução ≥ 50% do basal)"
+                alvoNaoHdl = "Não-HDL < 100 mg/dL"
+                alvoApoB = "ApoB < 70 mg/dL"
                 estatinaSugerida = usoEstatinas
-                    ? "Manter terapia ou intensificar se fora da meta. Considerar atorvastatina 40-80mg ou rosuvastatina 20-40mg. Associar ezetimiba 10 mg se necessário."
+                    ? "Manter terapia ou intensificar se fora da meta. Considerar atorvastatina 40-80mg ou rosuvastatina 20-40mg. Associar ezetimiba 10mg se necessário."
                     : "Alta intensidade: atorvastatina 40mg OU rosuvastatina 20mg."
                 seguimento =
-                    "Prevenção Primária de alto risco ou critério clínico. Foco em atingir a meta terapêutica de LDL de forma agressiva."
+                    "Prevenção primária de alto risco ou critério clínico. Foco em atingir a meta terapêutica de LDL de forma agressiva."
                 break
             case "Intermediário":
-                alvoLdl = "< 100 mg/dL"
+                alvoLdl = "< 100 mg/dL (redução ≥ 30% do basal)"
+                alvoNaoHdl = "Não-HDL < 130 mg/dL"
+                alvoApoB = "ApoB < 90 mg/dL"
                 estatinaSugerida = usoEstatinas
                     ? "Manter esquema atual se LDL estiver dentro da meta (< 100 mg/dL). Se acima, titular dose ou trocar por mais potente."
-                    : "Moderada Intensidade: atorvastatina 10-20mg, rosuvastatina 5-10mg ou sinvastatina 20-40mg."
+                    : "Moderada intensidade: atorvastatina 10-20mg, rosuvastatina 5-10mg ou sinvastatina 20-40mg."
                 seguimento =
-                    "Discussão clínica compartilhada. Avaliar presença de fatores potencializadores não inclusos no escore para guiar a agressividade do tratamento."
-                break
-            case "Borderline":
-                alvoLdl = "< 130 mg/dL"
-                estatinaSugerida =
-                    "Avaliar estilo de vida de forma isolada na maioria dos casos. Se já estiver em uso de estatina de dose baixa, manter acompanhamento."
-                seguimento =
-                    "Foco em Mudança do Estilo de Vida. Reavaliar fatores de risco e perfil lipídico em 3 a 6 meses."
+                    "Discussão clínica compartilhada. Avaliar presença de fatores agravantes de risco para guiar a intensidade do tratamento."
                 break
             default:
-                alvoLdl = "< 130 mg/dL"
+                alvoLdl = "< 115 mg/dL (redução ≥ 30% do basal)"
+                alvoNaoHdl = "Não-HDL < 145 mg/dL"
+                alvoApoB = "ApoB < 100 mg/dL"
                 estatinaSugerida =
                     "Não indicado o início de estatinas (salvo se indicação prévia)."
                 seguimento =
@@ -1256,16 +1611,19 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         }
 
         setResultado({
-            risco10Anos: sobrescritaImediata
-                ? "Não calculável"
-                : `${riscoCalculado.toFixed(1)}%`,
-            idadeVascular: sobrescritaImediata
-                ? "Não calculável"
-                : idadeVascular,
+            risco10Anos:
+                examesOk && nEventos === 0
+                    ? `${riscoCalculado.toFixed(1)}%`
+                    : "Não calculável",
+            idadeVascular:
+                examesOk && nEventos === 0 ? idadeVascular : "Não calculável",
             categoriaRisco,
             alvoLdl,
+            alvoNaoHdl,
+            alvoApoB,
             estatinaSugerida,
             seguimento,
+            criterios,
         })
     }, [
         idade,
@@ -1276,12 +1634,16 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         tfg,
         hba1c,
         rac,
-        prevSecundaria,
-        hiperFam,
+        ldl,
+        lpa,
+        cac,
+        checklistEstrat,
         diabetes,
         fumante,
         antiHipertensivos,
         usoEstatinas,
+        subclinica,
+        doencaAtero,
     ])
 
     const updateIpss = useCallback((questionId: string, value: string) => {
@@ -1906,20 +2268,6 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                     <div style={{ gridColumn: "1 / -1" }}>
                         <div className="prevent-chips-grid">
                             <div
-                                style={styles.chip(prevSecundaria)}
-                                onClick={() =>
-                                    setPrevSecundaria(!prevSecundaria)
-                                }
-                            >
-                                IAM, AVC ou Doença Arterial prévia
-                            </div>
-                            <div
-                                style={styles.chip(hiperFam)}
-                                onClick={() => setHiperFam(!hiperFam)}
-                            >
-                                Hipercolesterolemia Familiar
-                            </div>
-                            <div
                                 style={styles.chip(antiHipertensivos)}
                                 onClick={() =>
                                     setAntiHipertensivos(!antiHipertensivos)
@@ -1947,6 +2295,81 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             </div>
                         </div>
                     </div>
+                    {diabetes ? (
+<div style={{ gridColumn: "1 / -1" }}>
+                            <div
+                                style={{
+                                    ...styles.legendaBox,
+                                    marginTop: "10px",
+                                }}
+                            >
+                                <div style={{ fontWeight: 700, color: "var(--prevent-text)", marginBottom: "4px" }}>
+                                    Estratificadores de risco no DM2
+                                </div>
+                                {GRUPOS_DM2.map(function (g, i) {
+                                    return renderGrupoEstrat(
+                                        g,
+                                        i === GRUPOS_DM2.length - 1
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <div style={{ ...styles.sectionLabel, marginTop: "4px" }}>
+                        Agravantes
+                    </div>
+                    <div style={styles.inputGroup}>
+                        <label style={styles.label}>Escore CAC (UA)</label>
+                        <select
+                            value={cac}
+                            onChange={(e) => setCac(e.target.value)}
+                            style={styles.select}
+                        >
+                            <option value="">Não avaliado</option>
+                            <option value="10-100">10 - 100</option>
+                            <option value="100-300">100 - 300 (ou p &gt; 75)</option>
+                            <option value=">300">&gt; 300</option>
+                        </select>
+                    </div>
+                    <div style={styles.inputGroup}>
+                        <label style={styles.label}>Lp(a) (mg/dL)</label>
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            placeholder="Ex: 20"
+                            value={lpa}
+                            onChange={(e) => setLpa(e.target.value.replace(/,/g, "."))}
+                            style={styles.input}
+                        />
+                    </div>
+                    <div style={{ gridColumn: "1 / -1" }}>
+                        <div className="prevent-chips-grid">
+                            <div
+                                style={styles.chip(subclinica)}
+                                onClick={() => setSubclinica(!subclinica)}
+                            >
+                                Aterosclerose subclínica
+                            </div>
+                            <div
+                                style={styles.chip(doencaAtero)}
+                                onClick={() => setDoencaAtero(!doencaAtero)}
+                            >
+                                Carga aterosclerótica / obstrução ≥ 50%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ gridColumn: "1 / -1" }}>
+                        <div style={styles.legendaBox}>
+                            {gruposVisiveis.map(function (item, i) {
+                                return renderGrupoEstrat(
+                                    item,
+                                    i === gruposVisiveis.length - 1
+                                )
+                            })}
+                        </div>
+                    </div>
                 </div>
 
                 <div style={{ position: "sticky" as const, top: "48px" }}>
@@ -1966,10 +2389,14 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             <span
                                 className="prevent-badge-risco"
                                 style={{
-                                    background: "rgba(255,255,255,0.6)",
-                                    color: CONFIG_RISCOS[
+                                    background: CONFIG_RISCOS[
                                         resultado.categoriaRisco
                                     ].t,
+                                    color: legivelSobre(
+                                        CONFIG_RISCOS[
+                                            resultado.categoriaRisco
+                                        ].t
+                                    ),
                                     border: `1px solid ${CONFIG_RISCOS[resultado.categoriaRisco].border}`,
                                 }}
                             >
@@ -2015,6 +2442,39 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                                         {resultado.alvoLdl}
                                     </div>
                                 </div>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        gap: "8px",
+                                        marginBottom: "12px",
+                                        flexWrap: "wrap",
+                                    }}
+                                >
+                                    <div style={styles.alvoSecundario}>
+                                        {resultado.alvoNaoHdl}
+                                    </div>
+                                    <div style={styles.alvoSecundario}>
+                                        {resultado.alvoApoB}
+                                    </div>
+                                </div>
+                                <div style={styles.condutaTitle}>
+                                    Critérios que definem o risco
+                                </div>
+                                {resultado.criterios.map(function (c, i) {
+                                    return (
+                                        <div
+                                            key={i}
+                                            style={{
+                                                fontSize: "13px",
+                                                color: "var(--prevent-text)",
+                                                marginBottom: "4px",
+                                                lineHeight: "1.4",
+                                            }}
+                                        >
+                                            • {c}
+                                        </div>
+                                    )
+                                })}
                                 <div style={styles.condutaTitle}>
                                     Esquema terapêutico
                                 </div>
