@@ -330,6 +330,18 @@
     "value": ""
   },
   {
+    "section": "medicamentos",
+    "id": "polifarmacia",
+    "label": "faz uso de 5 ou mais medicamentos",
+    "labelMd": "Polifarmácia (>5)",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
     "section": "ivcf20",
     "id": "ivcf_idade",
     "label": "idade",
@@ -743,6 +755,30 @@
     "id": "dificuldade_engolir",
     "label": "dificuldades para engolir",
     "labelMd": "Dificuldade para engolir",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "perda_peso_nao_intencional",
+    "label": "perdeu peso sem querer no último ano",
+    "labelMd": "Perda de peso não intencional",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "riscos",
+    "id": "dor_cronica",
+    "label": "dor constante há mais de 3 meses",
+    "labelMd": "Dor crônica",
     "type": "single_choice",
     "options": [
       "sim",
@@ -1408,6 +1444,66 @@
     "id": "cage_manha",
     "label": "precisou beber pela manhã para se sentir melhor ou superar ressaca",
     "labelMd": "CAGE - Manhã",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "bucal",
+    "id": "protese_dentaria",
+    "label": "usa prótese dentária",
+    "labelMd": "Prótese dentária",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "bucal",
+    "id": "odontalgia",
+    "label": "dor nos dentes ou gengivas",
+    "labelMd": "Odontalgia",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "vacinacao",
+    "id": "vacinacao_atualizada",
+    "label": "vacinação em dia",
+    "labelMd": "Vacinação atualizada",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "continencia",
+    "id": "incontinencia_urinaria",
+    "label": "incontinência urinária",
+    "labelMd": "Incontinência urinária",
+    "type": "single_choice",
+    "options": [
+      "sim",
+      "não"
+    ],
+    "value": ""
+  },
+  {
+    "section": "continencia",
+    "id": "incontinencia_fecal",
+    "label": "incontinência fecal",
+    "labelMd": "Incontinência fecal",
     "type": "single_choice",
     "options": [
       "sim",

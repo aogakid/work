@@ -289,8 +289,11 @@ const secoes = [
   { id: "cuidados", label: "Cuidados" },
   { id: "quedas", label: "Prevenção de Quedas" },
   { id: "medicamentos", label: "Medicamentos" },
+  { id: "bucal", label: "Saúde Bucal" },
+  { id: "vacinacao", label: "Vacinação" },
   { id: "ivcf20", label: "IVCF-20" },
   { id: "riscos", label: "Riscos Individuais" },
+  { id: "continencia", label: "Incontinências" },
   { id: "sono", label: "Sono" },
   { id: "ambiental", label: "Avaliação Ambiental" },
   { id: "suporte", label: "Suporte Sociofamiliar" },
@@ -340,6 +343,84 @@ const computeIVCFTotal = (fields: FormField[]): number => {
   })
 
   return total
+}
+
+const AVALIACAO_NEGATIVO: Record<string, string[]> = {
+  mora_sozinho: ["sim"],
+  ilpi_residente: ["sim"],
+  companheiro: ["não"],
+  viuvez_recente: ["sim"],
+  cuidador_disponivel: ["não"],
+  visitas_regulares: ["não"],
+  responsavel_dependentes: ["sim"],
+  ler_escrever: ["não"],
+  bpc_bolsa_familia: ["não"],
+  queda_ano_passado: ["sim"],
+  bengala_andador: ["sim"],
+  instabilidade_andar: ["sim"],
+  apoia_moveis: ["sim"],
+  preocupacao_quedas: ["sim"],
+  apoio_levantar: ["sim"],
+  dificuldade_meio_fio: ["sim"],
+  urgencia_urinaria: ["sim"],
+  hipoestesia_pes: ["sim"],
+  medicamentos_tontura: ["sim"],
+  hipnoticos_ansioliticos: ["sim"],
+  tristeza_depressao: ["sim"],
+  med_abrir_fechar: ["sim", "às vezes"],
+  med_ler_rotulo: ["sim", "às vezes"],
+  med_lembrar: ["sim", "às vezes"],
+  med_varios_comprimidos: ["sim", "às vezes"],
+  med_conseguir: ["sim", "às vezes"],
+  med_automudanca: ["sim", "às vezes"],
+  polifarmacia: ["sim"],
+  fumante: ["sim"],
+  alcool: ["sim"],
+  restrito_leito: ["sim"],
+  restrito_domicilio: ["sim"],
+  feridas_cronicas: ["sim"],
+  desidratacao: ["sim"],
+  desnutricao: ["sim"],
+  dificuldade_engolir: ["sim"],
+  perda_peso_nao_intencional: ["sim"],
+  dor_cronica: ["sim"],
+  odontalgia: ["sim"],
+  vacinacao_atualizada: ["não"],
+  incontinencia_urinaria: ["sim"],
+  incontinencia_fecal: ["sim"],
+  sono_reparador: ["não"],
+  cansaço_matinal: ["sim"],
+  sono_impacto_outros: ["sim"],
+  amb_circulacao_livre: ["não"],
+  amb_barras_apoio: ["não"],
+  amb_pisos_uniformes: ["não"],
+  amb_iluminacao: ["não"],
+  amb_interruptores: ["não"],
+  amb_antiderrapante: ["não"],
+  amb_box_abertura: ["não"],
+  amb_armarios_altura: ["não"],
+  amb_escadas: ["sim"],
+  amb_piso_antiderrapante: ["não"],
+  amb_corrimao: ["não"],
+  moradia_propria: ["não"],
+  moradia_boas_condicoes: ["não"],
+  renda_suficiente: ["não"],
+  atividade_extradomiciliar: ["não"],
+  atividade_coletiva_lazer: ["não"],
+}
+
+const opcaoRisco = (field: FormField, opt: string): boolean => {
+  if (field.section === "ivcf20") {
+    if (field.id === "ivcf_condicoes_perda" || field.id === "ivcf_comorbidades") return true
+    const scoreFn = IVCF_SCORE_MAP[field.id]
+    return scoreFn ? scoreFn(opt) > 0 : false
+  }
+  if (field.section === "cage") return opt === "sim"
+  if (field.section === "gds15") {
+    return GDS_REVERSE.has(field.id) ? opt === "não" : opt === "sim"
+  }
+  const neg = AVALIACAO_NEGATIVO[field.id]
+  return !!neg && neg.includes(opt)
 }
 
 const KATZ_SCORE_MAP: Record<string, number> = {
@@ -509,7 +590,7 @@ function CFSWizard(props: {
     <>
       {stepCard(1, "Paciente em fase terminal?", (
         <div style={{ display: "flex", gap: "8px" }}>
-          <div style={chipStyle(terminal === "sim")} onClick={() => resetCfs("sim")}>sim</div>
+          <div style={chipStyle(terminal === "sim", true)} onClick={() => resetCfs("sim")}>sim</div>
           <div style={chipStyle(terminal === "não")} onClick={() => resetCfs("não")}>não</div>
         </div>
       ))}
@@ -537,14 +618,14 @@ function CFSWizard(props: {
       {showChronic && stepCard(4, "Número de condições crônicas", (
         <div style={{ display: "flex", gap: "8px" }}>
           <div style={chipStyle(chronic === "0-9")} onClick={() => setChronic("0-9")}>0–9</div>
-          <div style={chipStyle(chronic === "10+")} onClick={() => setChronic("10+")}>≥ 10</div>
+          <div style={chipStyle(chronic === "10+", true)} onClick={() => setChronic("10+")}>≥ 10</div>
         </div>
       ))}
 
       {showHealth && stepCard(5, "Autopercepção de saúde", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {(["excelente", "muito_boa", "boa", "regular_ruim"] as const).map(opt => (
-            <div key={opt} style={chipStyle(health === opt)} onClick={() => selectHealth(opt)}>
+            <div key={opt} style={chipStyle(health === opt, opt === "regular_ruim")} onClick={() => selectHealth(opt)}>
               {opt === "muito_boa" ? "muito boa" : opt === "regular_ruim" ? "regular/ruim" : opt}
             </div>
           ))}
@@ -554,7 +635,7 @@ function CFSWizard(props: {
       {showEffort && stepCard(6, "\"Tudo exige esforço\"?", (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {(["todo_tempo", "as_vezes", "raramente_nunca"] as const).map(opt => (
-            <div key={opt} style={chipStyle(effort === opt)} onClick={() => selectEffort(opt)}>
+            <div key={opt} style={chipStyle(effort === opt, opt === "todo_tempo")} onClick={() => selectEffort(opt)}>
               {opt === "todo_tempo" ? "o tempo todo" : opt === "as_vezes" ? "às vezes" : "raramente/nunca"}
             </div>
           ))}
@@ -564,7 +645,7 @@ function CFSWizard(props: {
       {showSports && stepCard(7, "Pratica atividades esportivas ou recreativas moderadas/intensas?", (
         <div style={{ display: "flex", gap: "8px" }}>
           <div style={chipStyle(sports === "sim")} onClick={() => setSports("sim")}>sim</div>
-          <div style={chipStyle(sports === "não")} onClick={() => setSports("não")}>não</div>
+          <div style={chipStyle(sports === "não", true)} onClick={() => setSports("não")}>não</div>
         </div>
       ))}
     </>
@@ -1112,10 +1193,11 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
             <div className="geriatria-chips-grid" style={{ marginTop: "8px" }}>
               {field.options?.map(opt => {
                 const isSelected = (field.value as string) === opt
+                const risco = isSelected && opcaoRisco(field, opt)
                 return (
                   <div
                     key={opt}
-                    style={styles.chip(isSelected, "#00cc52", "rgba(0, 184, 73, 0.12)")}
+                    style={styles.chip(isSelected, risco ? "#e02424" : "#00cc52", risco ? "rgba(224, 36, 36, 0.15)" : "rgba(0, 184, 73, 0.12)")}
                     onClick={() => updateFieldValue(field.id, isSelected ? "" : opt)}
                   >
                     {opt}
@@ -1133,10 +1215,11 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
             <div className="geriatria-chips-grid" style={{ marginTop: "8px" }}>
               {field.options?.map(opt => {
                 const isSelected = ((field.value as string[]) || []).includes(opt)
+                const risco = isSelected && opcaoRisco(field, opt)
                 return (
                   <div
                     key={opt}
-                    style={styles.chip(isSelected, "#00cc52", "rgba(0, 184, 73, 0.12)")}
+                    style={styles.chip(isSelected, risco ? "#e02424" : "#00cc52", risco ? "rgba(224, 36, 36, 0.15)" : "rgba(0, 184, 73, 0.12)")}
                     onClick={() => toggleMultipleChoice(field.id, opt)}
                   >
                     {opt}
