@@ -364,6 +364,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [hoverTimer, setHoverTimer] = React.useState<boolean>(false)
     const [mostrarBurocracia, setMostrarBurocracia] = React.useState<boolean>(false)
     const [tempoBurocracia, setTempoBurocracia] = React.useState<number>(15)
+    const [progressoVertical, setProgressoVertical] = React.useState<boolean>(true)
     const [shakeTimeCount, setShakeTimeCount] = React.useState<number>(0)
     const [shakeProgressCount, setShakeProgressCount] = React.useState<number>(0)
     const [arquivadoManualmente, setArquivadoManualmente] = React.useState<boolean>(false)
@@ -1277,8 +1278,23 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 <>
                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 19, background: "transparent", pointerEvents: "auto" }} onClick={() => { setRelogioExiting(true); setPopupDispensado(true) }} />
                     <div className={`framer-timer-entrance gas-ui-blockout ${relogioExiting ? "framer-timer-exit" : ""}`} onAnimationEnd={() => { if (relogioExiting) { setMostrarSetupRelogio(false); setRelogioExiting(false) } }} style={{ position: "absolute", bottom: "16px", left: "16px", background: bgDinamicoPopup, backdropFilter: "blur(12px)", border: `1px solid ${borderDinamicaPopup}`, borderRadius: "12px", padding: "14px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", alignItems: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", width: "160px" }}>
-                        <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", marginBottom: "10px" }}>
+                        <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center", marginBottom: "10px", position: "relative" }}>
                             <span style={{ fontSize: "9px", fontWeight: 700, color: corDinamicaPopup, letterSpacing: "0.8px" }}>TEMPO</span>
+                            <button className="gas-scale-hover" onClick={() => setProgressoVertical(v => !v)} title={progressoVertical ? "Progresso vertical (cima → baixo)" : "Progresso horizontal (esquerda → direita)"} style={{ position: "absolute", top: "0px", right: "0px", background: progressoVertical ? corDinamicaPopup : "rgba(120,113,108,0.12)", border: "none", borderRadius: "5px", padding: "3px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: progressoVertical ? "#ffffff" : corDinamicaPopup }}>
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                                    {progressoVertical ? (
+                                        <>
+                                            <rect x="1.5" y="2.5" width="11" height="3" rx="1" />
+                                            <path d="M7 8.5 L7 12 M5.25 10.25 L7 12 L8.75 10.25" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <rect x="2.5" y="1.5" width="3" height="11" rx="1" />
+                                            <path d="M8.5 7 L12 7 M10.25 5.25 L12 7 L10.25 8.75" />
+                                        </>
+                                    )}
+                                </svg>
+                            </button>
                         </div>
                         <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} style={{ width: "84px", height: "84px", cursor: "ew-resize", overflow: "visible" }}>
                             <circle cx="42" cy="42" r="38" fill="rgba(255,255,255,0.4)" stroke="rgba(120,113,108,0.2)" strokeWidth="1.5" />
@@ -1457,7 +1473,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <div style={{ marginBottom: "8px", borderRadius: "10px", background: secaoExtrapolada && !arquivadoManualmente ? "#ef4444" : "var(--editor-bg)", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente ? "#ef4444" : "var(--editor-border)"}`, transition: "background 0.3s, border-color 0.3s" }}>
                         <div style={{ position: "relative", overflow: "hidden", borderRadius: "10px", padding: "4px 14px 0 14px" }}>
                             {cronometroAtivo && !arquivadoManualmente && !secaoExtrapolada && (
-                                <div className="gas-section-progress" style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${(segundosDecorridos / totalSegundosLimite) * 100}%`, background: `linear-gradient(90deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "width 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }} />
+                                <div className="gas-section-progress" style={progressoVertical
+                                    ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${(segundosDecorridos / totalSegundosLimite) * 100}%`, background: `linear-gradient(180deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "height 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }
+                                    : { position: "absolute", top: 0, left: 0, height: "100%", width: `${(segundosDecorridos / totalSegundosLimite) * 100}%`, background: `linear-gradient(90deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "width 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }} />
                             )}
                             <div
                                 key={`plaintext-${plainTextVersionRef.current}`}
@@ -1543,7 +1561,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             {s.enabled && !s.collapsed && (
                                 <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: "4px 14px 0 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
                                     {cronometroAtivo && !arquivadoManualmente && (
-                                        <div className="gas-section-progress" style={{ position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
+                                        <div className="gas-section-progress" style={progressoVertical
+                                            ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
+                                            : { position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
                                     )}
                                     <div
                                         key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}

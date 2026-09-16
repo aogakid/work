@@ -420,6 +420,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (snap.hdl !== undefined) next["hdl"] = snap.hdl
         if (snap.trig !== undefined) next["trig"] = snap.trig
         if (snap.cr !== undefined) next["cr"] = snap.cr
+        if (snap.hba1c !== undefined) next["hba1c"] = snap.hba1c
         return next
       })
       setTimeout(() => { syncRef.current = false }, 0)
@@ -436,6 +437,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (values.hdl !== undefined) next["hdl"] = values.hdl
         if (values.trig !== undefined) next["trig"] = values.trig
         if (values.cr !== undefined) next["cr"] = values.cr
+        if (values.hba1c !== undefined) next["hba1c"] = values.hba1c
         return next
       })
       setTimeout(() => { syncRef.current = false }, 0)
@@ -445,8 +447,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   useEffect(() => {
     if (syncRef.current) return
     if (!touchedRef.current) return
-    broadcastFieldSync("exames", { idade: values["idade"] || "", sexo: values["sexo"] || "", ct: values["ct"] || "", hdl: values["hdl"] || "", trig: values["trig"] || "", cr: values["cr"] || "" })
-  }, [values["idade"], values["sexo"], values["ct"], values["hdl"], values["trig"], values["cr"]])
+    broadcastFieldSync("exames", { idade: values["idade"] || "", sexo: values["sexo"] || "", ct: values["ct"] || "", hdl: values["hdl"] || "", trig: values["trig"] || "", cr: values["cr"] || "", hba1c: values["hba1c"] || "" })
+  }, [values["idade"], values["sexo"], values["ct"], values["hdl"], values["trig"], values["cr"], values["hba1c"]])
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {

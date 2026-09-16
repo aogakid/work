@@ -737,6 +737,15 @@ const CDR_GLOBAL_LABELS: Record<number, string> = {
   3: "Demência grave",
 }
 
+function legivelSobre(hex: string): string {
+  const h = hex.replace("#", "")
+  const r = parseInt(h.slice(0, 2), 16) / 255
+  const g = parseInt(h.slice(2, 4), 16) / 255
+  const b = parseInt(h.slice(4, 6), 16) / 255
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return lum > 0.42 ? "#161513" : "#ffffff"
+}
+
 function cdrLevelColor(level: number): string {
   if (level === 0) return "#00b849"
   if (level === 0.5) return "#84cc16"
@@ -1278,6 +1287,32 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
   const katzTotal = computeKatzTotal(formFields)
   const lawtonTotal = computeLawtonTotal(formFields)
   const klFilled = formFields.some(f => f.section === "katzlawton" && f.type === "single_choice" && f.value && f.value !== "")
+  const katzPreenchido = formFields.some(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
+  const lawtonPreenchido = formFields.some(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
+
+  const corCAGE = cageTotal >= 2 ? "#e02424" : "#00b849"
+  const corGDS = gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424"
+  const corCFS = cfsScore === null ? "#00b849" : cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : cfsScore <= 7 ? "#e02424" : "#7c2d12"
+  const corIVCF = ivcfTotal === 0 ? "#00b849" : ivcfTotal <= 6 ? "#00b849" : ivcfTotal <= 14 ? "#ca8a04" : "#e02424"
+  const corCDR = cdrResult === null ? "#00b849" : cdrLevelColor(cdrResult.global)
+  const corKatz = katzTotal >= 5 ? "#00b849" : katzTotal >= 3 ? "#ca8a04" : "#e02424"
+  const corLawton = lawtonTotal >= 6 ? "#00b849" : lawtonTotal >= 3 ? "#ca8a04" : "#e02424"
+  const corKL = katzPreenchido && lawtonPreenchido
+    ? (katzTotal < 3 || lawtonTotal < 3 ? "#e02424" : katzTotal < 5 || lawtonTotal < 6 ? "#ca8a04" : "#00b849")
+    : katzPreenchido
+      ? corKatz
+      : corLawton
+  const severidades = [
+    cageFilled ? (cageTotal >= 2 ? 2 : 0) : -1,
+    gds15Filled ? (gds15Total <= 4 ? 0 : gds15Total <= 9 ? 1 : 2) : -1,
+    cfsScore !== null ? (cfsScore <= 3 ? 0 : cfsScore <= 5 ? 1 : 2) : -1,
+    cdrResult !== null ? (cdrResult.global <= 0 ? 0 : cdrResult.global <= 1 ? 1 : 2) : -1,
+    katzPreenchido ? (katzTotal >= 5 ? 0 : katzTotal >= 3 ? 1 : 2) : -1,
+    lawtonPreenchido ? (lawtonTotal >= 6 ? 0 : lawtonTotal >= 3 ? 1 : 2) : -1,
+  ]
+  const temEscala = severidades.some(s => s >= 0)
+  const piorSeveridade = Math.max(...severidades.filter(s => s >= 0), 0)
+  const corGeral = !temEscala ? "#00b849" : piorSeveridade === 2 ? "#e02424" : piorSeveridade === 1 ? "#ca8a04" : "#00b849"
 
   const ivcfClassificacao = ivcfTotal === 0
     ? ""
@@ -1286,116 +1321,6 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
       : ivcfTotal <= 14
         ? "moderada"
         : "alta"
-
-  const gds15Card = activeTab === "gds15" && gds15Filled ? (() => {
-    const gdsColor = gds15Total <= 4 ? "#00b849" : gds15Total <= 9 ? "#ca8a04" : "#e02424"
-    return (
-    <div style={{
-      background: gds15Total <= 4 ? "rgba(0, 184, 73, 0.08)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
-      border: `1px solid ${
-        gds15Total <= 4 ? "rgba(0, 184, 73, 0.35)" : gds15Total <= 9 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
-      }`,
-      borderRadius: "12px",
-      padding: "12px 16px",
-      textAlign: "center" as const,
-    }}>
-      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-        GDS-15
-      </div>
-      <div style={{ fontSize: "28px", fontWeight: 800, color: gdsColor }}>
-        {gds15Total} / 15
-      </div>
-      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-        {gds15Total <= 4 ? "Normal" : gds15Total <= 9 ? "Depressão leve" : "Depressão moderada a grave"}
-      </div>
-    </div>
-    )
-  })() : null
-
-  const cfsCard = activeTab === "cfs" && cfsScore !== null ? (() => {
-    const cfsColor = cfsScore <= 3 ? "#00b849" : cfsScore <= 5 ? "#ca8a04" : cfsScore <= 7 ? "#e02424" : "#7c2d12"
-    return (
-    <div style={{
-      background: cfsScore <= 3 ? "rgba(0, 184, 73, 0.08)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.08)" : cfsScore <= 7 ? "rgba(224, 36, 36, 0.08)" : "rgba(124, 45, 18, 0.08)",
-      border: `1px solid ${
-        cfsScore <= 3 ? "rgba(0, 184, 73, 0.35)" : cfsScore <= 5 ? "rgba(234, 179, 8, 0.35)" : cfsScore <= 7 ? "rgba(224, 36, 36, 0.35)" : "rgba(124, 45, 18, 0.35)"
-      }`,
-      borderRadius: "12px",
-      padding: "12px 16px",
-      textAlign: "center" as const,
-    }}>
-      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-        CFS
-      </div>
-      <div style={{ fontSize: "28px", fontWeight: 800, color: cfsColor }}>
-        {cfsScore} / 9
-      </div>
-      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-        {CFS_LABELS[cfsScore]}
-      </div>
-    </div>
-    )
-  })() : null
-
-  const cdrCard = activeTab === "cdr" && cdrResult !== null ? (() => {
-    const cdrColor = cdrLevelColor(cdrResult.global)
-    return (
-    <div style={{
-      background: cdrResult.global === 0 ? "rgba(0, 184, 73, 0.08)" : cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.08)" : cdrResult.global === 1 ? "rgba(234, 179, 8, 0.08)" : cdrResult.global === 2 ? "rgba(234, 88, 12, 0.08)" : "rgba(224, 36, 36, 0.08)",
-      border: `1px solid ${
-        cdrResult.global === 0 ? "rgba(0, 184, 73, 0.35)" : cdrResult.global === 0.5 ? "rgba(132, 204, 22, 0.35)" : cdrResult.global === 1 ? "rgba(234, 179, 8, 0.35)" : cdrResult.global === 2 ? "rgba(234, 88, 12, 0.35)" : "rgba(224, 36, 36, 0.35)"
-      }`,
-      borderRadius: "12px",
-      padding: "12px 16px",
-      textAlign: "center" as const,
-    }}>
-      <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-        CDR
-      </div>
-      <div style={{ fontSize: "28px", fontWeight: 800, color: cdrColor }}>
-        {cdrResult.global}
-      </div>
-      <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-        {CDR_GLOBAL_LABELS[cdrResult.global]}
-      </div>
-    </div>
-    )
-  })() : null
-
-  const katzlawtonCard = activeTab === "katzlawton" && klFilled ? (() => {
-    const hasKatz = formFields.some(f => KATZ_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
-    const hasLawton = formFields.some(f => LAWTON_IDS.includes(f.id) && typeof f.value === "string" && f.value !== "")
-    return (
-    <div style={{ display: "grid", gridTemplateColumns: hasKatz && hasLawton ? "1fr 1fr" : "1fr", gap: "8px" }}>
-      {hasKatz && (
-        <div style={{
-          background: katzTotal >= 5 ? "rgba(0, 184, 73, 0.08)" : katzTotal >= 3 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
-          border: `1px solid ${katzTotal >= 5 ? "rgba(0, 184, 73, 0.35)" : katzTotal >= 3 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"}`,
-          borderRadius: "12px", padding: "12px 16px", textAlign: "center" as const,
-        }}>
-          <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>Katz ADL</div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: katzTotal >= 5 ? "#00b849" : katzTotal >= 3 ? "#ca8a04" : "#e02424" }}>{katzTotal} / 6</div>
-          <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-            {katzTotal >= 5 ? "Independente" : katzTotal >= 3 ? "Dependência parcial" : "Dependência significativa"}
-          </div>
-        </div>
-      )}
-      {hasLawton && (
-        <div style={{
-          background: lawtonTotal >= 6 ? "rgba(0, 184, 73, 0.08)" : lawtonTotal >= 3 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)",
-          border: `1px solid ${lawtonTotal >= 6 ? "rgba(0, 184, 73, 0.35)" : lawtonTotal >= 3 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"}`,
-          borderRadius: "12px", padding: "12px 16px", textAlign: "center" as const,
-        }}>
-          <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>Lawton IADL</div>
-          <div style={{ fontSize: "28px", fontWeight: 800, color: lawtonTotal >= 6 ? "#00b849" : lawtonTotal >= 3 ? "#ca8a04" : "#e02424" }}>{lawtonTotal} / 8</div>
-          <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-            {lawtonTotal >= 6 ? "Independente" : lawtonTotal >= 3 ? "Ajudas pontuais" : "Muita dependência"}
-          </div>
-        </div>
-      )}
-    </div>
-    )
-  })() : null
 
   return (
     <div style={{ ...styles.container, ...style }}>
@@ -1472,64 +1397,6 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
           <div style={{ display: "flex", flexDirection: "column", gap: "12px", maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}>
           {formFields.length > 0 && (
             <>
-              {/* Score cards row */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "10px" }}>
-                {activeTab === "ivcf20" && (
-                <div style={{
-                  background: ivcfTotal === 0 ? "var(--geriatria-card-bg)" : (
-                    ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.08)" :
-                    ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.08)" : "rgba(224, 36, 36, 0.08)"
-                  ),
-                  border: `1px solid ${
-                    ivcfTotal === 0 ? "var(--geriatria-border)" :
-                    ivcfTotal <= 6 ? "rgba(0, 184, 73, 0.35)" :
-                    ivcfTotal <= 14 ? "rgba(234, 179, 8, 0.35)" : "rgba(224, 36, 36, 0.35)"
-                  }`,
-                  borderRadius: "12px",
-                  padding: "12px 16px",
-                  textAlign: "center" as const,
-                }}>
-                  <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-                    IVCF-20
-                  </div>
-                  <div style={{ fontSize: "28px", fontWeight: 800, color: ivcfTotal === 0 ? "var(--geriatria-text-muted)" : (
-                    ivcfTotal <= 6 ? "#00b849" : ivcfTotal <= 14 ? "#ca8a04" : "#e02424"
-                  )}}>
-                    {ivcfTotal || "—"}
-                  </div>
-                  <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-                    {ivcfTotal === 0 ? "Preencha o IVCF-20" :
-                     ivcfClassificacao === "baixa" ? "Risco baixo" :
-                     ivcfClassificacao === "moderada" ? "Risco moderado" : "Risco alto"}
-                  </div>
-                </div>
-                )}
-                {activeTab === "cage" && cageFilled && (
-                  <div style={{
-                    background: cageTotal < 2 ? "rgba(0, 184, 73, 0.08)" : "rgba(224, 36, 36, 0.08)",
-                    border: `1px solid ${
-                      cageTotal < 2 ? "rgba(0, 184, 73, 0.35)" : "rgba(224, 36, 36, 0.35)"
-                    }`,
-                    borderRadius: "12px",
-                    padding: "12px 16px",
-                    textAlign: "center" as const,
-                  }}>
-                    <div style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--geriatria-text-muted)", marginBottom: "4px" }}>
-                      CAGE
-                    </div>
-                    <div style={{ fontSize: "28px", fontWeight: 800, color: cageTotal >= 2 ? "#e02424" : "#00b849" }}>
-                      {cageTotal}
-                    </div>
-                    <div style={{ fontSize: "10px", color: "var(--geriatria-text-muted)", marginTop: "2px" }}>
-                      {cageTotal >= 2 ? "Uso problemático" : "Baixo risco"}
-                    </div>
-                  </div>
-                )}
-                {gds15Card}
-                {cfsCard}
-                {cdrCard}
-                {katzlawtonCard}
-              </div>
 
               {activeTab === "avaliacao" ? (
               <div
@@ -1551,8 +1418,8 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   <div
                     className="geriatria-badge"
                     style={{
-                      background: "rgba(0, 184, 73, 0.12)",
-                      color: "#00cc52",
+                      background: corGeral,
+                      color: legivelSobre(corGeral),
                     }}
                   >
                     Resultado
@@ -1618,7 +1485,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   border: `1px solid ${cageTotal >= 2 ? "rgba(224, 36, 36, 0.3)" : "var(--geriatria-border)"}`,
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corCAGE, color: legivelSobre(corCAGE) }}>
                   CAGE
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
@@ -1650,7 +1517,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   }`,
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corCFS, color: legivelSobre(corCFS) }}>
                   CFS
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
@@ -1678,7 +1545,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   border: "1px solid var(--geriatria-border)",
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corKL, color: legivelSobre(corKL) }}>
                   Katz/Lawton
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
@@ -1724,7 +1591,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   }`,
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corIVCF, color: legivelSobre(corIVCF) }}>
                   IVCF-20
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
@@ -1758,7 +1625,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   }`,
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corCDR, color: legivelSobre(corCDR) }}>
                   CDR
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>
@@ -1792,7 +1659,7 @@ export default forwardRef<CompanionActions, Props>(function GeriatriaUI({ style 
                   }`,
                 }}
               >
-                <div className="geriatria-badge" style={{ background: "rgba(0, 184, 73, 0.12)", color: "#00cc52" }}>
+                <div className="geriatria-badge" style={{ background: corGDS, color: legivelSobre(corGDS) }}>
                   GDS-15
                 </div>
                 <div style={{ marginTop: "12px", fontSize: "14px", color: "var(--geriatria-text)", lineHeight: "1.5" }}>

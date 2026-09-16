@@ -519,6 +519,22 @@ function legivelSobre(hex: string): string {
     return lum > 0.42 ? "#161513" : "#ffffff"
 }
 
+const ESTAGIOS_MOTIVACAO: string[] = [
+    "Pré-contemplação",
+    "Contemplação",
+    "Preparação",
+    "Ação",
+    "Manutenção",
+]
+
+const GRAU_DEPENDENCIA: Record<string, string> = {
+    "Muito baixa": "muito baixo",
+    "Baixa": "baixo",
+    "Média": "médio",
+    "Alta": "alto",
+    "Muito alta": "muito alto",
+}
+
 interface Props {
     style?: React.CSSProperties
 }
@@ -551,7 +567,7 @@ interface ScoreOutput {
     maxScore: number
 }
 
-type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9" | "audit" | "fagerstrom"
+type ScoreTool = "prevent" | "ipss" | "gad7" | "phq9" | "audit" | "tabagismo"
 
 interface ScoreRange {
     max: number
@@ -579,6 +595,11 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [phq9Questions, setPhq9Questions] = useState<ScoreQuestion[]>([])
     const [auditQuestions, setAuditQuestions] = useState<ScoreQuestion[]>([])
     const [fagerstromQuestions, setFagerstromQuestions] = useState<ScoreQuestion[]>([])
+
+    const [cigarrosDia, setCigarrosDia] = useState("")
+    const [anosTabagismo, setAnosTabagismo] = useState("")
+    const [tempoPrimeiroCigarro, setTempoPrimeiroCigarro] = useState("")
+    const [estagioMotivacao, setEstagioMotivacao] = useState("")
 
     const [idade, setIdade] = useState("")
     const [sexo, setSexo] = useState("")
@@ -664,8 +685,8 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const broadcast = useCallback(() => {
         if (syncRef.current) return
         if (!touchedRef.current) return
-        broadcastFieldSync("escores", { idade, sexo, ct: colTotal, hdl, trig: triglicerideos, cr: creatinina })
-    }, [idade, sexo, colTotal, hdl, triglicerideos, creatinina])
+        broadcastFieldSync("escores", { idade, sexo, ct: colTotal, hdl, trig: triglicerideos, cr: creatinina, hba1c })
+    }, [idade, sexo, colTotal, hdl, triglicerideos, creatinina, hba1c])
 
     useEffect(() => broadcast(), [broadcast])
 
@@ -680,6 +701,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             if (snap.hdl !== undefined) setHdl(snap.hdl)
             if (snap.trig !== undefined) setTriglicerideos(snap.trig)
             if (snap.cr !== undefined) setCreatinina(snap.cr.replace(/,/g, "."))
+            if (snap.hba1c !== undefined) setHba1c(snap.hba1c.replace(/,/g, "."))
             setTimeout(() => { syncRef.current = false }, 0)
         }
         return listenFieldSync(({ source, values }) => {
@@ -692,6 +714,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             if (values.hdl !== undefined) setHdl(values.hdl)
             if (values.trig !== undefined) setTriglicerideos(values.trig)
             if (values.cr !== undefined) setCreatinina(values.cr.replace(/,/g, "."))
+            if (values.hba1c !== undefined) setHba1c(values.hba1c.replace(/,/g, "."))
             setTimeout(() => { syncRef.current = false }, 0)
         })
     }, [])
@@ -739,6 +762,19 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const fagerstrom = scoreTool(fagerstromQuestions)
     const fagerstromSeverity = fagerstrom.total <= 2 ? "Muito baixa" : fagerstrom.total <= 4 ? "Baixa" : fagerstrom.total <= 5 ? "Média" : fagerstrom.total <= 7 ? "Alta" : "Muito alta"
 
+    const cigarrosNum = parseFloat(cigarrosDia.replace(",", "."))
+    const anosNum = parseFloat(anosTabagismo.replace(",", "."))
+    const cargaTabagica = !isNaN(cigarrosNum) && !isNaN(anosNum) && cigarrosNum > 0 && anosNum > 0
+        ? (cigarrosNum * anosNum) / 20
+        : null
+    const cargaTabagicaStr = cargaTabagica !== null
+        ? (cargaTabagica % 1 === 0 ? String(cargaTabagica) : cargaTabagica.toFixed(1).replace(".", ","))
+        : ""
+
+    const grauDep = fagerstrom.total > 0 ? GRAU_DEPENDENCIA[fagerstromSeverity] || "" : ""
+    const estagioIdx = ESTAGIOS_MOTIVACAO.indexOf(estagioMotivacao)
+    const estagioFrame = estagioMotivacao ? ` em fase de ${estagioMotivacao.toLowerCase()}` : ""
+
     const audit = scoreTool(auditQuestions)
     const auditSeverity = audit.total <= 7 ? "Baixo risco" : audit.total <= 15 ? "Consumo de risco" : audit.total <= 19 ? "Consumo nocivo" : "Possível dependência"
 
@@ -759,6 +795,19 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         if (groupId === "phq9") return formatScoreOutput("PHQ-9", phq9)
         if (groupId === "fagerstrom") return formatScoreOutput("Fagerström", fagerstrom)
         if (groupId === "audit") return formatScoreOutput("AUDIT", audit)
+        if (groupId === "tabagismo") {
+            const grauFrag = grauDep ? ` com ${grauDep} grau de dependência` : ""
+            return `Tabagismo ativo${grauFrag}${estagioFrame}`
+        }
+        if (groupId === "carga") {
+            if (!cargaTabagicaStr && !tempoPrimeiroCigarro) return null
+            const tempoFrag = tempoPrimeiroCigarro
+                ? `Primeiro cigarro do dia após ${tempoPrimeiroCigarro.replace(",", ".")} horas`
+                : ""
+            const base = cargaTabagicaStr ? `Carga tabágica ${cargaTabagicaStr}` : ""
+            const partes = [base, tempoFrag].filter(Boolean)
+            return partes.length > 0 ? partes.join(". ") : "Tabagista ativo"
+        }
         return null
     }
 
@@ -768,6 +817,10 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         if (phq9Ref.current) setPhq9Questions(phq9Ref.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
         if (auditRef.current) setAuditQuestions(auditRef.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
         if (fagerstromRef.current) setFagerstromQuestions(fagerstromRef.current.map((q: ScoreQuestion) => ({ ...q, value: q.value ?? "" })))
+        setCigarrosDia("")
+        setAnosTabagismo("")
+        setTempoPrimeiroCigarro("")
+        setEstagioMotivacao("")
     }, [])
 
     useImperativeHandle(ref, () => ({
@@ -1666,8 +1719,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
         setAuditQuestions(prev => prev.map(q => q.id === questionId ? { ...q, value } : q))
     }, [])
 
-    const scoreToolsContent = (() => {
-        const toolConfig: Record<string, ScoreToolConfig | null> = {
+    const toolConfig: Record<string, ScoreToolConfig | null> = {
             ipss: {
                 title: "IPSS (International Prostate Symptom Score)",
                 subtitle: "sobre os últimos 30 dias, quantas vezes teve:",
@@ -1763,15 +1815,9 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                 update: updateAudit,
             },
         }
-        const cfg = toolConfig[activeTab]
+        const renderQuestionRows = (cfg: ScoreToolConfig | null) => {
         if (!cfg) return null
-        const currentRange = cfg.ranges.find((r) => cfg.total <= r.max) || cfg.ranges[cfg.ranges.length - 1]
-        const pct = cfg.maxScore > 0 ? (cfg.total / cfg.maxScore) * 100 : 0
         return (<>
-            <div style={styles.title}>{cfg.title}</div>
-            <div style={styles.subtitle}>{cfg.subtitle}</div>
-            <div className="prevent-root">
-                <div className="prevent-fields-grid">
                     {cfg.questions.map((q) => {
                         const idx = q.value !== "" ? q.options.indexOf(q.value) : -1
                         const hue = idx >= 0 ? Math.round(120 - (idx / (q.options.length - 1)) * 120) : 0
@@ -1839,6 +1885,48 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             </React.Fragment>
                         )
                     })}
+        </>)
+    }
+
+    const renderEstagioSlider = () => {
+        const idx = estagioIdx
+        const hue = idx >= 0 ? Math.round((idx / (ESTAGIOS_MOTIVACAO.length - 1)) * 120) : 0
+        const accent = idx >= 0 ? `hsl(${hue}, 70%, 42%)` : "var(--prevent-text-muted)"
+        return (
+            <div className="ipss-slider-row">
+                <label className="ipss-slider-label">Fase de mudança (Prochaska &amp; DiClemente)</label>
+                <input
+                    type="range"
+                    className="ipss-range"
+                    min={0}
+                    max={ESTAGIOS_MOTIVACAO.length - 1}
+                    step={1}
+                    value={idx >= 0 ? idx : 0}
+                    onChange={(e) => setEstagioMotivacao(ESTAGIOS_MOTIVACAO[parseInt(e.target.value)])}
+                    style={{
+                        ["--ipss-accent" as string]: accent,
+                        background: idx >= 0
+                            ? `linear-gradient(to right, ${accent} 0%, ${accent} ${(idx / (ESTAGIOS_MOTIVACAO.length - 1)) * 100}%, var(--prevent-border) ${(idx / (ESTAGIOS_MOTIVACAO.length - 1)) * 100}%, var(--prevent-border) 100%)`
+                            : `var(--prevent-border)`,
+                    }}
+                />
+                <div className="ipss-slider-value" style={{ color: accent }}>
+                    {idx >= 0 ? ESTAGIOS_MOTIVACAO[idx] : "—"}
+                </div>
+            </div>
+        )
+    }
+
+    const renderScoreTool = (cfg: ScoreToolConfig | null, mostrarTitulo: boolean) => {
+        if (!cfg) return null
+        const currentRange = cfg.ranges.find((r) => cfg.total <= r.max) || cfg.ranges[cfg.ranges.length - 1]
+        const pct = cfg.maxScore > 0 ? (cfg.total / cfg.maxScore) * 100 : 0
+        return (<>
+            {mostrarTitulo && <div style={styles.title}>{cfg.title}</div>}
+            {mostrarTitulo && <div style={styles.subtitle}>{cfg.subtitle}</div>}
+            <div className="prevent-root">
+                <div className="prevent-fields-grid">
+                    {renderQuestionRows(cfg)}
                 </div>
                 <div style={{ position: "sticky" as const, top: "48px" }}>
                     <div
@@ -1848,7 +1936,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             border: `1px solid ${currentRange.color}73`,
                         }}
                     >
-                        <span className="prevent-badge-risco" style={{ background: "rgba(255,255,255,0.6)", color: currentRange.color, border: `1px solid ${currentRange.color}73` }}>
+                        <span className="prevent-badge-risco" style={{ background: currentRange.color, color: legivelSobre(currentRange.color), border: `1px solid ${currentRange.color}` }}>
                             {currentRange.label}
                         </span>
                         <div style={styles.label}>Pontuação</div>
@@ -1869,7 +1957,57 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                 </div>
             </div>
         </>)
-    })()
+    }
+
+    const scoreToolsContent = activeTab === "tabagismo" ? (<>
+        <div style={styles.title}>Tabagismo</div>
+        <div style={styles.subtitle}>carga tabágica, dependência e motivação para cessação:</div>
+        <div className="prevent-root">
+            <div className="prevent-fields-grid">
+                <div style={styles.sectionLabel}>Carga tabágica</div>
+                <div style={styles.inputGroup}>
+                    <label style={styles.label}>Cigarros por dia</label>
+                    <input type="text" inputMode="decimal" placeholder="Ex: 20" value={cigarrosDia} onChange={(e) => setCigarrosDia(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))} style={styles.input} />
+                </div>
+                <div style={styles.inputGroup}>
+                    <label style={styles.label}>Anos de tabagismo</label>
+                    <input type="text" inputMode="decimal" placeholder="Ex: 15" value={anosTabagismo} onChange={(e) => setAnosTabagismo(e.target.value.replace(/[^0-9.]/g, "").slice(0, 4))} style={styles.input} />
+                </div>
+                <div style={styles.inputGroup}>
+                    <label style={styles.label}>Tempo até o 1º cigarro do dia (horas)</label>
+                    <input type="text" inputMode="decimal" placeholder="Ex: 2" value={tempoPrimeiroCigarro} onChange={(e) => setTempoPrimeiroCigarro(e.target.value.replace(/[^0-9.]/g, "").slice(0, 4))} style={styles.input} />
+                </div>
+
+                <div style={{ ...styles.sectionLabel, marginTop: "20px" }}>Fagerström (Dependência à Nicotina)</div>
+                {renderQuestionRows(toolConfig.fagerstrom)}
+
+                <div style={{ ...styles.sectionLabel, marginTop: "20px" }}>Estágio de motivação para cessação</div>
+                {renderEstagioSlider()}
+            </div>
+            <div style={{ position: "sticky" as const, top: "48px" }}>
+                <div className="prevent-result-card" style={{ background: "var(--prevent-card-bg)", border: "1px solid var(--prevent-border)" }}>
+                    <span className="prevent-badge-risco" style={{ background: "#e62219", color: legivelSobre("#e62219"), border: "1px solid #e62219" }}>
+                        Tabagismo ativo
+                    </span>
+                    <div style={styles.label}>Carga tabágica</div>
+                    <div style={styles.scoreValue}>{cargaTabagicaStr ? `${cargaTabagicaStr} maços-ano` : "—"}</div>
+                    <div style={{ ...styles.condutaTitle, color: "#e62219" }}>Primeiro cigarro do dia</div>
+                    <div style={styles.condutaText}>{tempoPrimeiroCigarro ? `após ${tempoPrimeiroCigarro.replace(".", ",")} horas de acordar` : "informe o tempo até o 1º cigarro"}</div>
+                    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid var(--prevent-conduta-border)" }}>
+                        <div style={styles.label}>Fagerström</div>
+                        <div style={{ fontSize: "20px", fontWeight: 700, color: "var(--prevent-text)", marginBottom: "4px" }}>
+                            {fagerstrom.total} <span style={{ fontSize: "12px", fontWeight: 400, color: "var(--prevent-text-muted)" }}>/{fagerstrom.maxScore}</span> · {fagerstromSeverity}
+                        </div>
+                        {fagerstrom.total > 0 && <div style={{ fontSize: "12px", color: "var(--prevent-text-muted)", marginBottom: "12px" }}>
+                            {fagerstrom.total <= 2 ? "Dependência muito baixa" : fagerstrom.total <= 4 ? "Dependência baixa" : fagerstrom.total <= 5 ? "Dependência moderada" : fagerstrom.total <= 7 ? "Dependência alta" : "Dependência muito alta"}
+                        </div>}
+                        <div style={styles.label}>Motivação</div>
+                        <div style={styles.condutaText}>{estagioMotivacao ? `fase de ${estagioMotivacao.toLowerCase()}` : "não selecionada"}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </>) : renderScoreTool(toolConfig[activeTab], true)
 
     const markTouched = () => { touchedRef.current = true }
 
@@ -1880,7 +2018,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
             <div style={{ display: "flex", gap: "4px", marginBottom: "16px", flexWrap: "wrap" }}>
-                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"], ["audit", "AUDIT"], ["fagerstrom", "Fagerström"]] as const).map(([key, label]) => (
+                {([["prevent", "PREVENT"], ["ipss", "IPSS"], ["gad7", "GAD-7"], ["phq9", "PHQ-9"], ["audit", "AUDIT"], ["tabagismo", "Tabagismo"]] as const).map(([key, label]) => (
                     <div
                         key={key}
                         onClick={() => setActiveTab(key)}
@@ -1979,7 +2117,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             inputMode="decimal"
                             placeholder="Ex: 175"
                             value={altura}
-                            onChange={(e) => setAltura(e.target.value.replace(/,/g, "."))}
+                            onChange={(e) => setAltura(e.target.value.replace(/[^0-9]/g, ""))}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,

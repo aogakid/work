@@ -43,6 +43,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "phq9", label: "PHQ-9", targetSection: "objetivo" },
             { id: "audit", label: "AUDIT", targetSection: "objetivo" },
             { id: "fagerstrom", label: "Fagerström", targetSection: "objetivo" },
+            { id: "tabagismo", label: "Tabagismo", targetSection: "avaliacao" },
+            { id: "carga", label: "Carga tabágica", targetSection: "subjetivo" },
         ],
     },
     {
