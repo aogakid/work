@@ -12,9 +12,24 @@ export function withGoogleSheetsSubmit<P extends { style?: CSSProperties; childr
             if (!isCounting) return
             const timer = setTimeout(() => {
                 setIsCounting(false)
-            }, 5000)
+            }, 30000)
             return () => clearTimeout(timer)
         }, [isCounting])
+
+        useEffect(() => {
+            const quandoMudaStatus = (e: CustomEvent<boolean>) => {
+                setIsCounting(Boolean(e.detail))
+            }
+            window.addEventListener(
+                "gas-sending-status",
+                quandoMudaStatus as EventListener
+            )
+            return () =>
+                window.removeEventListener(
+                    "gas-sending-status",
+                    quandoMudaStatus as EventListener
+                )
+        }, [])
 
         const originalChildren = Array.isArray(props.children)
             ? props.children
@@ -75,17 +90,18 @@ export function withGoogleSheetsSubmit<P extends { style?: CSSProperties; childr
                 }}
                 onClick={async () => {
                     setIsCounting(true)
-
-                    if (sheets.enviarParaPlanilha) {
-                        const texto = sheets.textoInput?.trim()
-                        if (!texto) {
-                            alert("Por favor, cole o texto antes de enviar.")
-                            setIsCounting(false)
-                            return
+                    try {
+                        if (sheets.enviarParaPlanilha) {
+                            const texto = sheets.textoInput?.trim()
+                            if (!texto) {
+                                alert("Por favor, cole o texto antes de enviar.")
+                                return
+                            }
+                            await sheets.enviarParaPlanilha()
+                        } else {
+                            alert("Erro de inicialização. Recarregue a página.")
                         }
-                        await sheets.enviarParaPlanilha()
-                    } else {
-                        alert("Erro de inicialização. Recarregue a página.")
+                    } finally {
                         setIsCounting(false)
                     }
                 }}

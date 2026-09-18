@@ -99,6 +99,7 @@ export const COMPANIONS: CompanionConfig[] = [
         component: CalculadoraGestacional,
         outputGroups: [
             { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
+            { id: "risco", label: "Risco gestacional (MS)", targetSection: "avaliacao" },
         ],
     },
 ]

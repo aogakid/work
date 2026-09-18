@@ -13,6 +13,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
     const sheets = useGoogleSheets()
     const [input, setInput] = React.useState("")
     const [itens, setItens] = React.useState<string[]>([""])
+    const [enviando, setEnviando] = React.useState(false)
     const podeAdicionar = itens.length < 10
     const inputRef = React.useRef<HTMLInputElement | null>(null)
 
@@ -52,6 +53,22 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
             )
     }, [])
 
+    React.useEffect(() => {
+        const escutarStatus = (e: CustomEvent<boolean>) => {
+            setEnviando(Boolean(e.detail))
+        }
+
+        window.addEventListener(
+            "gas-sending-status",
+            escutarStatus as EventListener
+        )
+        return () =>
+            window.removeEventListener(
+                "gas-sending-status",
+                escutarStatus as EventListener
+            )
+    }, [])
+
     const enviarParaPlanilha = React.useCallback(async () => {
         if (!input.trim()) return
 
@@ -74,12 +91,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
             const resultado = await resposta.json()
 
             if (resultado.status === "sucesso" && resultado.urlPdf) {
-                const urlVisualizadorCompleto =
-                    "https://docs.google.com/viewer?url=" +
-                    encodeURIComponent(resultado.urlPdf) +
-                    "&embedded=false"
-
-                window.open(urlVisualizadorCompleto, "_blank")
+                await abrirPdfVisualizador(resultado.urlPdf)
             } else {
                 alert(
                     "Erro no Sheets: " + (resultado.mensagem || "Desconhecido")
@@ -94,6 +106,42 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
             )
         }
     }, [input, itens])
+
+    const abrirPdfVisualizador = (urlPdf: string): Promise<void> =>
+        new Promise((resolve) => {
+            const urlVisualizadorCompleto =
+                "https://docs.google.com/viewer?url=" +
+                encodeURIComponent(urlPdf) +
+                "&embedded=false"
+
+            let paginaAberta = false
+            const abrirPagina = () => {
+                if (paginaAberta) return
+                paginaAberta = true
+                window.open(urlVisualizadorCompleto, "_blank")
+            }
+            let concluido = false
+            const concluir = () => {
+                if (concluido) return
+                concluido = true
+                resolve()
+            }
+
+            fetch(urlPdf, { mode: "no-cors" })
+                .then(() => {
+                    abrirPagina()
+                    concluir()
+                })
+                .catch(() => {
+                    abrirPagina()
+                    concluir()
+                })
+
+            window.setTimeout(() => {
+                abrirPagina()
+                concluir()
+            }, 8000)
+        })
 
     React.useEffect(() => {
         sheets.enviarParaPlanilha = enviarParaPlanilha
@@ -134,6 +182,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                     :root {
                         --gas-bg: #1c1917; --gas-border: #2e2a24; --gas-text: #f5f5f4; --gas-focus: #e07a3b; --gas-placeholder: #57534e;
                     }
+                    .framer-gas-overlay { background: rgba(28, 25, 23, 0.85); }
                 }
                 .framer-gas-textarea {
                     width: 100% !important; height: auto !important; flex: 1 1 auto; min-height: 180px !important; background: var(--gas-bg) !important; border: 1px solid var(--gas-border) !important;
@@ -162,6 +211,21 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                 @media (min-width: 601px) {
                     .framer-gas-lista-f { flex-direction: row; flex-wrap: wrap; align-items: flex-start; }
                     .framer-gas-linha-f { flex: 1 1 calc((100% - 40px) / 5); }
+                }
+                @keyframes framerGasUiRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+                .framer-gas-spinner {
+                    width: 36px; height: 36px; border-radius: 50%;
+                    border: 3px solid rgba(201, 106, 42, 0.25);
+                    border-top-color: var(--gas-focus);
+                    animation: framerGasUiRotate 0.8s linear infinite;
+                }
+                .framer-gas-overlay {
+                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                    z-index: 9999;
+                    background: rgba(255, 255, 255, 0.85);
+                    backdrop-filter: blur(4px);
+                    display: flex; align-items: center; justify-content: center;
+                    flex-direction: column; gap: 14px;
                 }
             `}</style>
 
@@ -202,6 +266,23 @@ Hora	Usuário	Tipo Agendamento	Observação
                     </div>
                 ))}
             </div>
+
+            {enviando && (
+                <div className="framer-gas-overlay">
+                    <div className="framer-gas-spinner" />
+                    <div
+                        style={{
+                            color: "var(--gas-focus)",
+                            fontSize: 14,
+                            fontWeight: 600,
+                            fontFamily: "sans-serif",
+                            letterSpacing: "0.3px",
+                        }}
+                    >
+                        Gerando PDF...
+                    </div>
+                </div>
+            )}
         </div>
     )
 })

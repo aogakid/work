@@ -273,6 +273,7 @@ const injectStyles = `
     gap: 10px;
     align-items: flex-end;
     min-width: 0;
+    flex-wrap: wrap;
   }
 
   .gest-inputs-line .gest-field {
@@ -282,14 +283,13 @@ const injectStyles = `
     min-width: 0;
   }
 
-  /* US date stays compact so semanas + dias fit beside it on the line */
-  .gest-inputs-line .gest-field--date {
-    flex: 0 1 190px;
+  /* DUM and US date split the row on big screens */
+  .gest-inputs-line .gest-field--dum {
+    flex: 1 1 180px;
   }
 
-  /* DUM is alone on its row, so it stretches */
-  .gest-inputs-line .gest-field--full {
-    flex: 1 1 100%;
+  .gest-inputs-line .gest-field--date {
+    flex: 1 1 190px;
   }
 
   .gest-inputs-line .gest-field--narrow {
@@ -595,6 +595,223 @@ const injectStyles = `
     border: 1px solid rgba(59, 130, 246, 0.3);
   }
 
+  /* Tabs */
+  .gest-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+
+  .gest-tab {
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--gest-input-bg);
+    border: 1px solid var(--gest-border);
+    color: var(--gest-text-muted);
+    font-weight: 400;
+    transition: all 0.15s ease;
+  }
+
+  .gest-tab--ativo {
+    font-weight: 700;
+    color: var(--gest-text);
+    background: var(--gest-card-bg);
+    border-color: var(--gest-progress-marker);
+  }
+
+  /* Checklist de risco gestacional */
+  .gest-risk {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .gest-risk-corpo {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  @media (min-width: 760px) {
+    .gest-risk-corpo {
+      grid-template-columns: 1.4fr 1fr;
+    }
+  }
+
+  .gest-risk-grupos {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .gest-risk-grupo {
+    border: 1px solid var(--gest-border);
+    border-radius: 12px;
+    padding: 14px;
+    background: var(--gest-card-bg);
+  }
+
+  .gest-risk-grupo-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--gest-text-muted);
+    margin-bottom: 8px;
+  }
+
+  .gest-risk-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gest-risk-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 0;
+    cursor: pointer;
+  }
+
+  .gest-risk-check {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    min-width: 17px;
+    border-radius: 5px;
+    border: 1.5px solid var(--gest-progress-marker);
+    background: var(--gest-input-bg);
+    cursor: pointer;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+
+  .gest-risk-check:checked {
+    background: rgba(0, 184, 73, 0.16);
+    border-color: rgba(0, 184, 73, 0.55);
+  }
+
+  .gest-risk-check:checked::after {
+    content: "";
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #007a30;
+    border-bottom: 2px solid #007a30;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  .gest-risk-sublabel {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #2563eb;
+    padding: 8px 0 3px 0;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    margin-bottom: 2px;
+  }
+
+  .gest-risk-sublabel:first-child {
+    padding-top: 2px;
+  }
+
+  .gest-risk-sublabel--alto {
+    color: #e02424;
+    border-bottom-color: rgba(224, 36, 36, 0.2);
+    margin-top: 8px;
+  }
+
+  .gest-risk-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--gest-text);
+  }
+
+  .gest-risk-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .gest-risk-resultado {
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid var(--gest-border);
+  }
+
+  .gest-risk-resultado--baixo {
+    background: rgba(0, 184, 73, 0.08);
+    border-color: rgba(0, 184, 73, 0.35);
+  }
+
+  .gest-risk-resultado--medio {
+    background: rgba(242, 143, 0, 0.08);
+    border-color: rgba(242, 143, 0, 0.35);
+  }
+
+  .gest-risk-resultado--alto {
+    background: rgba(224, 36, 36, 0.08);
+    border-color: rgba(224, 36, 36, 0.35);
+  }
+
+  .gest-risk-score {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 6px 0 10px 0;
+    line-height: 1.15;
+  }
+
+  .gest-risk-score--baixo { color: #007a30; }
+  .gest-risk-score--medio { color: #b45309; }
+  .gest-risk-score--alto { color: #e02424; }
+
+  .gest-risk-conduta {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--gest-text);
+  }
+
+  .gest-risk-fatores {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--gest-border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .gest-risk-fator {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--gest-text);
+  }
+
+  .gest-risk-callout {
+    margin-top: 12px;
+    background: var(--gest-milestone-now-bg);
+    border: 1px solid var(--gest-milestone-now-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--gest-text);
+  }
+
+  .gest-risk-callout strong {
+    color: #e02424;
+  }
+
 `
 
 const styles = {
@@ -707,12 +924,6 @@ const styles = {
         border: "1px dashed var(--gest-border)",
         borderRadius: "12px",
     },
-    hint: {
-        fontSize: "12px",
-        color: "var(--gest-text-muted)",
-        marginTop: "6px",
-        lineHeight: 1.4,
-    },
     emojiLarge: {
         fontSize: "36px",
         lineHeight: 1,
@@ -763,12 +974,12 @@ const TAMANHO_FETO: Record<
 > = {
     4: {
         emoji: "🌱",
-        comparacao: "um grão de papoula",
+        comparacao: "um grão de arroz",
         curiosidade: "O embrião acaba de se implantar no útero.",
     },
     5: {
         emoji: "🫘",
-        comparacao: "um grão de sésamo",
+        comparacao: "um grão de milho",
         curiosidade:
             "O tubo neural — base do cérebro e da medula — já está se formando.",
     },
@@ -779,7 +990,7 @@ const TAMANHO_FETO: Record<
     },
     7: {
         emoji: "🫐",
-        comparacao: "um mirtilo",
+        comparacao: "uma jabuticaba",
         curiosidade: "Braços e pernas aparecem como pequenos brotos.",
     },
     8: {
@@ -815,7 +1026,7 @@ const TAMANHO_FETO: Record<
     },
     14: {
         emoji: "🍋",
-        comparacao: "um limão siciliano",
+        comparacao: "um limão-tahiti",
         curiosidade: "O rosto fica mais definido e a nuca fica mais reta.",
     },
     15: {
@@ -880,7 +1091,7 @@ const TAMANHO_FETO: Record<
     },
     26: {
         emoji: "🍈",
-        comparacao: "um melão cantaloupe",
+        comparacao: "um melão amarelo",
         curiosidade: "Os olhos abrem pela primeira vez.",
     },
     27: {
@@ -923,23 +1134,23 @@ const TAMANHO_FETO: Record<
     },
     34: {
         emoji: "🍈",
-        comparacao: "um melão cantaloupe grande",
+        comparacao: "um mamão formosa",
         curiosidade:
             "Pulmões e sistema nervoso amadurecem para a vida fora do útero.",
     },
     35: {
         emoji: "🍈",
-        comparacao: "um melão honeydew",
+        comparacao: "um abacaxi grande",
         curiosidade: "Os rins estão totalmente desenvolvidos.",
     },
     36: {
         emoji: "🥬",
-        comparacao: "uma alface romana",
+        comparacao: "uma alface americana",
         curiosidade: "Ele pode descer para a pelve e “engajar” para o parto.",
     },
     37: {
         emoji: "🥬",
-        comparacao: "um acelga",
+        comparacao: "um pé de couve",
         curiosidade: "A partir daqui é considerado a termo precoce.",
     },
     38: {
@@ -959,6 +1170,51 @@ const TAMANHO_FETO: Record<
         curiosidade:
             "Data prevista! Só 5% dos bebês nascem exatamente no dia calculado.",
     },
+}
+
+/** Medidas aproximadas por semana: comprimento do bebê (cm) e
+ *  altura uterina esperada (cm) — cadeia de altura da funda. */
+const MEDIDAS_FETO_CM: Record<
+    number,
+    { tamanhoCm: string; alturaUterina: number }
+> = {
+    4: { tamanhoCm: "0,1 cm", alturaUterina: 2 },
+    5: { tamanhoCm: "0,3 cm", alturaUterina: 2 },
+    6: { tamanhoCm: "0,8 cm", alturaUterina: 3 },
+    7: { tamanhoCm: "1 cm", alturaUterina: 3 },
+    8: { tamanhoCm: "1,6 cm", alturaUterina: 4 },
+    9: { tamanhoCm: "2,3 cm", alturaUterina: 4 },
+    10: { tamanhoCm: "3 cm", alturaUterina: 5 },
+    11: { tamanhoCm: "4 cm", alturaUterina: 5 },
+    12: { tamanhoCm: "5,4 cm", alturaUterina: 6 },
+    13: { tamanhoCm: "7 cm", alturaUterina: 8 },
+    14: { tamanhoCm: "8,7 cm", alturaUterina: 10 },
+    15: { tamanhoCm: "10 cm", alturaUterina: 12 },
+    16: { tamanhoCm: "12 cm", alturaUterina: 14 },
+    17: { tamanhoCm: "13,3 cm", alturaUterina: 15 },
+    18: { tamanhoCm: "14,5 cm", alturaUterina: 16 },
+    19: { tamanhoCm: "15,5 cm", alturaUterina: 17 },
+    20: { tamanhoCm: "16,5 cm", alturaUterina: 18 },
+    21: { tamanhoCm: "18 cm", alturaUterina: 19 },
+    22: { tamanhoCm: "19,5 cm", alturaUterina: 20 },
+    23: { tamanhoCm: "20,5 cm", alturaUterina: 21 },
+    24: { tamanhoCm: "22 cm", alturaUterina: 22 },
+    25: { tamanhoCm: "23,5 cm", alturaUterina: 23 },
+    26: { tamanhoCm: "24,5 cm", alturaUterina: 24 },
+    27: { tamanhoCm: "26 cm", alturaUterina: 25 },
+    28: { tamanhoCm: "27 cm", alturaUterina: 26 },
+    29: { tamanhoCm: "28,5 cm", alturaUterina: 27 },
+    30: { tamanhoCm: "30 cm", alturaUterina: 28 },
+    31: { tamanhoCm: "31,5 cm", alturaUterina: 29 },
+    32: { tamanhoCm: "33 cm", alturaUterina: 30 },
+    33: { tamanhoCm: "34,5 cm", alturaUterina: 31 },
+    34: { tamanhoCm: "35 cm", alturaUterina: 32 },
+    35: { tamanhoCm: "36,5 cm", alturaUterina: 33 },
+    36: { tamanhoCm: "37,5 cm", alturaUterina: 34 },
+    37: { tamanhoCm: "38,5 cm", alturaUterina: 35 },
+    38: { tamanhoCm: "39 cm", alturaUterina: 36 },
+    39: { tamanhoCm: "40 cm", alturaUterina: 37 },
+    40: { tamanhoCm: "41 cm", alturaUterina: 38 },
 }
 
 interface Marco {
@@ -1131,6 +1387,170 @@ const EXAMES_MS: {
     },
 ]
 
+/* ── Estratificação de risco gestacional (MS) ────────────────────────
+ * Fatores baseados no Quadro 4 do Manual de Gestação de Alto Risco (MS, 2022)
+ * e no Manual de Atenção ao Pré-Natal de Baixo Risco (MS, 2012).
+ * Níveis: habitual (baixo) / intermediário (médio) / alto risco.
+ * Se houver ≥1 fator de alto risco → ALTO. Senão, ≥1 fator intermediário → MÉDIO.
+ * Senão → BAIXO. Sinais de alarme indicam urgência/emergência obstétrica. */
+
+type NivelRisco = "medio" | "alto"
+
+interface FatorRisco {
+    id: string
+    label: string
+    nivel: NivelRisco
+    alarme?: boolean
+}
+
+interface GrupoRisco {
+    id: string
+    titulo: string
+    fatores: FatorRisco[]
+}
+
+const RISCOS_MS: GrupoRisco[] = [
+    {
+        id: "sociodemograficas",
+        titulo: "Características individuais e sociodemográficas",
+        fatores: [
+            { id: "idade_limites", label: "Idade menor que 15 anos ou maior que 35 anos", nivel: "medio" },
+            { id: "altura_baixa", label: "Altura menor que 1,45 m", nivel: "medio" },
+            { id: "imc_baixo_sobrepeso", label: "IMC pré-gestacional < 18,5 ou entre 30 e 39,9 kg/m²", nivel: "medio" },
+            { id: "trabalho_desfav", label: "Condições de trabalho desfavoráveis (esforço físico excessivo, carga horária extensa, exposição a agentes físicos/químicos/biológicos nocivos, estresse)", nivel: "medio" },
+            { id: "violencia", label: "Indícios ou ocorrência de violência doméstica ou de gênero", nivel: "medio" },
+            { id: "conjugal_insegura", label: "Situação conjugal insegura", nivel: "medio" },
+            { id: "apoio_familiar", label: "Insuficiência de apoio familiar", nivel: "medio" },
+            { id: "autocuidado", label: "Capacidade de autocuidado insuficiente", nivel: "medio" },
+            { id: "nao_aceitacao", label: "Não aceitação da gestação", nivel: "medio" },
+            { id: "baixa_escolaridade", label: "Baixa escolaridade (menos de 5 anos de estudo)", nivel: "medio" },
+            { id: "teratogenicos", label: "Uso de medicamentos teratogênicos", nivel: "medio" },
+            { id: "ansiedade_leve", label: "Transtorno depressivo ou de ansiedade leve", nivel: "medio" },
+            { id: "etilismo_dependencia", label: "Etilismo com indicativo de dependência (ex.: CAGE ≥ 2)", nivel: "medio" },
+            { id: "tabagismo_dependencia", label: "Tabagismo com indicativo de dependência elevada (ex.: Fagerström ≥ 8)", nivel: "medio" },
+            { id: "drogas", label: "Dependência e/ou uso abusivo de drogas", nivel: "alto" },
+            { id: "agravos_nutricionais", label: "Agravos alimentares ou nutricionais: IMC ≥ 40, desnutrição, carências nutricionais (hipovitaminoses), transtornos alimentares (anorexia, bulimia)", nivel: "alto" },
+            { id: "situacao_rua_indigenas", label: "Gestante em situação de rua, de comunidades indígenas, quilombolas ou migrantes", nivel: "alto" },
+        ],
+    },
+    {
+        id: "reprodutiva",
+        titulo: "História reprodutiva anterior",
+        fatores: [
+            { id: "abortos_aprecoce", label: "Abortos precoces (até 12 semanas) em gestações anteriores (até 2 consecutivos)", nivel: "medio" },
+            { id: "pe_grave_prev", label: "Histórico de pré-eclâmpsia grave ou eclâmpsia em gestação anterior", nivel: "medio" },
+            { id: "ies_prev", label: "Insuficiência istmo-cervical prévia", nivel: "alto" },
+            { id: "crescimento_prev", label: "Alterações no crescimento intrauterino (restrição de crescimento fetal e macrossomia)", nivel: "alto" },
+            { id: "malformacao_prev", label: "Malformação fetal anterior", nivel: "alto" },
+            { id: "nulipara_multipara", label: "Nuliparidade ou multiparidade (5 ou mais partos)", nivel: "alto" },
+            { id: "dmg_prev", label: "Diabetes gestacional em gestação anterior", nivel: "alto" },
+            { id: "sindr_hemo_hip_prev", label: "Síndromes hemorrágicas ou hipertensivas sem critérios de gravidade", nivel: "alto" },
+            { id: "cesareas_2mais", label: "Cesáreas prévias (2 ou mais)", nivel: "alto" },
+            { id: "intervalo_interpartal", label: "Intervalo interpartal menor que 2 anos", nivel: "alto" },
+            { id: "abortamento_habitual", label: "Abortamento habitual/recorrente (3 ou mais abortamentos consecutivos)", nivel: "alto" },
+            { id: "aborto_tardio_morte", label: "Aborto tardio ou morte perinatal explicada ou inexplicada", nivel: "alto" },
+            { id: "isoimun_rh_prev", label: "Isoimunização Rh em gestação anterior", nivel: "alto" },
+            { id: "acretismo_prev", label: "Acretismo placentário prévio", nivel: "alto" },
+            { id: "pe_hellp_prev", label: "Pré-eclâmpsia grave ou síndrome HELLP prévias", nivel: "alto" },
+            { id: "prematuridade_prev", label: "Prematuridade anterior", nivel: "alto" },
+            { id: "cesarea_incisao_classe", label: "Cesariana prévia com incisão clássica/corporal/longitudinal", nivel: "alto" },
+        ],
+    },
+    {
+        id: "clinicas_previas",
+        titulo: "Condições clínicas prévias à gestação",
+        fatores: [
+            { id: "asma_controlada", label: "Asma controlada sem uso de medicamento contínuo", nivel: "medio" },
+            { id: "hipotireoidismo_subclinico", label: "Hipotireoidismo subclínico diagnosticado na gestação", nivel: "medio" },
+            { id: "pneumopatias_graves", label: "Pneumopatias graves (asma em uso de medicamento contínuo, DPOC, fibrose cística)", nivel: "alto" },
+            { id: "nefropatias_graves", label: "Nefropatias graves (insuficiência renal, rins policísticos)", nivel: "alto" },
+            { id: "endocrinopatias", label: "Endocrinopatias (diabetes mellitus, hipotireoidismo em uso de medicamento, hipertireoidismo)", nivel: "alto" },
+            { id: "cardiopatias", label: "Cardiopatias (valvulopatias, arritmias, endocardite) ou infarto agudo do miocárdio", nivel: "alto" },
+            { id: "hematologicas", label: "Doenças hematológicas (doença falciforme, PTI/PTT, talassemias, coagulopatias)", nivel: "alto" },
+            { id: "neurologicas", label: "Doenças neurológicas (epilepsia, AVC, déficits motores graves)", nivel: "alto" },
+            { id: "ginecopatias", label: "Ginecopatias (malformações uterinas, útero bicorno, miomas grandes, cirurgia uterina)", nivel: "alto" },
+            { id: "neoplasias", label: "Neoplasias (quadro suspeito, diagnosticado ou em tratamento)", nivel: "alto" },
+            { id: "infecciosas_previas", label: "Doenças infecciosas: HIV/aids, sífilis terciária/resistente, toxoplasmose, rubéola, CMV, tuberculose, hanseníase, hepatites", nivel: "alto" },
+            { id: "psiquiatrica_grave", label: "Doença psiquiátrica grave (psicose, depressão grave, transtorno bipolar)", nivel: "alto" },
+            { id: "autoimunes", label: "Doenças autoimunes (ex.: lúpus eritematoso sistêmico)", nivel: "alto" },
+            { id: "tromboembolismo", label: "Antecedentes de tromboembolismo", nivel: "alto" },
+            { id: "transplantes_cancer", label: "Transplantes ou câncer diagnosticado", nivel: "alto" },
+        ],
+    },
+    {
+        id: "intercorrencias_atuais",
+        titulo: "Intercorrências clínicas/obstétricas na gestação atual",
+        fatores: [
+            { id: "itu_ate2", label: "Infecção urinária (até 2 ocorrências) ou 1 episódio de pielonefrite", nivel: "medio" },
+            { id: "ganho_peso_inadequado", label: "Ganho de peso inadequado (insuficiente ou excessivo)", nivel: "medio" },
+            { id: "anemia_leve", label: "Anemia leve a moderada (hemoglobina entre 9 e 11 g/dL)", nivel: "medio" },
+            { id: "sifilis_tx_herpes", label: "Doenças infecciosas: sífilis (exceto terciária/resistente), toxoplasmose aguda sem repercussão fetal, herpes simples", nivel: "medio" },
+            { id: "dengue_zika_chik", label: "Suspeita ou confirmação de dengue, vírus zika ou chikungunya (quadro febril exantemático)", nivel: "medio" },
+            { id: "rciu_suspeita", label: "Restrição de crescimento fetal suspeita", nivel: "medio" },
+            { id: "macro_acima_p90", label: "Feto acima do percentil 90% ou suspeita de macrossomia", nivel: "medio" },
+            { id: "pe_grave_precoce", label: "Pré-eclâmpsia grave ou de instalação precoce (antes de 34 semanas)", nivel: "alto", alarme: true },
+            { id: "tromboembolismo_atual", label: "Tromboembolismo na gestação", nivel: "alto" },
+            { id: "itu_repeticao", label: "Infecção urinária de repetição: 3 ou mais episódios de ITU baixa ou 2 ou mais de pielonefrite", nivel: "alto" },
+            { id: "infecciosas_graves", label: "Doenças infecciosas de alto risco: sífilis terciária/resistente ou com achados ecográficos de sífilis congênita, toxoplasmose aguda com suspeita de repercussão fetal, rubéola, CMV, HIV/aids na gestação", nivel: "alto", alarme: true },
+            { id: "rciu_confirmada", label: "Restrição de crescimento fetal confirmada", nivel: "alto" },
+            { id: "devio_liquido", label: "Desvios da quantidade de líquido amniótico (oligoidrâmnio/polidrâmnio)", nivel: "alto" },
+            { id: "isoimun_rh_atual", label: "Isoimunização Rh na gestação atual", nivel: "alto" },
+            { id: "iec_atual", label: "Insuficiência istmocervical diagnosticada na gestação atual", nivel: "alto" },
+            { id: "tpp_inibido", label: "Trabalho de parto pré-termo inibido na gestação atual", nivel: "alto", alarme: true },
+            { id: "anemia_grave", label: "Anemia grave (hemoglobina < 9 g/dL) ou refratária ao tratamento", nivel: "alto" },
+            { id: "hemorragias_atuais", label: "Hemorragias na gestação atual", nivel: "alto", alarme: true },
+            { id: "placenta_previa", label: "Placenta prévia (diagnóstico confirmado após 22 semanas)", nivel: "alto", alarme: true },
+            { id: "acretismo_atual", label: "Acretismo placentário", nivel: "alto" },
+            { id: "colestase_gestacional", label: "Colestase gestacional (prurido gestacional ou icterícia persistente)", nivel: "alto" },
+            { id: "malformacao_arritmia_fetal", label: "Malformação fetal ou arritmia cardíaca fetal", nivel: "alto", alarme: true },
+            { id: "gemelharidade", label: "Gestação gemelar", nivel: "medio" },
+            { id: "patologia_clinica_atual", label: "Qualquer patologia clínica que repercuta na gestação ou necessite de acompanhamento clínico especializado", nivel: "alto", alarme: true },
+        ],
+    },
+]
+
+const LABEL_NIVEL_RISCO: Record<string, string> = {
+    baixo: "Baixo risco (risco habitual)",
+    medio: "Médio risco (risco intermediário)",
+    alto: "Alto risco",
+}
+
+const CONDUTA_RISCO: Record<string, string> = {
+    baixo: "Pré-natal na APS, rotina de consultas conforme MS. Reclassificar o risco a cada consulta.",
+    medio: "Pré-natal na APS com vigilância reforçada; considerar apoio da equipe especializada/AAE e reavaliação periódica.",
+    alto: "Encaminhar para pré-natal de alto risco (atenção ambulatorial especializada); manter vínculo com a APS.",
+}
+
+interface ResultadoRisco {
+    nivel: "baixo" | "medio" | "alto"
+    fatores: string[]
+    temAlarme: boolean
+}
+
+function calcularRiscoGestacional(marcados: Record<string, boolean>): ResultadoRisco {
+    const fatores: string[] = []
+    let temAlto = false
+    let temMedio = false
+    let temAlarme = false
+
+    for (const grupo of RISCOS_MS) {
+        for (const fator of grupo.fatores) {
+            if (marcados[fator.id]) {
+                fatores.push(fator.label)
+                if (fator.nivel === "alto") temAlto = true
+                else temMedio = true
+                if (fator.alarme) temAlarme = true
+            }
+        }
+    }
+
+    return {
+        nivel: temAlto ? "alto" : temMedio ? "medio" : "baixo",
+        fatores,
+        temAlarme,
+    }
+}
+
 function addDays(d: Date, days: number) {
     const copy = new Date(d)
     copy.setDate(copy.getDate() + days)
@@ -1179,6 +1599,11 @@ function clampSemana(semanas: number) {
 function obterTamanho(semana: number) {
     const s = clampSemana(semana)
     return TAMANHO_FETO[s] ?? TAMANHO_FETO[40]
+}
+
+function obterMedidas(semana: number) {
+    const s = clampSemana(semana)
+    return MEDIDAS_FETO_CM[s] ?? MEDIDAS_FETO_CM[40]
 }
 
 function obterMarcos(semanaAtual: number) {
@@ -1310,6 +1735,7 @@ interface ResultadoGestacional {
     diasRestantes: number
     percentual: number
     tamanho: (typeof TAMANHO_FETO)[number]
+    medidas: (typeof MEDIDAS_FETO_CM)[number]
     marcos: ReturnType<typeof obterMarcos>
     valido: boolean
     mensagemErro?: string
@@ -1332,6 +1758,7 @@ function calcularGestacao(dum: string): ResultadoGestacional | null {
             diasRestantes: 0,
             percentual: 0,
             tamanho: TAMANHO_FETO[4],
+            medidas: MEDIDAS_FETO_CM[4],
             marcos: { agora: [], emBreve: [] },
             valido: false,
             mensagemErro: "Data inválida.",
@@ -1351,6 +1778,7 @@ function calcularGestacao(dum: string): ResultadoGestacional | null {
             diasRestantes: 0,
             percentual: 0,
             tamanho: TAMANHO_FETO[4],
+            medidas: MEDIDAS_FETO_CM[4],
             marcos: { agora: [], emBreve: [] },
             valido: false,
             mensagemErro: "A DUM não pode ser uma data futura.",
@@ -1368,6 +1796,7 @@ function calcularGestacao(dum: string): ResultadoGestacional | null {
             diasRestantes: 0,
             percentual: 100,
             tamanho: TAMANHO_FETO[40],
+            medidas: MEDIDAS_FETO_CM[40],
             marcos: obterMarcos(40),
             valido: true,
             mensagemErro:
@@ -1393,6 +1822,7 @@ function calcularGestacao(dum: string): ResultadoGestacional | null {
         diasRestantes,
         percentual,
         tamanho: obterTamanho(semanaParaTamanho),
+        medidas: obterMedidas(semanaParaTamanho),
         marcos: obterMarcos(semanas),
         valido: true,
     }
@@ -1540,6 +1970,73 @@ function CardMarco({ marco, tipo }: { marco: Marco; tipo: "now" | "soon" }) {
             </span>
             <span className="gest-milestone-title">{marco.titulo}</span>
             <p className="gest-milestone-desc">{marco.descricao}</p>
+        </div>
+    )
+}
+
+function ItemRisco({
+    fator,
+    marcado,
+    aoMarcar,
+}: {
+    fator: FatorRisco
+    marcado: boolean
+    aoMarcar: (id: string) => void
+}) {
+    return (
+        <label className="gest-risk-item">
+            <input
+                type="checkbox"
+                className="gest-risk-check"
+                checked={marcado}
+                onChange={() => aoMarcar(fator.id)}
+            />
+            <span className="gest-risk-label">{fator.label}</span>
+        </label>
+    )
+}
+
+function BlocoRisco({
+    grupo,
+    marcados,
+    aoMarcar,
+}: {
+    grupo: GrupoRisco
+    marcados: Record<string, boolean>
+    aoMarcar: (id: string) => void
+}) {
+    const medios = grupo.fatores.filter((f) => f.nivel === "medio")
+    const altos = grupo.fatores.filter((f) => f.nivel === "alto")
+
+    return (
+        <div className="gest-risk-grupo">
+            <div className="gest-risk-grupo-titulo">{grupo.titulo}</div>
+            <div className="gest-risk-list">
+                {medios.length > 0 && (
+                    <div className="gest-risk-sublabel">Médio risco</div>
+                )}
+                {medios.map((fator) => (
+                    <ItemRisco
+                        key={fator.id}
+                        fator={fator}
+                        marcado={!!marcados[fator.id]}
+                        aoMarcar={aoMarcar}
+                    />
+                ))}
+                {altos.length > 0 && (
+                    <div className="gest-risk-sublabel gest-risk-sublabel--alto">
+                        Alto risco
+                    </div>
+                )}
+                {altos.map((fator) => (
+                    <ItemRisco
+                        key={fator.id}
+                        fator={fator}
+                        marcado={!!marcados[fator.id]}
+                        aoMarcar={aoMarcar}
+                    />
+                ))}
+            </div>
         </div>
     )
 }
@@ -1702,23 +2199,29 @@ function RotinaPreNatal({ dum, semanas }: { dum: Date; semanas: number }) {
                             </div>
                         )
                     })}
-
-                    <div className="gest-routine-source">
-                        Fonte: Ministério da Saúde — Manual de Pré-Natal de
-                        Baixo Risco e Caderneta da Gestante. Datas estimadas a
-                        partir da DUM; confirme o calendário com o profissional
-                        de saúde.
-                    </div>
             </div>
         </>
     )
 }
 
 export default forwardRef<CompanionActions, Props>(function CalculadoraGestacional({ style }: Props, ref) {
+    const [activeTab, setActiveTab] = useState<"calc" | "risco">("calc")
+
     const [dum, setDum] = useState("")
     const [usDate, setUsDate] = useState("")
     const [usSemanas, setUsSemanas] = useState("")
     const [usDias, setUsDias] = useState("")
+
+    const [riscoMarcados, setRiscoMarcados] = useState<Record<string, boolean>>({})
+
+    const riscoResultado = useMemo(
+        () => calcularRiscoGestacional(riscoMarcados),
+        [riscoMarcados]
+    )
+
+    const toggleRiscoFator = (id: string) => {
+        setRiscoMarcados(prev => ({ ...prev, [id]: !prev[id] }))
+    }
 
     const resolucao = useMemo(
         () => resolverFonte(dum, usDate, parseInt(usSemanas) || 0, parseInt(usDias) || 0),
@@ -1741,13 +2244,22 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
             const src = resolucao?.fonte === "us" ? " (via US)" : ""
             return `IG: ${formatIgCurta(resultado.semanas, resultado.dias)} | DPP: ${formatDateCurta(resultado.dpp)}${src}`
         }
+        if (groupId === "risco" && riscoResultado.fatores.length > 0) {
+            const fatorLista = riscoResultado.fatores.join("; ")
+            const alarme = riscoResultado.temAlarme
+                ? " | Sinais de alarme — avaliar em urgência/emergência obstétrica."
+                : ""
+            return `Risco gestacional (MS): ${LABEL_NIVEL_RISCO[riscoResultado.nivel]} (${CONDUTA_RISCO[riscoResultado.nivel]}) | Fatores: ${fatorLista}${alarme}`
+        }
         return null
     }
 
     useImperativeHandle(ref, () => ({
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset() {
+            setActiveTab("calc")
             setDum(""); setUsDate(""); setUsSemanas(""); setUsDias("")
+            setRiscoMarcados({})
         },
     }), [])
 
@@ -1775,6 +2287,23 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
         <div style={{ ...styles.container, ...style }}>
             <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
 
+            <div className="gest-tabs">
+                <div
+                    className={`gest-tab${activeTab === "calc" ? " gest-tab--ativo" : ""}`}
+                    onClick={() => setActiveTab("calc")}
+                >
+                    Calculadora
+                </div>
+                <div
+                    className={`gest-tab${activeTab === "risco" ? " gest-tab--ativo" : ""}`}
+                    onClick={() => setActiveTab("risco")}
+                >
+                    Risco
+                </div>
+            </div>
+
+            {activeTab === "calc" ? (
+            <>
             <div style={styles.title}>Calculadora gestacional</div>
             <div style={styles.subtitle}>
                 para idade gestacional e data provável do parto
@@ -1782,7 +2311,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
 
             <div className="gest-inputs-row">
                 <div className="gest-inputs-line">
-                    <div className="gest-field gest-field--date gest-field--full">
+                    <div className="gest-field gest-field--dum">
                         <span className="gest-field-label">DUM</span>
                         <input
                             type="date"
@@ -1792,8 +2321,6 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                             style={styles.input}
                         />
                     </div>
-                </div>
-                <div className="gest-inputs-line">
                     <span className="gest-ou">ou</span>
                     <div className="gest-field gest-field--date">
                         <span className="gest-field-label">Data do US</span>
@@ -1850,6 +2377,37 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                 </div>
             ) : (
                 <>
+                {resolucao && dum && usDate && (parseInt(usSemanas) > 0 || parseInt(usDias) > 0) && (
+                    <div className="gest-dating-card" style={{ marginTop: "20px" }}>
+                        <div className="gest-dating-card-title">Resolução da data</div>
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">DUM informada</span>
+                            <span className="gest-dating-value">{formatDateCurta(new Date(dum + "T12:00:00"))}</span>
+                        </div>
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">DUM pelo US</span>
+                            <span className="gest-dating-value">{formatDateCurta(resolucao.dumEfetiva)}</span>
+                        </div>
+                        {resolucao.diffDias !== null && (
+                            <div className="gest-dating-row">
+                                <span className="gest-dating-label">Diferença</span>
+                                <span className="gest-dating-value">{resolucao.diffDias} {resolucao.diffDias === 1 ? "dia" : "dias"}</span>
+                            </div>
+                        )}
+                        <div className="gest-dating-row">
+                            <span className="gest-dating-label">Fonte utilizada</span>
+                            <span className="gest-dating-value">
+                                {resolucao.fonte === "dum" ? "DUM" : "Ultrassom"}
+                                <span className={`gest-dating-source gest-dating-source--${resolucao.fonte}`}>
+                                    {resolucao.fonte === "dum" ? "DUM" : "US"}
+                                </span>
+                            </span>
+                        </div>
+                        <div className="gest-dating-rule">
+                            {resolucao.motivo}
+                        </div>
+                    </div>
+                )}
                 <div className="gest-main" style={{ marginTop: "20px" }}>
                     {/* Card principal — IG, DPP, progresso */}
                     <div
@@ -1940,6 +2498,31 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                             >
                                 {resultado.tamanho.curiosidade}
                             </div>
+                            <div style={{ marginTop: "12px" }}>
+                                <div style={styles.detailRow}>
+                                    <span style={styles.detailLabel}>
+                                        Tamanho aproximado
+                                    </span>
+                                    <span style={styles.detailValue}>
+                                        {resultado.medidas.tamanhoCm}
+                                    </span>
+                                </div>
+                                <div
+                                    style={{
+                                        ...styles.detailRow,
+                                        borderBottom: "none",
+                                        paddingBottom: 0,
+                                    }}
+                                >
+                                    <span style={styles.detailLabel}>
+                                        Altura uterina esperada
+                                    </span>
+                                    <span style={styles.detailValue}>
+                                        {" "}
+                                        {resultado.medidas.alturaUterina} cm
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Card marcos da fase */}
@@ -1986,40 +2569,69 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                     dum={resultado.dum}
                     semanas={resultado.semanas}
                 />
+                </>
+            )}
+            </>
+            ) : (
+            <>
+            <div style={styles.title}>Risco gestacional</div>
+            <div style={styles.subtitle}>
+                estratificação de risco segundo o Ministério da Saúde
+            </div>
 
-                {/* Dating info card below results */}
-                {resolucao && dum && usDate && (parseInt(usSemanas) > 0 || parseInt(usDias) > 0) && (
-                    <div className="gest-dating-card">
-                        <div className="gest-dating-card-title">Resolução da data</div>
-                        <div className="gest-dating-row">
-                            <span className="gest-dating-label">DUM informada</span>
-                            <span className="gest-dating-value">{formatDateCurta(new Date(dum + "T12:00:00"))}</span>
-                        </div>
-                        <div className="gest-dating-row">
-                            <span className="gest-dating-label">DUM pelo US</span>
-                            <span className="gest-dating-value">{formatDateCurta(resolucao.dumEfetiva)}</span>
-                        </div>
-                        {resolucao.diffDias !== null && (
-                            <div className="gest-dating-row">
-                                <span className="gest-dating-label">Diferença</span>
-                                <span className="gest-dating-value">{resolucao.diffDias} {resolucao.diffDias === 1 ? "dia" : "dias"}</span>
+            <div className="gest-risk">
+                <div className="gest-risk-corpo">
+                    <div className="gest-risk-grupos">
+                        {RISCOS_MS.map(grupo => (
+                            <BlocoRisco
+                                key={grupo.id}
+                                grupo={grupo}
+                                marcados={riscoMarcados}
+                                aoMarcar={toggleRiscoFator}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="gest-risk-side">
+                        {riscoResultado.fatores.length > 0 ? (
+                            <div className={`gest-card gest-risk-resultado gest-risk-resultado--${riscoResultado.nivel}`}>
+                                <div style={styles.cardTitle}>Estratificação de risco</div>
+                                <div className={`gest-risk-score gest-risk-score--${riscoResultado.nivel}`}>
+                                    {LABEL_NIVEL_RISCO[riscoResultado.nivel]}
+                                </div>
+                                <div className="gest-risk-conduta">
+                                    {CONDUTA_RISCO[riscoResultado.nivel]}
+                                </div>
+                                <div className="gest-risk-fatores">
+                                    {riscoResultado.fatores.map(f => (
+                                        <div className="gest-risk-fator" key={f}>
+                                            {f}
+                                        </div>
+                                    ))}
+                                </div>
+                                {riscoResultado.temAlarme && (
+                                    <div className="gest-risk-callout">
+                                        <strong>Sinais de alarme presentes</strong> — avaliar em
+                                        urgência/emergência obstétrica (encaminhamento hospitalar).
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div style={styles.empty}>
+                                Selecione os fatores de risco aplicáveis para
+                                estratificar o risco.
                             </div>
                         )}
-                        <div className="gest-dating-row">
-                            <span className="gest-dating-label">Fonte utilizada</span>
-                            <span className="gest-dating-value">
-                                {resolucao.fonte === "dum" ? "DUM" : "Ultrassom"}
-                                <span className={`gest-dating-source gest-dating-source--${resolucao.fonte}`}>
-                                    {resolucao.fonte === "dum" ? "DUM" : "US"}
-                                </span>
-                            </span>
-                        </div>
-                        <div className="gest-dating-rule">
-                            {resolucao.motivo}
-                        </div>
                     </div>
-                )}
-                </>
+                </div>
+
+                <div className="gest-routine-source">
+                    Fonte: Ministério da Saúde — Manual de Gestação de Alto Risco (2022) e
+                    Manual de Atenção ao Pré-Natal de Baixo Risco (2012). Reclassificar o risco
+                    a cada consulta e revisar diante de novos sinais.
+                </div>
+            </div>
+            </>
             )}
         </div>
     )
