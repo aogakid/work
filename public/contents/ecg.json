@@ -1,0 +1,653 @@
+{
+  "titulo": "ECG",
+  "alteracoes_eletrocardiograficas": {
+    "sobrecarga_atrial": {
+      "esquerda": [
+        {
+          "criterio": "Duração da onda P",
+          "achado": "P mitrale",
+          "valor_corte": ">= 120 ms (>= 3 quadradinhos) em DII",
+          "como_aferir": "No traçado em DII, meça a largura da onda P contando quadradinhos (cada um = 40 ms). Se a onda P ocupa 3 quadradinhos ou mais (>= 120 ms), o critério é positivo. Se ela ainda aparece entalhada ou bífida, é o clássico P mitrale (SAE).",
+          "apresenta": "≥ 120 ms (P ocupa 3+ quadradinhos em DII)",
+          "ausencia": "< 120 ms (P com até 2 quadradinhos)"
+        },
+        {
+          "criterio": "Índice de Morris em V1",
+          "achado": "Fase negativa da onda P em V1",
+          "valor_corte": "Profundidade >= 1 mm e duração >= 40 ms (área >= 1 mm²)",
+          "como_aferir": "Em V1, a onda P normal tem a parte positiva maior que a negativa. Meça a parte NEGATIVA (que desce abaixo da linha de base): profundidade em mm e largura em ms. Se a profundidade >= 1 mm E a duração >= 40 ms (ou seja, ocupa pelo menos 1 quadradinho de área), o índice de Morris é positivo → SAE.",
+          "apresenta": "positivo — fase negativa ≥ 1 mm E ≥ 40 ms",
+          "ausencia": "negativo — sem fase negativa significativa"
+        }
+      ],
+      "direita": [
+        {
+          "criterio": "Amplitude da onda P",
+          "achado": "P pulmonale",
+          "valor_corte": ">= 2.5 mm nas derivações inferiores (DII, DIII, aVF)",
+          "como_aferir": "Observe a ALTURA da onda P em DII, DIII e aVF. Cada 1 mm = 1 quadradinho de amplitude (0,1 mV). Se a onda P tem >= 2,5 mm (2,5 quadradinhos) e é alta e apiculada, é a P pulmonale → SAD.",
+          "apresenta": "≥ 2,5 mm em DII/DIII/aVF",
+          "ausencia": "< 2,5 mm"
+        },
+        {
+          "criterio": "Componente positivo em V1/V2",
+          "achado": "Deflexão positiva inicial em V1 ou V2",
+          "valor_corte": ">= 1.5 mm",
+          "como_aferir": "Em V1/V2, meça a primeira parte da onda P (deflexão positiva inicial). Se a altura dessa deflexão inicial >= 1,5 mm, sugere sobrecarga atrial direita → SAD.",
+          "apresenta": "≥ 1,5 mm na deflexão inicial",
+          "ausencia": "< 1,5 mm"
+        }
+      ]
+    },
+    "sobrecarga_ventricular": {
+      "esquerda": [
+        {
+          "criterio": "Índice de Sokolow-Lyon",
+          "formula": "S(V1) + R(V5 ou V6)",
+          "valor_corte": ">= 35 mm",
+          "como_aferir": "Meça a profundidade da onda S em V1 e a altura da onda R em V5 e em V6. Some o S(V1) com a maior das duas R (V5 ou V6). Se o resultado >= 35 mm, o índice é positivo → SVE.",
+          "apresenta": "≥ 35 mm (S V1 + R V5/V6)",
+          "ausencia": "< 35 mm"
+        },
+        {
+          "criterio": "Critério de Voltagem de Cornell",
+          "formula": "R(aVL) + S(V3)",
+          "valor_corte": "> 28 mm (homens) ou > 20 mm (mulheres)",
+          "como_aferir": "Meça a altura da onda R em aVL e a profundidade da onda S em V3 e some as duas. Se a soma é > 28 mm no homem ou > 20 mm na mulher, o critério é positivo → SVE.",
+          "apresenta": "> 28 mm (homem) / > 20 mm (mulher)",
+          "ausencia": "dentro do limite de Cornell"
+        },
+        {
+          "criterio": "Padrão Strain",
+          "achado": "Infradesnivelamento do segmento ST com inversão assimétrica da onda T",
+          "derivacoes": [
+            "DI",
+            "aVL",
+            "V5",
+            "V6"
+          ],
+          "como_aferir": "Procure nas derivações esquerdas DI, aVL, V5 e V6: o segmento ST desce de forma curvilínea (infradesnível 'em serrote') e a onda T é invertida de forma assimétrica. Esses dois achados juntos formam o padrão strain → SVE.",
+          "apresenta": "presente — infra ST + T invertida assimétrica",
+          "ausencia": "ausente"
+        }
+      ],
+      "direita": [
+        {
+          "criterio": "Dominância da onda R em V1",
+          "formula": "R / S em V1",
+          "valor_corte": "> 1",
+          "como_aferir": "Em V1, compare a altura da onda R com a profundidade da onda S. Se a R é maior que a S (R/S > 1), o vetor da parede direita ficou sobrecarregado → SVD. Normalmente em V1 a S predomina sobre a R.",
+          "apresenta": "R/S > 1 (R maior que a S)",
+          "ausencia": "R/S ≤ 1"
+        },
+        {
+          "criterio": "Sokolow-Lyon para SVD",
+          "formula": "R(V1) + S(V5 ou V6)",
+          "valor_corte": "> 10.5 mm",
+          "como_aferir": "Some a altura da R em V1 com a maior onda S de V5 ou V6 (V6 costuma ser mais profunda). Se a soma > 10,5 mm, o critério é positivo → SVD.",
+          "apresenta": "> 10,5 mm (R V1 + S V5/V6)",
+          "ausencia": "≤ 10,5 mm"
+        },
+        {
+          "criterio": "Desvio do eixo do QRS",
+          "achado": "Desvio do eixo para a direita",
+          "valor_corte": "> +90 graus",
+          "como_aferir": "O eixo do QRS é a direção média do batimento no plano frontal (DI, DII, DIII, aVR, aVL, aVF). Regra rápida: olhe DI e aVF. Se o QRS em DI é predominantemente NEGATIVO (para baixo) e em aVF é POSITIVO (para cima), o eixo está no quadrante inferior direito, ou seja, > +90°. Confirmação: se em DIII o QRS também é positivo e em DI negativo, o eixo está > +90°. (Normal: entre -30° e +90°, com DI e DII positivos.)",
+          "apresenta": "eixo à direita — acima de +90°",
+          "ausencia": "eixo dentro do normal (-30° a +90°)"
+        }
+      ]
+    }
+  },
+  "perguntas": [
+    {
+      "id": "estabilidade_clinica",
+      "texto": "O paciente apresenta sinais de instabilidade hemodinâmica (hipotensão/choque, alteração do nível de consciência, dor torácica isquêmica ou edema agudo de pulmão)?",
+      "opcoes": [
+        {
+          "valor": "estavel",
+          "label": "Estável (Sem sinais de alarme no momento)"
+        },
+        {
+          "valor": "instavel",
+          "label": "Instável (Apresenta 1 ou mais sinais de instabilidade)"
+        }
+      ]
+    },
+    {
+      "id": "fc",
+      "texto": "Qual é a Frequência Cardíaca (FC)?",
+      "opcoes": [
+        {
+          "valor": "Bradicardia",
+          "label": "Bradicardia (<60 bpm)"
+        },
+        {
+          "valor": "Normocardia",
+          "label": "Normocardia (60–100 bpm)"
+        },
+        {
+          "valor": "Taquicardia",
+          "label": "Taquicardia (>100 bpm)"
+        },
+        {
+          "valor": "Indeterminada",
+          "label": "Indeterminada (ex: FV, caótico)"
+        },
+        {
+          "valor": "Ausente",
+          "label": "Ausente (ex: Assistolia)"
+        }
+      ]
+    },
+    {
+      "id": "qrs",
+      "texto": "Qual a morfologia/duração do Complexo QRS?",
+      "opcoes": [
+        {
+          "valor": "Estreito (<120 ms)",
+          "label": "Estreito (<120 ms)"
+        },
+        {
+          "valor": "Largo (≥120 ms)",
+          "label": "Largo (≥120 ms)"
+        },
+        {
+          "valor": "Desorganizado",
+          "label": "Desorganizado / Caótico (FV)"
+        },
+        {
+          "valor": "Ausente",
+          "label": "Ausente"
+        }
+      ]
+    },
+    {
+      "id": "rr",
+      "texto": "Como está o Ritmo / Intervalo R-R?",
+      "opcoes": [
+        {
+          "valor": "Regular",
+          "label": "Regular"
+        },
+        {
+          "valor": "Irregular",
+          "label": "Irregular (inclui irregularmente irregular e agrupados)"
+        },
+        {
+          "valor": "Ausente",
+          "label": "Ausente"
+        }
+      ]
+    },
+    {
+      "id": "onda_p",
+      "texto": "Como está a Onda P?",
+      "opcoes": [
+        {
+          "valor": "Presente",
+          "label": "Presente (P sinusal ou atrial organizada)"
+        },
+        {
+          "valor": "Ausente",
+          "label": "Ausente (não visível ou retrógrada)"
+        },
+        {
+          "valor": "Onda F",
+          "label": "Onda F (serrilha do flutter)"
+        },
+        {
+          "valor": "Dissociada",
+          "label": "Dissociada (sem relação fixa com o QRS)"
+        }
+      ]
+    },
+    {
+      "id": "st_t",
+      "texto": "Há alterações no Segmento ST ou Onda T (Isquemia / Repolarização)?",
+      "opcoes": [
+        {
+          "valor": "Sem alteração",
+          "label": "Sem alterações agudas de ST/T"
+        },
+        {
+          "valor": "Supradesnivelamento ST",
+          "label": "Supradesnivelamento do ST em ≥2 derivações contíguas"
+        },
+        {
+          "valor": "Infradesnivelamento ST",
+          "label": "Infradesnivelamento do ST / Inversão de T (Isquemia/Strain)"
+        },
+        {
+          "valor": "Onda T apiculada",
+          "label": "Onda T alta, simétrica e pontiaguda (apiculada)"
+        },
+        {
+          "valor": "Supra côncavo com infra de PR",
+          "label": "Supra de ST difuso côncavo + infradesnivelamento do segmento PR"
+        }
+      ]
+    },
+    {
+      "id": "sobrecarga_morfologia",
+      "texto": "Há critérios de Sobrecarga / Hipertrofia de Câmaras Cardíacas?",
+      "opcoes": [
+        {
+          "valor": "Nenhuma",
+          "label": "Nenhum critério evidente de sobrecarga"
+        },
+        {
+          "valor": "SAE",
+          "label": "Sobrecarga Atrial Esquerda (P larga/entalhada ≥120 ms, Índice de Morris + em V1)"
+        },
+        {
+          "valor": "SAD",
+          "label": "Sobrecarga Atrial Direita (P apiculada ≥2.5 mm em DII/DIII/aVF)"
+        },
+        {
+          "valor": "SVE",
+          "label": "Sobrecarga Ventricular Esquerda (Sokolow-Lyon ≥35 mm, Cornell +)"
+        },
+        {
+          "valor": "SVD",
+          "label": "Sobrecarga Ventricular Direita (R > S em V1, desvio do eixo à direita > +90°)"
+        }
+      ]
+    }
+  ],
+  "diagnosticos": [
+    {
+      "id": "ritmo_sinusal",
+      "categoria": "Ritmo Normal",
+      "criterios": {
+        "fc": "Normocardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Presente",
+        "st_t": "Sem alteração",
+        "sobrecarga_morfologia": "Nenhuma"
+      },
+      "arritmia": "Ritmo sinusal normal",
+      "origem": "Sinusal",
+      "gravidade": "Benigno",
+      "achado_chave": "Onda P sinusal positiva em DI, DII e aVF; PR 120–200 ms; QRS estreito e repolarização normal.",
+      "diferencial": "Excluir artefatos ou alterações sutis de voltagem.",
+      "conduta": {
+        "estavel": "Nenhuma intervenção necessária. Manter acompanhamento de rotina.",
+        "instavel": "Investigar etiologias não eletrocardiográficas para instabilidade (ex: choque hipovolêmico, séptico, TEP)."
+      }
+    },
+    {
+      "id": "sve",
+      "categoria": "Sobrecarga Ventricular / Estrutural",
+      "criterios": {
+        "sobrecarga_morfologia": "SVE"
+      },
+      "arritmia": "Sobrecarga Ventricular Esquerda (SVE / HVE)",
+      "origem": "Alteração Estrutural Ventricular",
+      "gravidade": "Eletivo",
+      "achado_chave": "Sokolow-Lyon (S em V1 + R em V5 ou V6 ≥ 35 mm), Cornell (R em aVL + S em V3 > 28 mm em homens, > 20 mm em mulheres); desvio do eixo à esquerda; padrão strain (infra ST + T assimétrica em V5-V6/DI/aVL).",
+      "diferencial": "Atletas de alta performance, bloqueio de ramo esquerdo, cardiopatia hipertrófica, hipertensão renovascular.",
+      "conduta": {
+        "estavel": "Otimizar tratamento da causa base (hipertensão arterial, estenose aórtica). Solicitar Ecocardiograma transtorácico para estimar massa ventricular e função sistólica/diastólica.",
+        "instavel": "Se acompanhado de Edema Agudo de Pulmão ou Crise Hipertensiva: Vasodilatadores EV (Nitroglicerina/Nitroprussiato), diurético de alça EV e afastar Síndrome Coronariana Aguda associada."
+      }
+    },
+    {
+      "id": "svd",
+      "categoria": "Sobrecarga Ventricular / Estrutural",
+      "criterios": {
+        "sobrecarga_morfologia": "SVD"
+      },
+      "arritmia": "Sobrecarga Ventricular Direita (SVD / HVD)",
+      "origem": "Alteração Estrutural Ventricular",
+      "gravidade": "Eletivo",
+      "achado_chave": "Onda R > S em V1 (R em V1 > 7 mm ou R/S > 1); desvio do eixo QRS para a direita (> +90°); onda S profunda em V5-V6; padrão strain de VD (inversão de T e infra ST em V1-V3).",
+      "diferencial": "Bloqueio de ramo direito, infarto dorsal/posterior, TEP agudo, Cor Pulmonale.",
+      "conduta": {
+        "estavel": "Investigar etiologia pulmonar ou cardíaca direita: Hipertensão Arterial Pulmonar (HAP), DPOC, TEP crônico, estenose pulmonar. Encaminhar para ecocardiograma e pneumologia/cardiologia.",
+        "instavel": "Investigar TEP Massivo ou disfunção aguda de VD. Suporte hemodinâmico cuidadoso (evitar hiper-hidratação que piore a interdependência ventricular), inotrópicos (Dobutamina) e Angio-TC de tórax imediata."
+      }
+    },
+    {
+      "id": "sae",
+      "categoria": "Sobrecarga Atrial / Estrutural",
+      "criterios": {
+        "sobrecarga_morfologia": "SAE"
+      },
+      "arritmia": "Sobrecarga Atrial Esquerda (SAE)",
+      "origem": "Alteração Estrutural Atrial",
+      "gravidade": "Eletivo",
+      "achado_chave": "Onda P com duração ≥ 120 ms entalhada em DII/DI (P mitrale); Índice de Morris positivo em V1 (fase negativa da P em V1 com área ≥ 1 mm × 40 ms).",
+      "diferencial": "Atraso de condução interatrial (Bloqueio de Bachmann).",
+      "conduta": {
+        "estavel": "Investigar hipertensão arterial sistêmica, valvopatia mitral (estenose/insuficiência) ou disfunção diastólica do VE. Solicitar Ecocardiograma. Monitorar o aparecimento de Fibrilação Atrial.",
+        "instavel": "Se insuficiência cardíaca descompensada / EAP, manejar congestão com diuréticos e vasodilatadores. Monitorizar ritmo cardíaco de perto pelo elevado risco de FA."
+      }
+    },
+    {
+      "id": "sad",
+      "categoria": "Sobrecarga Atrial / Estrutural",
+      "criterios": {
+        "sobrecarga_morfologia": "SAD"
+      },
+      "arritmia": "Sobrecarga Atrial Direita (SAD)",
+      "origem": "Alteração Estrutural Atrial",
+      "gravidade": "Eletivo",
+      "achado_chave": "Onda P alta e apiculada ≥ 2,5 mm (0,25 mV) nas derivações inferiores DII, DIII e aVF (P pulmonale).",
+      "diferencial": "Hipocalemia, tônus simpático aumentado, taquicardia sinusal.",
+      "conduta": {
+        "estavel": "Investigar pneumopatias crônicas (DPOC, enfisema), hipertensão pulmonar ou valvopatia tricuspídea. Encaminhar para Ecocardiograma transtorácico.",
+        "instavel": "Investigar causas agudas de sobrecarga de cavidades direitas (ex: TEP, crise de hipertensão pulmonar, descompensação grave de DPOC). Suporte ventilatório e oxigenoterapia."
+      }
+    },
+    {
+      "id": "iamcsst",
+      "categoria": "Isquemia / Coronariopatia Aguda",
+      "criterios": {
+        "st_t": "Supradesnivelamento ST"
+      },
+      "arritmia": "Infarto Agudo do Miocárdio com Supradesnivelamento de ST (IAMCSST)",
+      "origem": "Isquêmica (Oclusão Coronariana Aguda)",
+      "gravidade": "Emergência extrema",
+      "achado_chave": "Supradesnivelamento do ST ≥ 1 mm em ≥ 2 derivações contíguas (≥ 1.5–2.5 mm em V2-V3) ou imagem de onda T hiperaguda / equivalente isquêmico.",
+      "diferencial": "Pericardite aguda, repolarização precoce, aneurisma de ventrículo esquerdo, síndrome de Takotsubo.",
+      "conduta": {
+        "estavel": "Ativação imediata da rede de IAM. Dupla antiagregação plaquetária (AAS + Inibidor P2Y12) + Anticoagulação. Reperfusão de urgência: Angioplastia Primária (<120 min) ou Fibrinolítico se ICP indisponível (<12 h do início dos sintomas).",
+        "instavel": "Ativação emergencial de reperfusão. Suporte hemodinâmico imediato (inotrópicos/vasopressores se choque cardiogênico), O2 se SpO2 <90%, preparar para suporte circulatório/cardioversão em caso de arritmias associadas."
+      }
+    },
+    {
+      "id": "iamssst_isquemia",
+      "categoria": "Isquemia / Coronariopatia Aguda",
+      "criterios": {
+        "st_t": "Infradesnivelamento ST"
+      },
+      "arritmia": "Síndrome Coronariana Aguda sem Supra de ST (SCAssST / Isquemia Aguda)",
+      "origem": "Isquêmica",
+      "gravidade": "Emergência",
+      "achado_chave": "Infradesnivelamento horizontal/descendente do ST ≥ 0.5 mm e/ou inversão de onda T profunda simétrica em derivações contíguas.",
+      "diferencial": "Efeito digitálico, sobrecarga ventricular esquerda com strain, hipocalemia.",
+      "conduta": {
+        "estavel": "AAS + anticoagulação + estratificação de risco (GRACE/TIMI). Estratégia invasiva (coronariografia) em 24h conforme risco.",
+        "instavel": "Estratégia invasiva imediata (Coronariografia de urgência em <2h) para pacientes com instabilidade hemodinâmica, dor refratária ou arritmias graves."
+      }
+    },
+    {
+      "id": "pericardite_aguda",
+      "categoria": "Inflamatória / Pericárdica",
+      "criterios": {
+        "st_t": "Supra côncavo com infra de PR"
+      },
+      "arritmia": "Pericardite Aguda",
+      "origem": "Inflamatória",
+      "gravidade": "Urgência",
+      "achado_chave": "Supradesnivelamento difuso do ST com concavidade para cima (aspecto em sela) + Infradesnivelamento do PR (especialmente em DII e V5-V6) e supra de PR em aVR.",
+      "diferencial": "IAMCSST (que apresenta infra de ST de espelho e convexidade), repolarização precoce.",
+      "conduta": {
+        "estavel": "Anti-inflamatórios não esteroides (AINEs, ex: Ibuprofeno) + Colchicina. Acompanhamento ecocardiográfico para afastar derrame pericárdico.",
+        "instavel": "Investigar Tamponamento Cardíaco (Tríade de Beck: abafamento de bulhas, turgência jugular, hipotensão). Pericardiocentese de emergência se houver restrição hemodinâmica."
+      }
+    },
+    {
+      "id": "hipercalemia",
+      "categoria": "Distúrbio Eletrolítico",
+      "criterios": {
+        "st_t": "Onda T apiculada"
+      },
+      "arritmia": "Hipercalemia (Alterações Eletrocardiográficas)",
+      "origem": "Metabólica",
+      "gravidade": "Emergência",
+      "achado_chave": "Ondas T altas, simétricas e pontiagudas (em tenda); conforme progride: achatamento da P, alargamento do QRS até padrão em onda senoidal.",
+      "diferencial": "Isquemia miocárdica hiperaguda (onda T larga/assimétrica), repolarização precoce.",
+      "conduta": {
+        "estavel": "Medidas de eliminação de K⁺ (resinas de troca, furosemida) + insulina com glicose EV. Monitorização contínua.",
+        "instavel": "Estabilização imediata da membrana miocárdica com Gluconato de Cálcio 10% EV (10–20 mL) + Solução polarizante (Insulina regular + Glicose 50%) + Bicarbonato de Sódio (se acidose) e hemodiálise de urgência."
+      }
+    },
+    {
+      "id": "bre_completo",
+      "categoria": "Distúrbio de Condução Intraventricular",
+      "criterios": {
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Regular",
+        "onda_p": "Presente"
+      },
+      "arritmia": "Bloqueio de Ramo Esquerdo (BRE)",
+      "origem": "Sistema de Condução",
+      "gravidade": "Eletivo",
+      "achado_chave": "QRS ≥ 120 ms; onda R larga, entalhada ou monofásica em DI, aVL, V5-V6; ausência de q em V5-V6; onda S profunda em V1-V3.",
+      "diferencial": "Pesquisar isquemia associada usando Critérios de Sgarbossa / Sgarbossa Modificado.",
+      "conduta": {
+        "estavel": "Comparar com ECGs anteriores. Avaliação ambulatorial da função ventricular (ecocardiograma). Se achado novo com dor torácica, investigar síndrome coronariana.",
+        "instavel": "Se novo/presumivelmente novo acompanhado de dor torácica e instabilidade, manejar como equivalente de IAM com supra de ST. Avaliar marcapasso se associado a BAV alto grau."
+      }
+    },
+    {
+      "id": "brd_completo",
+      "categoria": "Distúrbio de Condução Intraventricular",
+      "criterios": {
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Regular",
+        "onda_p": "Presente"
+      },
+      "arritmia": "Bloqueio de Ramo Direito (BRD)",
+      "origem": "Sistema de Condução",
+      "gravidade": "Benigno",
+      "achado_chave": "QRS ≥ 120 ms; padrão rsr′, rsR′ ou rSR′ em V1-V2 (morfologia em orelha de coelho); onda S larga e empastada em DI, aVL, V5-V6.",
+      "diferencial": "Síndrome de Brugada, sobrecarga de ventrículo direito, TEP agudo.",
+      "conduta": {
+        "estavel": "Sem tratamento específico se isolado e assintomático. Seguimento de rotina.",
+        "instavel": "Investigar causa aguda subjacente (ex: Cor Pulmonale agudo por TEP massivo se houver sobrecarga VD associada)."
+      }
+    },
+    {
+      "id": "tsv_trn",
+      "categoria": "Arritmia Supraventricular",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Taquicardia Supraventricular por Reentrada Nodal (TRN)",
+      "origem": "Nó AV",
+      "gravidade": "Urgência",
+      "achado_chave": "FC 150–250 bpm, RR estritamente regular, QRS estreito; ondas P ausentes ou vistas como pseudo-r' em V1 ou pseudo-s em DII/DIII/aVF.",
+      "diferencial": "TRAV ortodrômica, Flutter atrial com condução 2:1, Taquicardia Atrial Focal.",
+      "conduta": {
+        "estavel": "1º) Manobra vagal modificada. 2º) Adenosina 6 mg EV em bolus rápido + flush 20 mL SF; se sem resposta em 1–2 min, 12 mg EV. 3º) Diltiazem/Verapamil ou Betabloqueador EV.",
+        "instavel": "Cardioversão Elétrica Sincronizada imediata (50–100 J) sob sedação se viável."
+      }
+    },
+    {
+      "id": "fa_alta_resposta",
+      "categoria": "Arritmia Supraventricular",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Irregular",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Fibrilação Atrial com Resposta Ventricular Rápida",
+      "origem": "Atrial",
+      "gravidade": "Urgência",
+      "achado_chave": "FC >100 bpm, RR irregularmente irregular; ausência de ondas P organizadas; linha de base fibrilatória.",
+      "diferencial": "Flutter atrial com condução AV variável, Taquicardia Atrial Multifocal.",
+      "conduta": {
+        "estavel": "Controle de frequência com Betabloqueador (ex: Metoprolol 5 mg EV) ou Diltiazem/Verapamil EV + Anticoagulação conforme CHA₂DS₂-VASc.",
+        "instavel": "Cardioversão Elétrica Sincronizada imediata (120–200 J bifásico) sob sedação/analgesia urgente."
+      }
+    },
+    {
+      "id": "flutter_2_1",
+      "categoria": "Arritmia Supraventricular",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Onda F"
+      },
+      "arritmia": "Flutter Atrial com Condução AV 2:1",
+      "origem": "Atrial",
+      "gravidade": "Urgência",
+      "achado_chave": "FC ventricular fixa em ~150 bpm; ondas F em dente de serra a ~300/min melhor vistas em DII, DIII, aVF e V1.",
+      "diferencial": "TSV paroxística, Taquicardia Sinusal.",
+      "conduta": {
+        "estavel": "Controle de frequência (Betabloqueadores, Bloqueadores dos canais de cálcio) + Anticoagulação oral. Planejar ablação de istmo cavotricuspídeo.",
+        "instavel": "Cardioversão Elétrica Sincronizada imediata (50–100 J)."
+      }
+    },
+    {
+      "id": "tv_monomorfica",
+      "categoria": "Arritmia Ventricular",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Regular",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Taquicardia Ventricular Monomórfica Sustentada",
+      "origem": "Ventricular",
+      "gravidade": "Emergência",
+      "achado_chave": "FC >100 bpm (>150 bpm em geral), QRS largo (≥ 120 ms) com mesma morfologia batimento a batimento; concordância pré-cordial, dissociação AV.",
+      "diferencial": "TSV com aberrância de condução. Na dúvida, TRATAR COMO TV.",
+      "conduta": {
+        "estavel": "Amiodarona 150 mg EV em 10 min (pode repetir) seguido de infusão contínua; ou Procainamida EV. Preparar material de cardioversão.",
+        "instavel": "Cardioversão Elétrica Sincronizada imediata (100–200 J bifásico) com sedação rápida."
+      }
+    },
+    {
+      "id": "torsades_de_pointes",
+      "categoria": "Arritmia Ventricular",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Irregular",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Torsades de Pointes (TV Polimórfica com QT Longo)",
+      "origem": "Ventricular",
+      "gravidade": "Emergência",
+      "achado_chave": "QRS largo torcendo ao redor da linha isoelétrica; RR irregular; associado a QTc prolongado no ECG basal.",
+      "diferencial": "TV polimórfica por isquemia aguda (QT normal).",
+      "conduta": {
+        "estavel": "Sulfato de Magnésio 2 g EV em 1–2 min + correção de hipocalemia (K⁺ >4,5 mEq/L). Suspender todos os fármacos que prolongam o QT.",
+        "instavel": "Desfibrilação imediata (Carga máxima não sincronizada, ex: 200 J bifásico) + Sulfato de Magnésio EV + Marcapasso provisório para sobreestimulação (overdrive pacing)."
+      }
+    },
+    {
+      "id": "fa_pre_excitada",
+      "categoria": "Arritmia por Via Acessória",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Irregular",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Fibrilação Atrial Pré-excitada (WPW + FA)",
+      "origem": "Via Acessória",
+      "gravidade": "Emergência",
+      "achado_chave": "FC extremamente alta (>200–250 bpm), QRS bizarro, largo e de morfologia variável, RR irregularmente irregular. PROIBIDO bloqueadores do nó AV!",
+      "diferencial": "FA com bloqueio de ramo/aberrância (que tem QRS de morfologia fixa).",
+      "conduta": {
+        "estavel": "Procainamida ou Ibutilida EV. Se indisponíveis ou dúvida, realizar cardioversão elétrica de forma precoce.",
+        "instavel": "Cardioversão Elétrica Sincronizada imediata (120–200 J bifásico)."
+      }
+    },
+    {
+      "id": "bavt_escape_juncional",
+      "categoria": "Bloqueio Atrioventricular",
+      "criterios": {
+        "fc": "Bradicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Dissociada"
+      },
+      "arritmia": "Bloqueio AV Total (3º grau) com Escape Juncional",
+      "origem": "Nó AV / Infranodal alto",
+      "gravidade": "Emergência",
+      "achado_chave": "Dissociação AV completa: P sinusais regulares em taxa normal e QRS estreito regular em FC baixa (~40 bpm) sem relação fixa entre si.",
+      "diferencial": "BAV de 2º grau Mobitz II.",
+      "conduta": {
+        "estavel": "Monitorização contínua, colher exames (K⁺, troponina, digoxina). Passar pás de marcapasso transcutâneo em modo standby. Encaminhar para Marcapasso Definitivo.",
+        "instavel": "Atropina 1 mg EV (pode responder por ser escape nodal) + Iniciar Marcapasso Transcutâneo imediato ou Infusão de Dopamina/Adrenalina até passagem de Marcapasso Transvenoso."
+      }
+    },
+    {
+      "id": "bavt_escape_ventricular",
+      "categoria": "Bloqueio Atrioventricular",
+      "criterios": {
+        "fc": "Bradicardia",
+        "qrs": "Largo (≥120 ms)",
+        "rr": "Regular",
+        "onda_p": "Dissociada"
+      },
+      "arritmia": "Bloqueio AV Total (3º grau) com Escape Ventricular",
+      "origem": "Infranodal / His-Purkinje",
+      "gravidade": "Emergência",
+      "achado_chave": "Dissociação AV completa com QRS largo e FC muito baixa (20–40 bpm). Altíssimo risco de assistolia.",
+      "diferencial": "Ritmo de escape idioventricular isolado.",
+      "conduta": {
+        "estavel": "Manter pás do Marcapasso Transcutâneo posicionadas e ligadas. Encaminhamento de urgência para marcapasso transvenoso provisório e definitivo.",
+        "instavel": "Marcapasso Transcutâneo imediato. Atropina é INEFICAZ. Infusão contínua de Adrenalina (2–10 mcg/min) ou Dopamina enquanto instala marcapasso transvenoso."
+      }
+    },
+    {
+      "id": "fv",
+      "categoria": "Parada Cardiorrespiratória",
+      "criterios": {
+        "fc": "Indeterminada",
+        "qrs": "Desorganizado",
+        "rr": "Ausente",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Fibrilação Ventricular (FV)",
+      "origem": "Ventricular",
+      "gravidade": "Emergência extrema",
+      "achado_chave": "Atividade elétrica caótica sem ondas P, complexos QRS ou ondas T reconhecíveis.",
+      "diferencial": "Artefato de movimento ou desconexão de cabos.",
+      "conduta": {
+        "estavel": "Inaplicável (Sempre PCR/Emergência Extrema).",
+        "instavel": "Ritmo chocável: Desfibrilação imediata (Carga máxima) + RCP de alta qualidade (30:2 ou contínua) + Adrenalina 1 mg a cada 3–5 min + Amiodarona 300 mg após o 3º choque (protocolo ACLS)."
+      }
+    },
+    {
+      "id": "assistolia",
+      "categoria": "Parada Cardiorrespiratória",
+      "criterios": {
+        "fc": "Ausente",
+        "qrs": "Ausente",
+        "rr": "Ausente",
+        "onda_p": "Ausente"
+      },
+      "arritmia": "Assistolia",
+      "origem": "Sem atividade",
+      "gravidade": "Emergência extrema",
+      "achado_chave": "Linha isoelétrica (ausência de atividade elétrica ventricular).",
+      "diferencial": "Excluir FV fina, cabos desconectados. Checar protocolo CAGADA (Cabos, Ganho, Derivações).",
+      "conduta": {
+        "estavel": "Inaplicável (Sempre PCR/Emergência Extrema).",
+        "instavel": "Ritmo NÃO chocável: RCP de alta qualidade imediata + Adrenalina 1 mg EV o mais rápido possível (repetir a cada 3–5 min) + Investigar e tratar causas reversíveis (5Hs e 5Ts)."
+      }
+    },
+    {
+      "id": "aesp",
+      "categoria": "Parada Cardiorrespiratória",
+      "criterios": {
+        "fc": "Ausente",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Ausente"
+      },
+      "arritmia": "Atividade Elétrica Sem Pulso (AESP)",
+      "origem": "Vários",
+      "gravidade": "Emergência extrema",
+      "achado_chave": "Ritmo elétrico organizado presente no monitor, porém SEM pulso central palpável.",
+      "diferencial": "Choque obstrutivo/hipovolêmico profundo com pulso frágil (pseudo-AESP).",
+      "conduta": {
+        "estavel": "Inaplicável (Sempre PCR/Emergência Extrema).",
+        "instavel": "Ritmo NÃO chocável: RCP de alta qualidade + Adrenalina 1 mg EV a cada 3–5 min + Foco absoluto em identificar e tratar a causa subjacente (5Hs e 5Ts)."
+      }
+    }
+  ]
+}
