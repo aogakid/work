@@ -444,11 +444,19 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     })
   }, [])
 
+  const idade = values["idade"]
+  const sexo = values["sexo"]
+  const ct = values["ct"]
+  const hdl = values["hdl"]
+  const trig = values["trig"]
+  const cr = values["cr"]
+  const hba1c = values["hba1c"]
+
   useEffect(() => {
     if (syncRef.current) return
     if (!touchedRef.current) return
-    broadcastFieldSync("exames", { idade: values["idade"] || "", sexo: values["sexo"] || "", ct: values["ct"] || "", hdl: values["hdl"] || "", trig: values["trig"] || "", cr: values["cr"] || "", hba1c: values["hba1c"] || "" })
-  }, [values["idade"], values["sexo"], values["ct"], values["hdl"], values["trig"], values["cr"], values["hba1c"]])
+    broadcastFieldSync("exames", { idade: idade || "", sexo: sexo || "", ct: ct || "", hdl: hdl || "", trig: trig || "", cr: cr || "", hba1c: hba1c || "" })
+  }, [idade, sexo, ct, hdl, trig, cr, hba1c])
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {

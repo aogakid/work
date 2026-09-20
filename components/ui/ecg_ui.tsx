@@ -1,6 +1,8 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { gerarLeads, gerarBeatUnico, DURACAO_MS, PASSO_MS } from "./ecg_strip"
+import type { EcgState, BeatPreviewSpec, LeadsTraco } from "./ecg_strip"
 
 const injectStyles = `
   :root {
@@ -239,7 +241,6 @@ interface EcgData {
 interface CriterioSobrecarga {
   criterio: string
   achado?: string
-  valor_corte?: string
   formula?: string
   derivacoes?: string[]
   como_aferir?: string
@@ -358,6 +359,309 @@ function montarGrupos(alter: AlteracoesEcg): GrupoSobrecarga[] {
   ]
 }
 
+const PREVIEW_BASE: Record<string, BeatPreviewSpec> = {
+  sae_0: { lead: "DII" },
+  sae_1: { lead: "V1" },
+  sad_0: { lead: "DII" },
+  sad_1: { lead: "V1" },
+  sve_0: { lead: "DII" },
+  sve_1: { lead: "DII" },
+  sve_2: { lead: "DII" },
+  svd_0: { lead: "V1" },
+  svd_1: { lead: "V1" },
+  svd_2: { lead: "V1" },
+}
+
+const PREVIEW_SIM: Record<string, BeatPreviewSpec> = {
+  sae_0: { lead: "DII", pWide: true },
+  sae_1: { lead: "V1", morris: true },
+  sad_0: { lead: "DII", pTall: true },
+  sad_1: { lead: "V1", pTall: true },
+  sve_0: { lead: "DII", highVoltage: true },
+  sve_1: { lead: "DII", highVoltage: true, deepS: true },
+  sve_2: { lead: "DII", strain: true },
+  svd_0: { lead: "V1", rDominant: true },
+  svd_1: { lead: "V1", highVoltage: true, deepS: true },
+  svd_2: { lead: "V1" },
+}
+
+const EIXO_CRITERIO_ID = "svd_2"
+
+function samplesCriterio(id: string, presente: boolean): number[] | null {
+  if (id === EIXO_CRITERIO_ID) return null
+  const spec = presente ? PREVIEW_SIM[id] : PREVIEW_BASE[id]
+  if (!spec) return null
+  return gerarBeatUnico(spec)
+}
+
+const PX_MS = 0.2
+const PX_MV = 80
+const JANELA_BEAT_MS = 1100
+const COR_TRACO = "var(--ecg-accent, #c0392b)"
+const COR_GRID = "rgba(120,120,120,0.16)"
+const COR_GRID_FORTE = "rgba(120,120,120,0.4)"
+
+const BASE_MAIN = 160
+const ALTURA_MAIN = 344
+const BASE_PREV = 140
+const ALTURA_PREV = 280
+
+interface LinhaVert {
+  x: number
+  forte: boolean
+  segundo: boolean
+}
+
+interface LinhaHori {
+  y: number
+  forte: boolean
+}
+
+function paraPath(samples: number[], base: number): string {
+  let d = ""
+  for (let i = 0; i < samples.length; i++) {
+    const x = i * PASSO_MS * PX_MS
+    const y = base - samples[i] * PX_MV
+    d += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1)
+  }
+  return d
+}
+
+function linhasVerticais(ateMs: number): LinhaVert[] {
+  const linhas: LinhaVert[] = []
+  for (let x = 40; x <= ateMs; x += 40) {
+    linhas.push({ x: x * PX_MS, forte: x % 200 === 0, segundo: x % 1000 === 0 })
+  }
+  return linhas
+}
+
+function linhasHorizontais(altura: number, base: number): LinhaHori[] {
+  const linhas: LinhaHori[] = []
+  const passo = (0.1 * PX_MV)
+  const maxK = Math.floor(Math.min(base, altura - base) / passo)
+  for (let k = 1; k <= maxK; k++) {
+    linhas.push({ y: base - k * passo, forte: k % 5 === 0 })
+    linhas.push({ y: base + k * passo, forte: k % 5 === 0 })
+  }
+  return linhas
+}
+
+function StripSvg(props: { path: string; label: string; duracaoS: number }) {
+  const larg = DURACAO_MS * PX_MS
+  const vert = linhasVerticais(DURACAO_MS)
+  const hori = linhasHorizontais(ALTURA_MAIN, BASE_MAIN)
+  return (
+    <svg
+      viewBox={"0 0 " + larg + " " + ALTURA_MAIN}
+      preserveAspectRatio="none"
+      style={{ width: "100%", height: "auto", display: "block", borderRadius: "8px", background: "var(--ecg-bg)" }}
+    >
+      {vert.map(function (l) {
+        return (
+          <g key={"v" + l.x}>
+            <line
+              x1={l.x}
+              x2={l.x}
+              y1={0}
+              y2={ALTURA_MAIN}
+              stroke={l.forte ? COR_GRID_FORTE : COR_GRID}
+              strokeWidth={l.forte ? 1.2 : 0.8}
+              vectorEffect="non-scaling-stroke"
+            />
+            {l.segundo && (
+              <text x={l.x - 7} y={ALTURA_MAIN - 9} style={{ fontSize: "13px", fill: COR_GRID_FORTE, fontWeight: 600 }}>
+                {Math.round(l.x / (1000 * PX_MS))}
+              </text>
+            )}
+          </g>
+        )
+      })}
+      {hori.map(function (l) {
+        return (
+          <line
+            key={"h" + l.y}
+            x1={0}
+            x2={larg}
+            y1={l.y}
+            y2={l.y}
+            stroke={l.forte ? COR_GRID_FORTE : COR_GRID}
+            strokeWidth={l.forte ? 1.2 : 0.8}
+            vectorEffect="non-scaling-stroke"
+          />
+        )
+      })}
+      <line x1={0} x2={larg} y1={BASE_MAIN} y2={BASE_MAIN} stroke={COR_GRID_FORTE} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <text
+        x={8}
+        y={20}
+        stroke="var(--ecg-bg)"
+        strokeWidth={4}
+        paintOrder="stroke"
+        style={{ fontSize: "15px", fontWeight: 700, fill: COR_TRACO }}
+      >
+        {props.label} · {props.duracaoS} s
+      </text>
+      <path
+        d={props.path}
+        fill="none"
+        stroke={COR_TRACO}
+        strokeWidth={2.6}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  )
+}
+
+function EcgStripViewer({ leads }: { leads: LeadsTraco }) {
+  return (
+    <div
+      style={{
+        marginBottom: "12px",
+        padding: "10px",
+        borderRadius: "10px",
+        border: "1px solid var(--ecg-border)",
+        background: "var(--ecg-card-bg)",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <StripSvg path={paraPath(leads.dii, BASE_MAIN)} label="DII" duracaoS={4} />
+        <StripSvg path={paraPath(leads.v1, BASE_MAIN)} label="V1" duracaoS={4} />
+      </div>
+    </div>
+  )
+}
+
+function BeatPreview(props: { samples: number[]; destaque?: boolean }) {
+  const larg = JANELA_BEAT_MS * PX_MS
+  const path = paraPath(props.samples, BASE_PREV)
+  const vert = linhasVerticais(JANELA_BEAT_MS)
+  const hori = linhasHorizontais(ALTURA_PREV, BASE_PREV)
+  const cor = props.destaque ? COR_TRACO : "#5f6064"
+  return (
+    <div style={{ flexShrink: 0, flex: "0 1 200px", minWidth: "150px", maxWidth: "220px", width: "100%" }}>
+      <svg
+        viewBox={"0 0 " + larg + " " + ALTURA_PREV}
+        preserveAspectRatio="none"
+        style={{ width: "100%", height: "auto", display: "block", borderRadius: "8px", background: "var(--ecg-bg)" }}
+      >
+        {vert.map(function (l) {
+          return (
+            <line
+              key={"v" + l.x}
+              x1={l.x}
+              x2={l.x}
+              y1={0}
+              y2={ALTURA_PREV}
+              stroke={l.forte ? COR_GRID_FORTE : COR_GRID}
+              strokeWidth={l.forte ? 1.2 : 0.8}
+              vectorEffect="non-scaling-stroke"
+            />
+          )
+        })}
+        {hori.map(function (l) {
+          return (
+            <line
+              key={"h" + l.y}
+              x1={0}
+              x2={larg}
+              y1={l.y}
+              y2={l.y}
+              stroke={l.forte ? COR_GRID_FORTE : COR_GRID}
+              strokeWidth={l.forte ? 1.2 : 0.8}
+              vectorEffect="non-scaling-stroke"
+            />
+          )
+        })}
+        <line x1={0} x2={larg} y1={BASE_PREV} y2={BASE_PREV} stroke={COR_GRID_FORTE} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <path
+          d={path}
+          fill="none"
+          stroke={cor}
+          strokeWidth={props.destaque ? 2.8 : 2.3}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    </div>
+  )
+}
+
+type SentidoEixo = "up" | "iso" | "down"
+
+const EIXO_LIMB_ORDER = ["DI", "DII", "DIII", "aVR", "aVL", "aVF"]
+
+function eixoDirecao(axis: number, leadAxis: number): SentidoEixo {
+  const v = Math.cos(((axis - leadAxis) * Math.PI) / 180)
+  if (v > 0.15) return "up"
+  if (v < -0.15) return "down"
+  return "iso"
+}
+
+const EIXO_NORMAL_SENT: Record<string, SentidoEixo> = {
+  DI: eixoDirecao(60, 0),
+  DII: eixoDirecao(60, 60),
+  DIII: eixoDirecao(60, 120),
+  aVR: eixoDirecao(60, -150),
+  aVL: eixoDirecao(60, -30),
+  aVF: eixoDirecao(60, 90),
+}
+
+const EIXO_DEVIADO_SENT: Record<string, SentidoEixo> = {
+  DI: eixoDirecao(120, 0),
+  DII: eixoDirecao(120, 60),
+  DIII: eixoDirecao(120, 120),
+  aVR: eixoDirecao(120, -150),
+  aVL: eixoDirecao(120, -30),
+  aVF: eixoDirecao(120, 90),
+}
+
+function Eixo12Derivacoes({ deviado }: { deviado: boolean }) {
+  const mapa = deviado ? EIXO_DEVIADO_SENT : EIXO_NORMAL_SENT
+  return (
+    <div style={{ flex: "1 1 200px", minWidth: "170px" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gridTemplateRows: "repeat(3, auto)",
+          gridAutoFlow: "column",
+          gap: "6px",
+        }}
+      >
+        {EIXO_LIMB_ORDER.map(function (lead) {
+          const s = mapa[lead] || "iso"
+          const simbolo = s === "up" ? "▲" : s === "down" ? "▼" : "–"
+          const cor = s === "up" ? COR_TRACO : s === "down" ? "#8f8f8f" : "#c3c3c3"
+          return (
+            <div
+              key={lead}
+              style={{
+                textAlign: "center",
+                padding: "6px 4px",
+                borderRadius: "6px",
+                background: "var(--ecg-input-bg)",
+                border: "1px solid var(--ecg-border)",
+              }}
+            >
+              <div style={{ fontSize: "10px", fontWeight: 600, color: "var(--ecg-text-muted)" }}>{lead}</div>
+              <div style={{ fontSize: "17px", lineHeight: 1.2, color: cor }}>{simbolo}</div>
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ fontSize: "11px", color: "var(--ecg-text-muted)", textAlign: "center", lineHeight: 1.4 }}>
+        Plano frontal (hexaxial) — ▲ positivo · – isoeletrico · ▼ negativo.{" "}
+        {deviado
+          ? "Eixo a ~+120°: DI e aVL ficam ▼, DIII/aVF ▲; aVR (invertida) ~ iso."
+          : "Eixo a ~+60°: ▲ em DI, DII, DIII e aVF; aVR é a derivação invertida, fica ▼."}
+      </div>
+    </div>
+  )
+}
+
 function overloadValue(criterios: Record<string, boolean>, grupos: GrupoSobrecarga[]): string | null {
   if (grupos.length === 0) return null
   const todosRespondidos = grupos.every(function (g) {
@@ -441,6 +745,7 @@ function SobrecargaWizard(props: {
         const { g, c, i, id } = item
         const presente = criterios[id] === true
         const ausente = criterios[id] === false
+        const previewSamples = samplesCriterio(id, presente)
         return (
           <div key={id} style={styles.stepCard}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" }}>
@@ -454,15 +759,18 @@ function SobrecargaWizard(props: {
             </div>
             <div style={{ fontSize: "12px", color: "var(--ecg-text-muted)", lineHeight: 1.5 }}>
               {c.formula && <span style={{ fontFamily: "'Monaco', 'Menlo', monospace" }}>{c.formula}</span>}
-              {c.formula && c.valor_corte && <span> · </span>}
-              {c.valor_corte && <span>{c.valor_corte}</span>}
               {c.derivacoes && c.derivacoes.length > 0 && (
                 <span> · derivações: {c.derivacoes.join(", ")}</span>
               )}
               {c.achado && <span> · {c.achado}</span>}
             </div>
-            <div style={{ fontSize: "12px", color: "var(--ecg-text-muted)", lineHeight: 1.5, marginTop: "6px", background: "var(--ecg-input-bg)", borderRadius: "8px", padding: "8px 10px" }}>
-              <strong>Como medir/aferir:</strong> {c.como_aferir || "—"}
+            <div style={{ display: "flex", gap: "12px", alignItems: "flex-start", marginTop: "10px", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 200px", minWidth: "180px", fontSize: "12px", color: "var(--ecg-text-muted)", lineHeight: 1.5, background: "var(--ecg-input-bg)", borderRadius: "8px", padding: "8px 10px" }}>
+                <strong>Como medir/aferir:</strong> {c.como_aferir || "—"}
+              </div>
+              {id === EIXO_CRITERIO_ID
+                ? <Eixo12Derivacoes deviado={presente} />
+                : <BeatPreview samples={previewSamples || []} destaque={presente} />}
             </div>
             <div className="ecg-chips" style={{ marginTop: "8px" }}>
               <div style={chipSim(presente, true)} onClick={() => onCriterio(id, "sim")}>
@@ -609,7 +917,7 @@ export default forwardRef<CompanionActions, Props>(function EcgUI({ style }: Pro
   }
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
-  getOutputRef.current = function (_groupId: string): string | null {
+  getOutputRef.current = function (): string | null {
     return buildMarkdown()
   }
 
@@ -628,6 +936,16 @@ export default forwardRef<CompanionActions, Props>(function EcgUI({ style }: Pro
   const worst = matched.length > 0 ? GRAVIDADE_META[matched[0].gravidade] : null
   const badgeColor = worst ? worst.color : "var(--ecg-accent)"
   const instavel = selecoes["estabilidade_clinica"] === "instavel"
+
+  const estadoEcg: EcgState = {
+    fc: selecoes["fc"] || "",
+    qrs: selecoes["qrs"] || "",
+    rr: selecoes["rr"] || "",
+    ondaP: selecoes["onda_p"] || "",
+    stt: selecoes["st_t"] || "",
+    overload,
+  }
+  const leads = gerarLeads(estadoEcg)
 
   const stepVisible: Record<string, boolean> = {
     estabilidade_clinica: true,
@@ -733,6 +1051,8 @@ export default forwardRef<CompanionActions, Props>(function EcgUI({ style }: Pro
               <div className="ecg-badge" style={{ background: badgeColor, color: legivelSobre(badgeColor) }}>
                 ECG
               </div>
+
+              <EcgStripViewer leads={leads} />
 
               {answeredCount === 0 ? (
                 <div style={styles.resultHint}>

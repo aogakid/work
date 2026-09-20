@@ -6,7 +6,6 @@
         {
           "criterio": "Duração da onda P",
           "achado": "P mitrale",
-          "valor_corte": ">= 120 ms (>= 3 quadradinhos) em DII",
           "como_aferir": "No traçado em DII, meça a largura da onda P contando quadradinhos (cada um = 40 ms). Se a onda P ocupa 3 quadradinhos ou mais (>= 120 ms), o critério é positivo. Se ela ainda aparece entalhada ou bífida, é o clássico P mitrale (SAE).",
           "apresenta": "≥ 120 ms (P ocupa 3+ quadradinhos em DII)",
           "ausencia": "< 120 ms (P com até 2 quadradinhos)"
@@ -14,8 +13,7 @@
         {
           "criterio": "Índice de Morris em V1",
           "achado": "Fase negativa da onda P em V1",
-          "valor_corte": "Profundidade >= 1 mm e duração >= 40 ms (área >= 1 mm²)",
-          "como_aferir": "Em V1, a onda P normal tem a parte positiva maior que a negativa. Meça a parte NEGATIVA (que desce abaixo da linha de base): profundidade em mm e largura em ms. Se a profundidade >= 1 mm E a duração >= 40 ms (ou seja, ocupa pelo menos 1 quadradinho de área), o índice de Morris é positivo → SAE.",
+          "como_aferir": "Em V1, a onda P normal tem a parte positiva maior que a negativa. Meça a parte NEGATIVA (que desce abaixo da linha de base): profundidade em mm e largura em ms. Se a profundidade >= 1 mm E a duração >= 40 ms (ou seja, ocupa pelo menos 1 quadradinho de área), o índice de Morris é positivo.",
           "apresenta": "positivo — fase negativa ≥ 1 mm E ≥ 40 ms",
           "ausencia": "negativo — sem fase negativa significativa"
         }
@@ -24,16 +22,14 @@
         {
           "criterio": "Amplitude da onda P",
           "achado": "P pulmonale",
-          "valor_corte": ">= 2.5 mm nas derivações inferiores (DII, DIII, aVF)",
-          "como_aferir": "Observe a ALTURA da onda P em DII, DIII e aVF. Cada 1 mm = 1 quadradinho de amplitude (0,1 mV). Se a onda P tem >= 2,5 mm (2,5 quadradinhos) e é alta e apiculada, é a P pulmonale → SAD.",
+          "como_aferir": "Observe a ALTURA da onda P em DII, DIII e aVF. Cada 1 mm = 1 quadradinho de amplitude (0,1 mV). Se a onda P tem >= 2,5 mm (2,5 quadradinhos) e é alta e apiculada, é a P pulmonale.",
           "apresenta": "≥ 2,5 mm em DII/DIII/aVF",
           "ausencia": "< 2,5 mm"
         },
         {
           "criterio": "Componente positivo em V1/V2",
           "achado": "Deflexão positiva inicial em V1 ou V2",
-          "valor_corte": ">= 1.5 mm",
-          "como_aferir": "Em V1/V2, meça a primeira parte da onda P (deflexão positiva inicial). Se a altura dessa deflexão inicial >= 1,5 mm, sugere sobrecarga atrial direita → SAD.",
+          "como_aferir": "Em V1/V2, meça a primeira parte da onda P (deflexão positiva inicial). Se a altura dessa deflexão inicial >= 1,5 mm, sugere sobrecarga atrial direita.",
           "apresenta": "≥ 1,5 mm na deflexão inicial",
           "ausencia": "< 1,5 mm"
         }
@@ -44,16 +40,14 @@
         {
           "criterio": "Índice de Sokolow-Lyon",
           "formula": "S(V1) + R(V5 ou V6)",
-          "valor_corte": ">= 35 mm",
-          "como_aferir": "Meça a profundidade da onda S em V1 e a altura da onda R em V5 e em V6. Some o S(V1) com a maior das duas R (V5 ou V6). Se o resultado >= 35 mm, o índice é positivo → SVE.",
+          "como_aferir": "Meça a profundidade da onda S em V1 e a altura da onda R em V5 e em V6. Some o S(V1) com a maior das duas R (V5 ou V6). Se o resultado >= 35 mm, o índice é positivo.",
           "apresenta": "≥ 35 mm (S V1 + R V5/V6)",
           "ausencia": "< 35 mm"
         },
         {
           "criterio": "Critério de Voltagem de Cornell",
           "formula": "R(aVL) + S(V3)",
-          "valor_corte": "> 28 mm (homens) ou > 20 mm (mulheres)",
-          "como_aferir": "Meça a altura da onda R em aVL e a profundidade da onda S em V3 e some as duas. Se a soma é > 28 mm no homem ou > 20 mm na mulher, o critério é positivo → SVE.",
+          "como_aferir": "Meça a altura da onda R em aVL e a profundidade da onda S em V3 e some as duas. Se a soma é > 28 mm no homem ou > 20 mm na mulher, o critério é positivo.",
           "apresenta": "> 28 mm (homem) / > 20 mm (mulher)",
           "ausencia": "dentro do limite de Cornell"
         },
@@ -66,7 +60,7 @@
             "V5",
             "V6"
           ],
-          "como_aferir": "Procure nas derivações esquerdas DI, aVL, V5 e V6: o segmento ST desce de forma curvilínea (infradesnível 'em serrote') e a onda T é invertida de forma assimétrica. Esses dois achados juntos formam o padrão strain → SVE.",
+          "como_aferir": "Procure nas derivações esquerdas DI, aVL, V5 e V6: o segmento ST desce de forma curvilínea (infradesnível 'em serrote') e a onda T é invertida de forma assimétrica. Esses dois achados juntos formam o padrão strain.",
           "apresenta": "presente — infra ST + T invertida assimétrica",
           "ausencia": "ausente"
         }
@@ -75,23 +69,20 @@
         {
           "criterio": "Dominância da onda R em V1",
           "formula": "R / S em V1",
-          "valor_corte": "> 1",
-          "como_aferir": "Em V1, compare a altura da onda R com a profundidade da onda S. Se a R é maior que a S (R/S > 1), o vetor da parede direita ficou sobrecarregado → SVD. Normalmente em V1 a S predomina sobre a R.",
+          "como_aferir": "Em V1, compare a altura da onda R com a profundidade da onda S. Se a R é maior que a S (R/S > 1), o vetor da parede direita ficou sobrecarregado. Normalmente em V1 a S predomina sobre a R.",
           "apresenta": "R/S > 1 (R maior que a S)",
           "ausencia": "R/S ≤ 1"
         },
         {
           "criterio": "Sokolow-Lyon para SVD",
           "formula": "R(V1) + S(V5 ou V6)",
-          "valor_corte": "> 10.5 mm",
-          "como_aferir": "Some a altura da R em V1 com a maior onda S de V5 ou V6 (V6 costuma ser mais profunda). Se a soma > 10,5 mm, o critério é positivo → SVD.",
+          "como_aferir": "Some a altura da R em V1 com a maior onda S de V5 ou V6 (V6 costuma ser mais profunda). Se a soma > 10,5 mm, o critério é positivo.",
           "apresenta": "> 10,5 mm (R V1 + S V5/V6)",
           "ausencia": "≤ 10,5 mm"
         },
         {
           "criterio": "Desvio do eixo do QRS",
           "achado": "Desvio do eixo para a direita",
-          "valor_corte": "> +90 graus",
           "como_aferir": "O eixo do QRS é a direção média do batimento no plano frontal (DI, DII, DIII, aVR, aVL, aVF). Regra rápida: olhe DI e aVF. Se o QRS em DI é predominantemente NEGATIVO (para baixo) e em aVF é POSITIVO (para cima), o eixo está no quadrante inferior direito, ou seja, > +90°. Confirmação: se em DIII o QRS também é positivo e em DI negativo, o eixo está > +90°. (Normal: entre -30° e +90°, com DI e DII positivos.)",
           "apresenta": "eixo à direita — acima de +90°",
           "ausencia": "eixo dentro do normal (-30° a +90°)"
@@ -102,21 +93,21 @@
   "perguntas": [
     {
       "id": "estabilidade_clinica",
-      "texto": "O paciente apresenta sinais de instabilidade hemodinâmica (hipotensão/choque, alteração do nível de consciência, dor torácica isquêmica ou edema agudo de pulmão)?",
+      "texto": "O paciente apresenta algum sinal de instabilidade hemodinâmica (hipotensão/choque, alteração do nível de consciência, dor torácica isquêmica ou edema agudo de pulmão)?",
       "opcoes": [
         {
           "valor": "estavel",
-          "label": "Estável (Sem sinais de alarme no momento)"
+          "label": "Estável"
         },
         {
           "valor": "instavel",
-          "label": "Instável (Apresenta 1 ou mais sinais de instabilidade)"
+          "label": "Instável"
         }
       ]
     },
     {
       "id": "fc",
-      "texto": "Qual é a Frequência Cardíaca (FC)?",
+      "texto": "Qual é a Frequência Cardíaca?",
       "opcoes": [
         {
           "valor": "Bradicardia",
@@ -154,7 +145,7 @@
         },
         {
           "valor": "Desorganizado",
-          "label": "Desorganizado / Caótico (FV)"
+          "label": "Desorganizado/Caótico"
         },
         {
           "valor": "Ausente",
@@ -186,19 +177,19 @@
       "opcoes": [
         {
           "valor": "Presente",
-          "label": "Presente (P sinusal ou atrial organizada)"
+          "label": "Presente"
         },
         {
           "valor": "Ausente",
-          "label": "Ausente (não visível ou retrógrada)"
+          "label": "Ausente"
         },
         {
           "valor": "Onda F",
-          "label": "Onda F (serrilha do flutter)"
+          "label": "Onda F"
         },
         {
           "valor": "Dissociada",
-          "label": "Dissociada (sem relação fixa com o QRS)"
+          "label": "Dissociada"
         }
       ]
     },
@@ -208,15 +199,15 @@
       "opcoes": [
         {
           "valor": "Sem alteração",
-          "label": "Sem alterações agudas de ST/T"
+          "label": "Sem alterações agudas"
         },
         {
           "valor": "Supradesnivelamento ST",
-          "label": "Supradesnivelamento do ST em ≥2 derivações contíguas"
+          "label": "Supradesnivelamento em ≥2 derivações contíguas"
         },
         {
           "valor": "Infradesnivelamento ST",
-          "label": "Infradesnivelamento do ST / Inversão de T (Isquemia/Strain)"
+          "label": "Infradesnivelamento do ST / Inversão de T"
         },
         {
           "valor": "Onda T apiculada",
@@ -275,6 +266,69 @@
       "conduta": {
         "estavel": "Nenhuma intervenção necessária. Manter acompanhamento de rotina.",
         "instavel": "Investigar etiologias não eletrocardiográficas para instabilidade (ex: choque hipovolêmico, séptico, TEP)."
+      }
+    },
+    {
+      "id": "taquicardia_sinusal",
+      "categoria": "Ritmo Normal",
+      "criterios": {
+        "fc": "Taquicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Presente",
+        "st_t": "Sem alteração",
+        "sobrecarga_morfologia": "Nenhuma"
+      },
+      "arritmia": "Taquicardia sinusal",
+      "origem": "Sinusal",
+      "gravidade": "Benigno",
+      "achado_chave": "FC entre 100–160 bpm com onda P sinusal presente e regular (uma P antes de cada QRS), positiva em DI, DII e aVF.",
+      "diferencial": "Distinguir de taquicardia fisiológica (febre, dor, ansiedade, hipovolemia, hipertireoidismo) e de taquiarritmias supraventriculares.",
+      "conduta": {
+        "estavel": "Tratar a causa de base (febre, dor, hipovolemia, drogas). Taquicardia sinusal em si raramente exige tratamento específico.",
+        "instavel": "Corrigir causa extracardíaca (hipóxia, hipovolemia, dor, febre) antes de considerar terapia antiarrítmica."
+      }
+    },
+    {
+      "id": "bradicardia_sinusal",
+      "categoria": "Ritmo Normal",
+      "criterios": {
+        "fc": "Bradicardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Regular",
+        "onda_p": "Presente",
+        "st_t": "Sem alteração",
+        "sobrecarga_morfologia": "Nenhuma"
+      },
+      "arritmia": "Bradicardia sinusal",
+      "origem": "Sinusal",
+      "gravidade": "Benigno",
+      "achado_chave": "FC < 60 bpm (geralmente 40–60) com onda P sinusal regular e condução AV preservada; comum em atletas e durante o sono.",
+      "diferencial": "Excluir BAVT (P dissociada dos QRS), escape juncional/ventricular e causas extracardíacas (hipotireoidismo, betabloqueador, verapamil, HSA).",
+      "conduta": {
+        "estavel": "Assintomática não exige tratamento. Se sintomática, investigar etiologia.",
+        "instavel": "Atropina 0,5–1 mg IV (repetir até 3 mg) e considerar marca-passo transcutâneo se refratária."
+      }
+    },
+    {
+      "id": "arritmia_sinusal",
+      "categoria": "Ritmo Normal",
+      "criterios": {
+        "fc": "Normocardia",
+        "qrs": "Estreito (<120 ms)",
+        "rr": "Irregular",
+        "onda_p": "Presente",
+        "st_t": "Sem alteração",
+        "sobrecarga_morfologia": "Nenhuma"
+      },
+      "arritmia": "Arritmia sinusal",
+      "origem": "Sinusal",
+      "gravidade": "Benigno",
+      "achado_chave": "Variação do intervalo RR > 120 ms (ou > 10%) acompanhando a respiração, com onda P sinusal presente em DI, DII e aVF.",
+      "diferencial": "Distinguir de fibrilação atrial (ausência de onda P) e de bloqueio sinusal.",
+      "conduta": {
+        "estavel": "Nenhuma intervenção necessária; achado fisiológico, comum em jovens.",
+        "instavel": "Investigar causas extracardíacas da instabilidade, não o ritmo."
       }
     },
     {
