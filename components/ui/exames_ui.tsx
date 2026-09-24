@@ -52,7 +52,7 @@ const injectStyles = `
     .${EXAMES_PREFIX}-root {
       grid-template-columns: 1.2fr 1fr;
       align-items: start;
-      min-height: calc(100vh - 80px);
+      align-content: start;
     }
   }
 
@@ -104,6 +104,14 @@ const injectStyles = `
     position: sticky;
     top: 48px;
     margin-top: 12px;
+  }
+
+  @media (max-width: 899px) {
+    .${EXAMES_PREFIX}-md-wrap {
+      position: static;
+      margin-top: 12px;
+      min-height: 120px;
+    }
   }
 
   .${EXAMES_PREFIX}-copy-icon {
@@ -381,6 +389,170 @@ function IconeLixeira() {
   )
 }
 
+type PeriodoAmpa = "dia" | "noite"
+
+interface AmpaParsed {
+  sbp: number
+  dbp: number
+}
+
+function ampaKey(day: number, periodo: PeriodoAmpa, slot: number): string {
+  return day + "-" + periodo + "-" + slot
+}
+
+function maskAmpa(raw: string): string {
+  const lower = raw.toLowerCase().replace(/[^0-9x]/g, "").replace(/x+/g, "x")
+  const xPos = lower.indexOf("x")
+  if (xPos !== -1) {
+    const sbp = lower.slice(0, xPos).slice(0, 3)
+    const dbp = lower.slice(xPos + 1).slice(0, 3).replace(/x/g, "")
+    if (sbp === "") return ""
+    return dbp !== "" ? sbp + "x" + dbp : sbp + "x"
+  }
+  const digits = lower
+  if (digits.length <= 3) return digits
+  const sbp3 = digits.slice(0, 3)
+  const n3 = parseInt(sbp3, 10)
+  if (n3 >= 40 && n3 <= 299) {
+    return sbp3 + "x" + digits.slice(3, 6)
+  }
+  const sbp2 = digits.slice(0, 2)
+  const n2 = parseInt(sbp2, 10)
+  if (n2 >= 40) {
+    return sbp2 + "x" + digits.slice(2, 5)
+  }
+  return digits
+}
+
+function parseAmpaValue(val: string): AmpaParsed | null {
+  const m = /^([0-9]{1,3})x([0-9]{1,3})$/.exec(val)
+  if (!m) return null
+  const sbp = parseInt(m[1], 10)
+  const dbp = parseInt(m[2], 10)
+  if (sbp <= 0 || dbp <= 0) return null
+  return { sbp, dbp }
+}
+
+const AMPA_PERIODS: Array<{ id: PeriodoAmpa; label: string }> = [
+  { id: "dia", label: "Diurna" },
+  { id: "noite", label: "Noturna" },
+]
+
+const EXAMES_TABS: Array<{ id: "exames" | "ampa" | "glicemia"; label: string }> = [
+  { id: "exames", label: "Laboratório" },
+  { id: "ampa", label: "AMPA" },
+  { id: "glicemia", label: "Glicemia" },
+]
+
+const AMPA_DAY_INDEXES: number[] = [0, 1, 2, 3, 4, 5, 6]
+
+type PeriodoGlicemia =
+  | "jejum"
+  | "pos_cafe"
+  | "pre_almoco"
+  | "pos_almoco"
+  | "pre_jantar"
+  | "pos_jantar"
+  | "ao_deitar"
+  | "madrugada"
+
+const GLICEMIA_PERIODS: Array<{ id: PeriodoGlicemia; label: string }> = [
+  { id: "jejum", label: "Jejum" },
+  { id: "pos_cafe", label: "Pós-café" },
+  { id: "pre_almoco", label: "Pré-almoço" },
+  { id: "pos_almoco", label: "Pós-almoço" },
+  { id: "pre_jantar", label: "Pré-jantar" },
+  { id: "pos_jantar", label: "Pós-jantar" },
+  { id: "ao_deitar", label: "Ao deitar" },
+  { id: "madrugada", label: "Madrugada" },
+]
+
+const GLICEMIA_DAY_INDEXES: number[] = [0, 1, 2, 3, 4, 5, 6]
+
+type GrupoGlicemia = "adulto" | "idoso_saudavel" | "idoso_fragil" | "idoso_muito_fragil" | "crianca"
+
+const GLICEMIA_GRUPOS: Array<{ id: GrupoGlicemia; label: string }> = [
+  { id: "adulto", label: "Adulto" },
+  { id: "idoso_saudavel", label: "Idoso saudável" },
+  { id: "idoso_fragil", label: "Idoso frágil" },
+  { id: "idoso_muito_fragil", label: "Idoso muito frágil" },
+  { id: "crianca", label: "Criança/Adolescente" },
+]
+
+type PontosGlicemia = 1 | 2 | 4 | 8
+
+const GLICEMIA_PONTOS_OPTIONS: Array<{ id: PontosGlicemia; label: string }> = [
+  { id: 1, label: "1 ponto" },
+  { id: 2, label: "2 pontos" },
+  { id: 4, label: "4 pontos" },
+  { id: 8, label: "8 pontos" },
+]
+
+const GLICEMIA_PONTOS_PERIODOS: Record<PontosGlicemia, PeriodoGlicemia[]> = {
+  1: ["jejum"],
+  2: ["jejum", "pre_jantar"],
+  4: ["jejum", "pre_almoco", "pre_jantar", "ao_deitar"],
+  8: ["jejum", "pos_cafe", "pre_almoco", "pos_almoco", "pre_jantar", "pos_jantar", "ao_deitar", "madrugada"],
+}
+
+const GLICEMIA_ALVO_JEJUM: string[] = ["80-130", "80-130", "90-150", "100-180", "70-130"]
+const GLICEMIA_ALVO_DEITAR: string[] = ["90-150", "90-150", "100-180", "110-200", "90-150"]
+const GLICEMIA_ALVO_POS_PRANDIAL: string[] = ["<180", "<180", "<180", "-", "<180"]
+
+const GLICEMIA_ALVOS: Record<PeriodoGlicemia, string[]> = {
+  jejum: GLICEMIA_ALVO_JEJUM,
+  pos_cafe: GLICEMIA_ALVO_POS_PRANDIAL,
+  pre_almoco: GLICEMIA_ALVO_JEJUM,
+  pos_almoco: GLICEMIA_ALVO_POS_PRANDIAL,
+  pre_jantar: GLICEMIA_ALVO_JEJUM,
+  pos_jantar: GLICEMIA_ALVO_POS_PRANDIAL,
+  ao_deitar: GLICEMIA_ALVO_DEITAR,
+  madrugada: GLICEMIA_ALVO_DEITAR,
+}
+
+function glicemiaKey(day: number, periodo: PeriodoGlicemia): string {
+  return day + "-" + periodo
+}
+
+function parseGlicemiaValue(val: string): number | null {
+  const num = parseFloat(val)
+  if (isNaN(num) || num <= 0) return null
+  return num
+}
+
+function isGlicemiaAlerta(v: number): boolean {
+  return v > 140 || v < 80
+}
+
+const ampaTh: React.CSSProperties = {
+  padding: "6px 4px",
+  fontSize: "11px",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  color: "var(--exames-text-muted)",
+  fontWeight: 700,
+  borderBottom: "1px solid var(--exames-border)",
+  textAlign: "left",
+  whiteSpace: "nowrap",
+  minWidth: "72px",
+}
+
+const ampaTd: React.CSSProperties = {
+  padding: "6px 4px",
+  borderBottom: "1px solid var(--exames-border)",
+  verticalAlign: "top",
+}
+
+const ampaTdDia: React.CSSProperties = {
+  padding: "6px 4px",
+  borderBottom: "1px solid var(--exames-border)",
+  fontSize: "13px",
+  fontWeight: 700,
+  color: "var(--exames-text)",
+  whiteSpace: "nowrap",
+  minWidth: "24px",
+}
+
 export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: Props, ref) {
   const [date, setDate] = useState(() => {
     const now = new Date()
@@ -398,6 +570,49 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   const syncRef = useRef(false)
   const touchedRef = useRef(false)
   const [escuro, setEscuro] = useState(false)
+  const [activeTab, setActiveTab] = useState<"exames" | "ampa" | "glicemia">("exames")
+
+  const [ampaStart, setAmpaStart] = useState(() => {
+    const now = new Date()
+    now.setDate(now.getDate() - 7)
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  })
+  const [ampaMeasures, setAmpaMeasures] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    for (const day of AMPA_DAY_INDEXES) {
+      for (const periodo of AMPA_PERIODS) {
+        for (let slot = 0; slot < 3; slot++) {
+          init[ampaKey(day, periodo.id, slot)] = ""
+        }
+      }
+    }
+    return init
+  })
+  const [ampaSlotCount, setAmpaSlotCount] = useState<1 | 2 | 3>(1)
+
+  const ampaSlots = useMemo(() => {
+    return [0, 1, 2].slice(0, ampaSlotCount)
+  }, [ampaSlotCount])
+
+  const [glicemiaStart, setGlicemiaStart] = useState(() => {
+    const now = new Date()
+    now.setDate(now.getDate() - 7)
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+  })
+  const [grupoGlicemia, setGrupoGlicemia] = useState<GrupoGlicemia>("adulto")
+  const [pontosGlicemia, setPontosGlicemia] = useState<PontosGlicemia>(4)
+  const [glicemiaMeasures, setGlicemiaMeasures] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {}
+    for (const day of GLICEMIA_DAY_INDEXES) {
+      for (const periodo of GLICEMIA_PERIODS) {
+        init[glicemiaKey(day, periodo.id)] = ""
+      }
+    }
+    return init
+  })
+  const [glicemiaRows, setGlicemiaRows] = useState<number[]>(GLICEMIA_DAY_INDEXES)
+  const nextGlicemiaRowId = useRef(GLICEMIA_DAY_INDEXES.length)
+  const [hoverGlicemiaRow, setHoverGlicemiaRow] = useState<number | null>(null)
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)")
@@ -469,15 +684,20 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (!v || v.trim() === "") return null
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
-    if (parts.length === 0) return null
-    return `(${dateBr}): ${parts.join(" // ")}`
+    const labPart = parts.length === 0 ? null : `(${dateBr}): ${parts.join(" // ")}`
+    const ampaPart = ampaOutput || null
+    const glicemiaPart = glicemiaOutput || null
+    const all = [labPart, ampaPart, glicemiaPart].filter(Boolean).join("\n") || null
+    if (!all) return null
+    return all
   }
 
   useImperativeHandle(ref, () => ({
     getOutput: (groupId: string) => getOutputRef.current(groupId),
     reset() {
       const now = new Date()
-      setDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`)
+      const hoje = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`
+      setDate(hoje)
       setValues(() => {
         const init: Record<string, string> = {}
         for (const f of FIELDS) {
@@ -487,12 +707,172 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       })
       setOutros("")
       setCopied(false)
+      setAmpaStart(hoje)
+      setAmpaCopied(false)
+      setAmpaSlotCount(1)
+      setActiveTab("exames")
+      setGlicemiaCopied(false)
+      setAmpaMeasures(() => {
+        const init: Record<string, string> = {}
+        for (const day of AMPA_DAY_INDEXES) {
+          for (const periodo of AMPA_PERIODS) {
+            for (let slot = 0; slot < 3; slot++) {
+              init[ampaKey(day, periodo.id, slot)] = ""
+            }
+          }
+        }
+        return init
+      })
+      setGlicemiaStart(hoje)
+      setGlicemiaMeasures(() => {
+        const init: Record<string, string> = {}
+        for (const day of GLICEMIA_DAY_INDEXES) {
+          for (const periodo of GLICEMIA_PERIODS) {
+            init[glicemiaKey(day, periodo.id)] = ""
+          }
+        }
+        return init
+      })
+      setGlicemiaRows(GLICEMIA_DAY_INDEXES)
+      nextGlicemiaRowId.current = GLICEMIA_DAY_INDEXES.length
+      setHoverGlicemiaRow(null)
     },
   }), [])
 
   const handleChange = useCallback((id: string, val: string) => {
     setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
   }, [])
+
+  const handleAmpaChange = useCallback((key: string, val: string) => {
+    setAmpaMeasures((prev) => ({ ...prev, [key]: maskAmpa(val) }))
+  }, [])
+
+  const handleGlicemiaChange = useCallback((key: string, val: string) => {
+    setGlicemiaMeasures((prev) => ({ ...prev, [key]: val }))
+  }, [])
+
+  const ampaMean = useCallback((periodo: PeriodoAmpa): AmpaParsed | null => {
+    const valid: AmpaParsed[] = []
+    for (const day of AMPA_DAY_INDEXES) {
+      let last = ""
+      for (let slot = ampaSlotCount - 1; slot >= 0; slot--) {
+        const v = ampaMeasures[ampaKey(day, periodo, slot)] || ""
+        if (v.trim() !== "") { last = v; break }
+      }
+      const parsed = parseAmpaValue(last)
+      if (parsed) valid.push(parsed)
+    }
+    if (valid.length === 0) return null
+    const somaSbp = valid.reduce((acc, m) => acc + m.sbp, 0)
+    const somaDbp = valid.reduce((acc, m) => acc + m.dbp, 0)
+    const medSbp = Math.round(somaSbp / valid.length)
+    const medDbp = Math.round(somaDbp / valid.length)
+    return { sbp: medSbp, dbp: medDbp }
+  }, [ampaMeasures, ampaSlotCount])
+
+  const isAmpaElevada = useCallback((m: AmpaParsed): boolean => {
+    return m.sbp >= 130 || m.dbp >= 80
+  }, [])
+
+  const glicemiaStats = useCallback((periodo: PeriodoGlicemia): { min: number; max: number; count: number } | null => {
+    const valid: number[] = []
+    const cabos: PeriodoGlicemia[] = periodo === "ao_deitar" ? ["ao_deitar", "madrugada"] : [periodo]
+    for (const day of glicemiaRows) {
+      for (const cabo of cabos) {
+        const v = glicemiaMeasures[glicemiaKey(day, cabo)] || ""
+        const parsed = parseGlicemiaValue(v)
+        if (parsed) valid.push(parsed)
+      }
+    }
+    if (valid.length === 0) return null
+    const min = Math.min(...valid)
+    const max = Math.max(...valid)
+    return { min, max, count: valid.length }
+  }, [glicemiaMeasures, glicemiaRows])
+
+  const glicemiaActivePeriods = useMemo(() => {
+    return GLICEMIA_PONTOS_PERIODOS[pontosGlicemia].map((id) => {
+      const found = GLICEMIA_PERIODS.find((p) => p.id === id)
+      return found || null
+    }).filter((p): p is { id: PeriodoGlicemia; label: string } => p != null)
+  }, [pontosGlicemia])
+
+  const glicemiaOutputPeriods = useMemo(() => {
+    return glicemiaActivePeriods.filter((p) => p.id !== "madrugada")
+  }, [glicemiaActivePeriods])
+
+  const isGlicemiaRowEmpty = useCallback((rowId: number): boolean => {
+    for (const periodo of glicemiaActivePeriods) {
+      const v = glicemiaMeasures[glicemiaKey(rowId, periodo.id)] || ""
+      if (v.trim() !== "") return false
+    }
+    return true
+  }, [glicemiaMeasures, glicemiaActivePeriods])
+
+  const addGlicemiaRow = useCallback(() => {
+    const id = nextGlicemiaRowId.current
+    nextGlicemiaRowId.current += 1
+    setGlicemiaMeasures((prev) => {
+      const next = { ...prev }
+      for (const periodo of GLICEMIA_PERIODS) next[glicemiaKey(id, periodo.id)] = ""
+      return next
+    })
+    setGlicemiaRows((prev) => [...prev, id])
+  }, [])
+
+  const deleteGlicemiaRow = useCallback((rowId: number) => {
+    setGlicemiaRows((prev) => {
+      if (prev.length <= 3) return prev
+      return prev.filter((r) => r !== rowId)
+    })
+    setGlicemiaMeasures((prev) => {
+      const next = { ...prev }
+      for (const periodo of GLICEMIA_PERIODS) delete next[glicemiaKey(rowId, periodo.id)]
+      return next
+    })
+    setHoverGlicemiaRow((prev) => (prev === rowId ? null : prev))
+  }, [])
+
+  const ampaOutput = useMemo(() => {
+    const dia = ampaMean("dia")
+    const noite = ampaMean("noite")
+    if (!dia && !noite) return ""
+    const dateBr = formatDateBR(ampaStart)
+    const partes: string[] = []
+    if (dia) partes.push(`média diurna = ${dia.sbp}x${dia.dbp}`)
+    if (noite) partes.push(`média noturna = ${noite.sbp}x${noite.dbp}`)
+    return `AMPA (${dateBr}): ${partes.join("; ")}`
+  }, [ampaMean, ampaStart])
+
+  const ampaElevada = useMemo(() => {
+    const dia = ampaMean("dia")
+    const noite = ampaMean("noite")
+    return (dia != null && isAmpaElevada(dia)) || (noite != null && isAmpaElevada(noite))
+  }, [ampaMean, isAmpaElevada])
+
+  const glicemiaOutput = useMemo(() => {
+    const partes: string[] = []
+    for (const periodo of glicemiaOutputPeriods) {
+      const stats = glicemiaStats(periodo.id)
+      if (stats) {
+        const faixa = stats.count === 1 ? `${stats.min}` : `${stats.min}-${stats.max}`
+        partes.push(`${periodo.label} ${faixa}`)
+      }
+    }
+    if (partes.length === 0) return ""
+    const dateBr = formatDateBR(glicemiaStart)
+    return `Mapa glicêmico (${dateBr}): ${partes.join("; ")}`
+  }, [glicemiaStats, glicemiaStart, glicemiaOutputPeriods])
+
+  const glicemiaAlerta = useMemo(() => {
+    for (const periodo of glicemiaOutputPeriods) {
+      const stats = glicemiaStats(periodo.id)
+      if (stats && (stats.max > 140 || stats.min < 80)) {
+        return true
+      }
+    }
+    return false
+  }, [glicemiaStats, glicemiaOutputPeriods])
 
   useEffect(() => {
     setValues((prev) => {
@@ -537,6 +917,28 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     })
   }, [markdown])
 
+  const [ampaCopied, setAmpaCopied] = useState(false)
+
+  const handleAmpaCopy = useCallback(() => {
+    const text = ampaOutput
+    if (!text) return
+    navigator.clipboard.writeText(text).then(() => {
+      setAmpaCopied(true)
+      setTimeout(() => setAmpaCopied(false), 1500)
+    })
+  }, [ampaOutput])
+
+  const [glicemiaCopied, setGlicemiaCopied] = useState(false)
+
+  const handleGlicemiaCopy = useCallback(() => {
+    const text = glicemiaOutput
+    if (!text) return
+    navigator.clipboard.writeText(text).then(() => {
+      setGlicemiaCopied(true)
+      setTimeout(() => setGlicemiaCopied(false), 1500)
+    })
+  }, [glicemiaOutput])
+
   const handleClearAll = useCallback(() => {
     const init: Record<string, string> = {}
     for (const f of FIELDS) {
@@ -544,6 +946,29 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     }
     setValues(init)
     setOutros("")
+setAmpaMeasures(() => {
+        const init: Record<string, string> = {}
+        for (const day of AMPA_DAY_INDEXES) {
+          for (const periodo of AMPA_PERIODS) {
+            for (let slot = 0; slot < 3; slot++) {
+              init[ampaKey(day, periodo.id, slot)] = ""
+            }
+          }
+        }
+        return init
+      })
+setGlicemiaMeasures(() => {
+        const init: Record<string, string> = {}
+        for (const day of GLICEMIA_DAY_INDEXES) {
+          for (const periodo of GLICEMIA_PERIODS) {
+            init[glicemiaKey(day, periodo.id)] = ""
+          }
+        }
+        return init
+      })
+      setGlicemiaRows(GLICEMIA_DAY_INDEXES)
+      nextGlicemiaRowId.current = GLICEMIA_DAY_INDEXES.length
+      setHoverGlicemiaRow(null)
   }, [])
 
   const s = useMemo(buildStyles, [])
@@ -562,7 +987,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       >
         <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "start", justifyContent: "space-between" }}>
           <div>
-            <div style={s.title}>Exames laboratoriais</div>
+            <div style={s.title}>Exames</div>
             <div style={s.subtitle}>converta facilmente em texto</div>
           </div>
           <button
@@ -599,6 +1024,30 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
           </button>
         </div>
 
+        <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
+          {EXAMES_TABS.map((tab) => (
+            <div
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: "6px 16px",
+                borderRadius: "20px",
+                fontSize: "13px",
+                fontWeight: activeTab === tab.id ? 600 : 400,
+                cursor: "pointer",
+                userSelect: "none",
+                background: activeTab === tab.id ? "rgba(0, 184, 73, 0.12)" : "var(--exames-input-bg)",
+                border: `1px solid ${activeTab === tab.id ? "#00cc52" : "var(--exames-border)"}`,
+                color: activeTab === tab.id ? "#00b849" : "var(--exames-text-muted)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              {tab.label}
+            </div>
+          ))}
+        </div>
+
+        {activeTab === "exames" ? (
         <div className={`${EXAMES_PREFIX}-left`}>
           <div className={`${EXAMES_PREFIX}-date-row`}>
             <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
@@ -703,7 +1152,310 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
             })}
           </div>
         </div>
+        ) : activeTab === "ampa" ? (
+        <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 }}>
+          <div className={`${EXAMES_PREFIX}-date-row`}>
+            <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
+              <span style={s.label}>Início da monitorização</span>
+              <input
+                type="date"
+                value={ampaStart}
+                onChange={(e) => setAmpaStart(e.target.value)}
+                style={{ ...s.input, width: "170px" }}
+              />
+            </div>
+            <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
+              <span style={s.label}>Medidas</span>
+              <div style={{ display: "flex", gap: "2px", height: "46px", alignItems: "center" }}>
+                {([1, 2, 3] as Array<1 | 2 | 3>).map((n) => (
+                  <div
+                    key={n}
+                    onClick={() => setAmpaSlotCount(n)}
+                    title={`${n} ${n === 1 ? "medida" : "medidas"} por vez`}
+                    style={{
+                      padding: "7px 12px",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      userSelect: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: ampaSlotCount === n ? "rgba(0, 184, 73, 0.12)" : "var(--exames-input-bg)",
+                      border: `1px solid ${ampaSlotCount === n ? "#00cc52" : "var(--exames-border)"}`,
+                      color: ampaSlotCount === n ? "#00b849" : "var(--exames-text-muted)",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {n}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "flex-start", minWidth: 0 }}>
+          <div style={{ overflowX: "auto", flex: "0 1 auto", minWidth: 0, maxWidth: "100%" }}>
+            <table style={{ borderCollapse: "collapse", width: "max-content" }}>
+              <thead>
+                <tr>
+                  <th style={ampaTh}>Dia</th>
+                  {AMPA_PERIODS.map((periodo, idx) => (
+                    <th key={periodo.id} style={{ ...ampaTh, ...(idx > 0 ? { paddingLeft: "28px" } : {}) }}>{periodo.label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {AMPA_DAY_INDEXES.map((day) => (
+                  <tr key={day}>
+                    <td style={ampaTdDia}>{day + 1}</td>
+                    {AMPA_PERIODS.map((periodo, idx) => {
+                      return (
+                        <td key={`${day}-${periodo.id}-cell`} style={{ ...ampaTd, ...(idx > 0 ? { paddingLeft: "28px" } : {}) }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            {ampaSlots.map((slot) => {
+                              const key = ampaKey(day, periodo.id, slot)
+                              const parsed = parseAmpaValue(ampaMeasures[key] || "")
+                              const elevada = parsed != null && isAmpaElevada(parsed)
+                              return (
+                                <input
+                                  key={key}
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder={ampaSlotCount === 1 ? "" : `${slot + 1}ª`}
+                                  value={ampaMeasures[key] || ""}
+                                  onChange={(e) => handleAmpaChange(key, e.target.value)}
+                                  style={{
+                                    ...s.input,
+                                    width: "110px",
+                                    height: "36px",
+                                    flexShrink: 0,
+                                    textAlign: "left",
+                                    padding: "0 8px",
+                                    ...(elevada
+                                      ? {
+                                          borderColor: "var(--exames-danger-border)",
+                                          background: "var(--exames-danger-bg)",
+                                          color: "var(--exames-danger)",
+                                        }
+                                      : {}),
+                                  }}
+                                />
+                              )
+                            })}
+                          </div>
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div style={{ flex: "1 1 320px", minWidth: 0, maxWidth: "100%", alignSelf: "flex-start" }}>
+            <div style={{ position: "relative", marginTop: 0 }}>
+              <div style={{
+                ...s.markdownOutput,
+                marginTop: 0,
+                color: ampaOutput ? s.markdownOutput.color : `var(--${EXAMES_PREFIX}-text-muted)`,
+                ...(ampaOutput && ampaElevada
+                  ? {
+                      borderColor: "var(--exames-danger-border)",
+                      background: "var(--exames-danger-bg)",
+                      color: "var(--exames-danger)",
+                    }
+                  : {}),
+              }}>
+                {ampaOutput || "Preencha as medidas..."}
+              </div>
+              {ampaOutput && (
+                <button
+                  className={`${EXAMES_PREFIX}-copy-icon`}
+                  onClick={handleAmpaCopy}
+                  title={ampaCopied ? "Copiado!" : "Copiar"}
+                >
+                  {ampaCopied ? <IconeCheck /> : <IconeCopiar />}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        </div>
+        ) : activeTab === "glicemia" ? (
+        <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: "16px", minWidth: 0 }}>
+          <div className={`${EXAMES_PREFIX}-date-row`}>
+            <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
+              <span style={s.label}>Início da monitorização</span>
+              <input
+                type="date"
+                value={glicemiaStart}
+                onChange={(e) => setGlicemiaStart(e.target.value)}
+                style={{ ...s.input, width: "170px" }}
+              />
+            </div>
+            <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
+              <span style={s.label}>Grupo</span>
+              <select
+                value={grupoGlicemia}
+                onChange={(e) => setGrupoGlicemia(e.target.value as GrupoGlicemia)}
+                style={{ ...s.input, width: "190px" }}
+              >
+                {GLICEMIA_GRUPOS.map((g) => (
+                  <option key={g.id} value={g.id}>{g.label}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
+              <span style={s.label}>Pontos</span>
+              <select
+                value={pontosGlicemia}
+                onChange={(e) => setPontosGlicemia(parseInt(e.target.value, 10) as PontosGlicemia)}
+                style={{ ...s.input, width: "110px" }}
+              >
+                {GLICEMIA_PONTOS_OPTIONS.map((o) => (
+                  <option key={o.id} value={o.id}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ overflowX: "auto", minWidth: 0, maxWidth: "100%" }}>
+            <table style={{ borderCollapse: "collapse", width: "max-content" }}>
+              <thead>
+                <tr>
+                  <th style={ampaTh}>Dia</th>
+                  {glicemiaActivePeriods.map((periodo, idx) => {
+                    const idxGrupo = GLICEMIA_GRUPOS.findIndex((g) => g.id === grupoGlicemia)
+                    return (
+                      <th key={periodo.id} style={{ ...ampaTh, ...(idx > 0 ? { paddingLeft: "28px" } : {}) }}>
+                        {periodo.label}
+                        <div style={{ fontSize: "10px", fontWeight: 600, letterSpacing: "0.02em", opacity: 0.75 }}>
+                          {GLICEMIA_ALVOS[periodo.id][idxGrupo]}
+                        </div>
+                      </th>
+                    )
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {glicemiaRows.map((rowId, i) => {
+                  const empty = isGlicemiaRowEmpty(rowId)
+                  const deletable = glicemiaRows.length > 3 && empty
+                  const hovering = deletable && hoverGlicemiaRow === rowId
+                  return (
+                    <tr key={rowId}>
+                      <td
+                        style={{
+                          ...ampaTdDia,
+                          ...(hovering
+                            ? {
+                                color: "var(--exames-danger)",
+                                cursor: "pointer",
+                              }
+                            : {}),
+                        }}
+                        onMouseEnter={() => { if (deletable) setHoverGlicemiaRow(rowId) }}
+                        onMouseLeave={() => setHoverGlicemiaRow((prev) => (prev === rowId ? null : prev))}
+                        onClick={() => { if (hovering) deleteGlicemiaRow(rowId) }}
+                        title={deletable ? "Linha vazia — clique para excluir" : undefined}
+                      >
+                        {hovering ? "−" : i + 1}
+                      </td>
+                      {glicemiaActivePeriods.map((periodo, idx) => {
+                        const key = glicemiaKey(rowId, periodo.id)
+                        const parsed = parseGlicemiaValue(glicemiaMeasures[key] || "")
+                        const alerta = parsed != null && isGlicemiaAlerta(parsed)
+                        return (
+                          <td key={`${rowId}-${periodo.id}-cell`} style={{ ...ampaTd, ...(idx > 0 ? { paddingLeft: "28px" } : {}) }}>
+                            <input
+                              key={key}
+                              type="text"
+                              inputMode="numeric"
+                              placeholder=""
+                              value={glicemiaMeasures[key] || ""}
+                              onChange={(e) => handleGlicemiaChange(key, e.target.value)}
+                              style={{
+                                ...s.input,
+                                width: "44px",
+                                height: "36px",
+                                flexShrink: 0,
+                                textAlign: "center",
+                                padding: "0 4px",
+                                ...(alerta
+                                  ? {
+                                      borderColor: "var(--exames-danger-border)",
+                                      background: "var(--exames-danger-bg)",
+                                      color: "var(--exames-danger)",
+                                    }
+                                  : {}),
+                              }}
+                            />
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div style={{ marginTop: "8px" }}>
+              <button
+                onClick={addGlicemiaRow}
+                title="Adicionar linha"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  background: "var(--exames-input-bg)",
+                  border: "1px dashed var(--exames-border)",
+                  color: "var(--exames-text-muted)",
+                  fontSize: "20px",
+                  lineHeight: 1,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div style={{ minWidth: 0, maxWidth: "100%" }}>
+            <div style={{ position: "relative", marginTop: 0 }}>
+              <div style={{
+                ...s.markdownOutput,
+                marginTop: 0,
+                color: glicemiaOutput ? s.markdownOutput.color : `var(--${EXAMES_PREFIX}-text-muted)`,
+                ...(glicemiaOutput && glicemiaAlerta
+                  ? {
+                      borderColor: "var(--exames-danger-border)",
+                      background: "var(--exames-danger-bg)",
+                      color: "var(--exames-danger)",
+                    }
+                  : {}),
+              }}>
+                {glicemiaOutput || "Preencha as medidas..."}
+              </div>
+              {glicemiaOutput && (
+                <button
+                  className={`${EXAMES_PREFIX}-copy-icon`}
+                  onClick={handleGlicemiaCopy}
+                  title={glicemiaCopied ? "Copiado!" : "Copiar"}
+                >
+                  {glicemiaCopied ? <IconeCheck /> : <IconeCopiar />}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+        ) : null}
+
+        <div style={{ display: activeTab === "ampa" || activeTab === "glicemia" ? "none" : undefined }}>
         <div style={{ position: "sticky" as const, top: "48px", minWidth: 0 }}>
           <div className={`${EXAMES_PREFIX}-right`} style={{ maxHeight: "calc(100vh - 80px)", overflowY: "auto" }}>
           {Object.entries(values).some(([k, v]) => k !== "idade" && k !== "sexo" && v.trim() !== "") && (
@@ -736,6 +1488,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
             )}
           </div>
           </div>
+        </div>
         </div>
       </div>
     </>
