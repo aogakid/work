@@ -14,18 +14,6 @@ interface SecaoMeta {
     border: string
 }
 
-interface ClusterItem {
-    meta: SecaoMeta
-    active: boolean
-    done: boolean
-    reached: boolean
-    progress: number
-}
-
-const RAIO_RING = 58
-const CIRCUNFERENCIA_RING = 2 * Math.PI * RAIO_RING
-const TAM_CIRCULO_LETRA = (RAIO_RING - 3) * 2
-
 const CLOCK_CX = 64
 const CLOCK_CY = 64
 const CLOCK_R = 52
@@ -184,14 +172,13 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
 
     let secaoAtual = "S"
     let secaoExtrapolada = false
-    let progressoVaoS = 0, progressoVaoO = 0, progressoVaoA = 0, progressoVaoP = 0, progressoVaoB = 0
 
-    if (segundosDecorridos < limiteSegundosS) { secaoAtual = "S"; progressoVaoS = (segundosDecorridos / limiteSegundosS) * 100 }
-    else if (segundosDecorridos < limiteSegundosO) { secaoAtual = "O"; progressoVaoS = 100; progressoVaoO = ((segundosDecorridos - limiteSegundosS) / (limiteSegundosO - limiteSegundosS)) * 100 }
-    else if (segundosDecorridos < limiteSegundosA) { secaoAtual = "A"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = ((segundosDecorridos - limiteSegundosO) / (limiteSegundosA - limiteSegundosO)) * 100 }
-    else if (segundosDecorridos < limiteSegundosP) { secaoAtual = "P"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100 }
-    else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) { secaoAtual = "B"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = ((segundosDecorridos - limiteSegundosP) / (limiteSegundosB - limiteSegundosP)) * 100 }
-    else { secaoAtual = "FIM"; secaoExtrapolada = true; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = 100 }
+    if (segundosDecorridos < limiteSegundosS) { secaoAtual = "S" }
+    else if (segundosDecorridos < limiteSegundosO) { secaoAtual = "O" }
+    else if (segundosDecorridos < limiteSegundosA) { secaoAtual = "A" }
+    else if (segundosDecorridos < limiteSegundosP) { secaoAtual = "P" }
+    else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) { secaoAtual = "B" }
+    else { secaoAtual = "FIM"; secaoExtrapolada = true }
 
     React.useEffect(() => {
         onSecaoChange(secaoAtual)
@@ -307,99 +294,45 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
     const metaTotal = tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)
     const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
 
-    /* ── SOAP cluster ── */
-    const clusterItems: ClusterItem[] = SECTION_META.map(m => {
-        let done = false
-        let reached = true
-        let progress = 0
-        if (m.letter === "S") { reached = true; done = segundosDecorridos >= limiteSegundosS; progress = progressoVaoS / 100 }
-        else if (m.letter === "O") { reached = segundosDecorridos >= limiteSegundosS; done = segundosDecorridos >= limiteSegundosO; progress = progressoVaoO / 100 }
-        else if (m.letter === "A") { reached = segundosDecorridos >= limiteSegundosO; done = segundosDecorridos >= limiteSegundosA; progress = progressoVaoA / 100 }
-        else if (m.letter === "P") { reached = segundosDecorridos >= limiteSegundosA; done = segundosDecorridos >= limiteSegundosP; progress = progressoVaoP / 100 }
-        return { meta: m, active: secaoAtual === m.letter, done, reached, progress }
-    })
-    if (mostrarBurocracia) {
-        clusterItems.push({
-            meta: BUROCRACIA_META,
-            active: secaoAtual === "B",
-            done: segundosDecorridos >= limiteSegundosB,
-            reached: segundosDecorridos >= limiteSegundosP,
-            progress: progressoVaoB / 100,
-        })
-    }
+    /* ── Single color-coded wheel ── */
+    const ordemSecoes = mostrarBurocracia ? ["S", "O", "A", "P", "B"] : ["S", "O", "A", "P"]
+    const fimSecaoLimite = (letter: string) =>
+        letter === "S" ? limiteSegundosS
+            : letter === "O" ? limiteSegundosO
+            : letter === "A" ? limiteSegundosA
+            : letter === "P" ? limiteSegundosP
+            : limiteSegundosB
+    const secaoMetaDe = (letter: string): SecaoMeta =>
+        letter === "B" ? BUROCRACIA_META : (SECTION_META.find(m => m.letter === letter) as SecaoMeta)
 
+    const RAIO_WHEEL = 47
+    const CIRC_WHEEL = 2 * Math.PI * RAIO_WHEEL
+    const RAIO_PROGRESSO = 60
+    const CIRC_PROGRESSO = 2 * Math.PI * RAIO_PROGRESSO
+    const totalWheel = Math.max(totalSegundosLimite, fimSecaoLimite(ordemSecoes[ordemSecoes.length - 1]), 1)
 
-    const renderCircle = (item: ClusterItem) => {
-        const ehExtrapoladoP = secaoExtrapolada && item.meta.letter === "P"
-        const isActive = item.active
-        let ringColor = item.meta.color
-        let ringProgress = 0
-        let strokeWidth = 6
-        let circleBg = item.meta.bg
-        let circleBorder = item.meta.border
-        let circleColor = item.meta.color
-        const letter = item.meta.letter
-        let slotOpacity = 1
+    const segmentosWheel = ordemSecoes.map((letter, i) => {
+        const inicio = i === 0 ? 0 : fimSecaoLimite(ordemSecoes[i - 1])
+        const fim = fimSecaoLimite(letter)
+        if (fim - inicio <= 0) return null
+        return { letter, meta: secaoMetaDe(letter), inicio, fim }
+    }).filter((s): s is { letter: string; meta: SecaoMeta; inicio: number; fim: number } => s !== null)
 
-        if (arquivadoManualmente) {
-            ringColor = "rgba(120,113,108,0.4)"
-            circleBg = "rgba(120,113,108,0.08)"
-            circleBorder = "rgba(120,113,108,0.18)"
-            circleColor = "var(--meta-text)"
-            slotOpacity = 0.6
-        } else if (secaoExtrapolada && item.done) {
-            ringProgress = 1
-            strokeWidth = 6
-            circleBg = item.meta.color
-            circleBorder = item.meta.color
-            circleColor = "#ffffff"
-        } else if (secaoExtrapolada && item.reached) {
-            strokeWidth = 6
-            circleBg = item.meta.color
-            circleBorder = item.meta.color
-            circleColor = "#ffffff"
-        } else if (isActive) {
-            ringProgress = item.progress
-            if (item.done) {
-                circleBg = item.meta.color
-                circleBorder = item.meta.color
-                circleColor = "#ffffff"
-            }
-        } else if (item.done) {
-            ringProgress = 1
-            strokeWidth = 3
-            slotOpacity = 0.75
-            circleBg = item.meta.color
-            circleBorder = item.meta.color
-            circleColor = "#ffffff"
-        } else if (item.reached) {
-            strokeWidth = 3
-            slotOpacity = 0.4
-        } else {
-            ringColor = "rgba(255,255,255,0.15)"
-            strokeWidth = 3
-            slotOpacity = 0.25
+    const estiloArcSecao = (letter: string, inicio: number, fim: number) => {
+        const ativo = secaoAtual === letter
+        const concluido = segundosDecorridos >= fim
+        const alcancado = segundosDecorridos >= inicio
+        const op = ativo ? 1 : concluido ? 0.65 : alcancado ? 0.32 : 0.14
+        const lenPx = ((fim - inicio) / totalWheel) * CIRC_WHEEL
+        const startPx = (inicio / totalWheel) * CIRC_WHEEL
+        return {
+            ativo,
+            lenPx,
+            startPx,
+            op,
+            stroke: secaoMetaDe(letter).color,
+            strokeWidth: ativo ? 26 : 22,
         }
-
-        const secId = MAPA_SECAO_ID[item.meta.letter]
-        const scale = isActive ? 1 : 0.5
-
-        return (
-            <div key={item.meta.letter} style={{ width: "140px", height: "140px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                <div onClick={() => { if (secId) onAbrirTemplate(secId) }} title={secId ? "ver modelo" : undefined} style={{ position: "relative", width: "128px", height: "128px", display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${scale})`, transition: "transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease", cursor: secId ? "pointer" : "default", opacity: slotOpacity, transformOrigin: "center center" }}>
-                    <svg width="128" height="128" viewBox="0 0 128 128" style={{ position: "absolute", top: 0, left: 0, width: "128px", height: "128px" }}>
-                        <circle cx="64" cy="64" r={RAIO_RING} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
-                        <circle cx="64" cy="64" r={RAIO_RING} fill="none" stroke={ringColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeDasharray={CIRCUNFERENCIA_RING} strokeDashoffset={CIRCUNFERENCIA_RING * (1 - ringProgress)} transform="rotate(-90 64 64)" style={{ transition: "stroke-dashoffset 0.3s ease, stroke 0.3s ease" }} />
-                    </svg>
-                    <div style={{ width: `${TAM_CIRCULO_LETRA}px`, height: `${TAM_CIRCULO_LETRA}px`, boxSizing: "border-box", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: circleBg, border: `2px solid ${circleBorder}`, color: circleColor, fontSize: "40px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', transition: "all 0.3s", position: "relative", zIndex: 1 }}>
-                        {letter}
-                    </div>
-                    {(item.done || ehExtrapoladoP) && !arquivadoManualmente && (
-                        <span style={{ position: "absolute", top: "2px", right: "16px", zIndex: 2, width: "36px", height: "36px", borderRadius: "50%", background: item.meta.color, color: "#ffffff", fontSize: "16px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>✓</span>
-                    )}
-                </div>
-            </div>
-        )
     }
 
     /* ── Session summary (on archive) ── */
@@ -443,26 +376,43 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
     /* ── Render ── */
     return (
         <div className="framer-timer-entrance" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "26px", width: "100%", maxWidth: "520px" }}>
-            {/* SOAP circles */}
+            {/* Single color-coded wheel */}
             {!arquivadoManualmente && (
-                <div className="soap-grid">
-                    {clusterItems.map(item => (
-                        <div key={item.meta.letter + "-cell"} className="soap-grid-cell">
-                            {renderCircle(item)}
-                        </div>
-                    ))}
+                <div style={{ position: "relative", width: "min(170px, 52vw)", height: "min(170px, 52vw)", flexShrink: 0 }}>
+                    <svg width="100%" height="100%" viewBox="0 0 128 128" preserveAspectRatio="xMidYMid meet">
+                            <circle cx="64" cy="64" r={RAIO_WHEEL} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="20" />
+                            {segmentosWheel.map(seg => {
+                                const estilo = estiloArcSecao(seg.letter, seg.inicio, seg.fim)
+                                if (estilo.lenPx <= 0.5) return null
+                                return (
+                                    <circle key={seg.letter} cx="64" cy="64" r={RAIO_WHEEL} fill="none" stroke={estilo.stroke} strokeWidth={estilo.strokeWidth} strokeDasharray={`${estilo.lenPx} ${CIRC_WHEEL - estilo.lenPx}`} strokeDashoffset={-estilo.startPx} transform="rotate(-90 64 64)" style={{ opacity: estilo.op, transition: "stroke 0.3s ease, stroke-dashoffset 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease" }} />
+                                )
+                            })}
+                            <circle cx="64" cy="64" r={RAIO_PROGRESSO} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth="4" transform="rotate(-90 64 64)" />
+                            <circle cx="64" cy="64" r={RAIO_PROGRESSO} fill="none" stroke="#ffffff" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${(segundosDecorridos / totalWheel) * CIRC_PROGRESSO} ${CIRC_PROGRESSO}`} transform="rotate(-90 64 64)" style={{ opacity: 0.9, transition: "stroke-dasharray 0.3s ease, stroke 0.3s ease", pointerEvents: "none" }} />
+                        </svg>
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "2px", pointerEvents: "none" }}>
+                        <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "clamp(24px, 7vw, 34px)", fontWeight: 800, lineHeight: 1, color: secaoExtrapolada ? "rgba(255,255,255,0.85)" : (metaAtual?.color || "#f5f5f4") }}>{secaoExtrapolada ? "!" : (metaAtual ? metaAtual.letter : "•")}</span>
+                        <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", fontWeight: 600, color: secaoExtrapolada ? "rgba(255,255,255,0.65)" : "var(--meta-text)", textAlign: "center", maxWidth: "88%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{displayTitle}</span>
+                    </div>
+                    <div onClick={() => { const secId = MAPA_SECAO_ID[secaoAtual]; if (secId) onAbrirTemplate(secId) }} title={MAPA_SECAO_ID[secaoAtual] ? "ver modelo" : undefined} style={{ position: "absolute", inset: 0, borderRadius: "50%", cursor: MAPA_SECAO_ID[secaoAtual] ? "pointer" : "default" }} />
                 </div>
             )}
             {!arquivadoManualmente && (
-                <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "15px", fontWeight: 600, color: arquivadoManualmente ? "var(--meta-text)" : (secaoExtrapolada ? "rgba(255,255,255,0.65)" : (metaAtual?.color || "#f5f5f4")), letterSpacing: "0.02em", textAlign: "center" }}>
-                    {displayTitle}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", flexWrap: "wrap" }}>
+                    {ordemSecoes.map(letter => (
+                        <span key={letter} style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "10px", fontWeight: 700, fontFamily: '"Google Sans Flex", sans-serif', color: secaoAtual === letter ? secaoMetaDe(letter).color : "var(--meta-text)" }}>
+                            <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: secaoMetaDe(letter).color, boxShadow: secaoAtual === letter ? `0 0 6px ${secaoMetaDe(letter).color}` : undefined }} />
+                            {secaoMetaDe(letter).letter}
+                        </span>
+                    ))}
                 </div>
             )}
 
             {/* Elapsed time */}
             {!arquivadoManualmente && (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}>
-                    <div key={`time-shake-${shakeTimeCount}`} className={`${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "76px", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: chipTextColor, transformOrigin: "center center" }}>
+                    <div key={`time-shake-${shakeTimeCount}`} className={`${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "clamp(36px, 11vw, 72px)", fontWeight: 800, letterSpacing: "-0.03em", lineHeight: 1, color: chipTextColor, transformOrigin: "center center" }}>
                         {textoCronometro}
                     </div>
                     {isPaused && (
@@ -567,6 +517,26 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     }, [])
 
     /* ── Clock hand drag ── */
+    interface Toques {
+        readonly length: number
+        readonly [index: number]: { clientX: number; clientY: number }
+    }
+
+    interface EventoCoordenada {
+        clientX?: number
+        clientY?: number
+        touches?: Toques
+        changedTouches?: Toques
+    }
+
+    const pegarCoordenadas = (e: EventoCoordenada) => {
+        const t = e.touches && e.touches[0]
+        if (t) return { x: t.clientX, y: t.clientY }
+        const ct = e.changedTouches && e.changedTouches[0]
+        if (ct) return { x: ct.clientX, y: ct.clientY }
+        return { x: e.clientX || 0, y: e.clientY || 0 }
+    }
+
     const tratarMovimentoPonteiro = (clientX: number, clientY: number) => {
         if (!relogioRef.current) return
         const rect = relogioRef.current.getBoundingClientRect()
@@ -578,12 +548,26 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
         setTempoLimite(Math.min(60, Math.max(1, minutosCalculados)))
     }
 
-    const iniciarArrastoPonteiro = (e: React.MouseEvent) => {
-        tratarMovimentoPonteiro(e.clientX, e.clientY)
-        const mover = (ev: MouseEvent) => tratarMovimentoPonteiro(ev.clientX, ev.clientY)
-        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
+    const iniciarArrastoPonteiro = (e: React.MouseEvent | React.TouchEvent) => {
+        const c = pegarCoordenadas(e)
+        tratarMovimentoPonteiro(c.x, c.y)
+        const mover = (ev: EventoCoordenada) => {
+            const pc = pegarCoordenadas(ev)
+            tratarMovimentoPonteiro(pc.x, pc.y)
+        }
+        const soltar = () => {
+            window.removeEventListener("mousemove", mover)
+            window.removeEventListener("mouseup", soltar)
+            window.removeEventListener("touchmove", mover)
+            window.removeEventListener("touchend", soltar)
+            window.removeEventListener("touchcancel", soltar)
+        }
         window.addEventListener("mousemove", mover)
         window.addEventListener("mouseup", soltar)
+        window.addEventListener("touchmove", mover, { passive: false })
+        window.addEventListener("touchend", soltar)
+        window.addEventListener("touchcancel", soltar)
+        e.preventDefault()
     }
 
     /* ── Setup helpers ── */
@@ -619,16 +603,28 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
         grausRef.current = novo
     }
 
-    const iniciarArrastoFronteira = (fronteira: string, e: React.MouseEvent) => {
-        const p = percentualDaPosicaoAvancado(e.clientX, e.clientY)
+    const iniciarArrastoFronteira = (fronteira: string, e: React.MouseEvent | React.TouchEvent) => {
+        const inicial = pegarCoordenadas(e)
+        const p = percentualDaPosicaoAvancado(inicial.x, inicial.y)
         if (p !== null) aplicarFronteira(fronteira, p)
-        const mover = (ev: MouseEvent) => {
-            const np = percentualDaPosicaoAvancado(ev.clientX, ev.clientY)
+        const mover = (ev: EventoCoordenada) => {
+            const c = pegarCoordenadas(ev)
+            const np = percentualDaPosicaoAvancado(c.x, c.y)
             if (np !== null) aplicarFronteira(fronteira, np)
         }
-        const soltar = () => { window.removeEventListener("mousemove", mover); window.removeEventListener("mouseup", soltar) }
+        const soltar = () => {
+            window.removeEventListener("mousemove", mover)
+            window.removeEventListener("mouseup", soltar)
+            window.removeEventListener("touchmove", mover)
+            window.removeEventListener("touchend", soltar)
+            window.removeEventListener("touchcancel", soltar)
+        }
         window.addEventListener("mousemove", mover)
         window.addEventListener("mouseup", soltar)
+        window.addEventListener("touchmove", mover, { passive: false })
+        window.addEventListener("touchend", soltar)
+        window.addEventListener("touchcancel", soltar)
+        e.preventDefault()
     }
 
     /* Timer colors */
@@ -794,10 +790,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                 input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
                 input[type="number"] { -moz-appearance: textfield; }
                 .gas-btn-pause-bars { font-weight: 700 !important; font-size: 8px !important; letter-spacing: 0.5px !important; transform: scaleY(0.95); }
-                .soap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; justify-items: center; }
-                .soap-grid-cell { width: 100%; display: flex; align-items: center; justify-content: center; }
-                @media (min-width: 600px) { .soap-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; } }
-                @media (max-width: 360px) { .soap-grid-cell svg { width: 100px !important; height: 100px !important; } .soap-grid-cell > div { width: 100px !important; height: 100px !important; } .soap-grid-cell > div svg { width: 100px !important; height: 100px !important; } .soap-grid-cell > div > div { width: 94px !important; height: 94px !important; font-size: 28px !important; } }
             `}</style>
 
             {/* ── MAIN ── */}
@@ -843,7 +835,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                         <div style={{ display: "flex", width: "100%", justifyContent: "center", alignItems: "center" }}>
                                             <span style={{ fontSize: m ? "13px" : "9px", fontWeight: 700, color: corDinamicaPopup, letterSpacing: m ? "1.2px" : "0.8px" }}>TEMPO</span>
                                         </div>
-                                        <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} viewBox="0 0 84 84" style={{ width: `${clockPx}px`, height: `${clockPx}px`, cursor: "ew-resize", overflow: "visible" }}>
+                                        <svg ref={relogioRef} onMouseDown={iniciarArrastoPonteiro} onTouchStart={iniciarArrastoPonteiro} viewBox="0 0 84 84" style={{ width: `${clockPx}px`, height: `${clockPx}px`, cursor: "ew-resize", overflow: "visible", touchAction: "none" }}>
                                             <circle cx="42" cy="42" r="38" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
                                             {fatiasTempoGradiente(tempoLimite * 6).map((f, i) => (
                                                 <path key={i} d={f.d} fill={corDinamicaPopup} fillOpacity={f.op} />
@@ -886,7 +878,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                         </div>
                                         {mostrarAvancado && (
                                             <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", paddingTop: "8px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                                                <svg ref={relogioAvancadoRef} width="132" height="132" viewBox="0 0 128 128" style={{ overflow: "visible", cursor: "ew-resize" }}>
+                                                <svg ref={relogioAvancadoRef} width="132" height="132" viewBox="0 0 128 128" style={{ overflow: "visible", cursor: "ew-resize", touchAction: "none" }}>
                                                     {ticksAvancado.map(t => <line key={`tick-${t.x1}-${t.y1}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="rgba(255,255,255,0.16)" strokeWidth="1" />)}
                                                     {fatiasRender.map(s => (
                                                         <g key={s.key}>
@@ -895,7 +887,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                                         </g>
                                                     ))}
                                                     {handlesRender.map(h => (
-                                                        <circle key={`handle-${h.key}`} cx={h.cx} cy={h.cy} r="6" fill={h.fill} stroke="#000000" strokeWidth="1.5" onMouseDown={e => iniciarArrastoFronteira(h.key, e)} style={{ cursor: "ew-resize" }} />
+                                                        <circle key={`handle-${h.key}`} cx={h.cx} cy={h.cy} r="6" fill={h.fill} stroke="#000000" strokeWidth="1.5" onMouseDown={e => iniciarArrastoFronteira(h.key, e)} onTouchStart={e => iniciarArrastoFronteira(h.key, e)} style={{ cursor: "ew-resize", touchAction: "none" }} />
                                                     ))}
                                                 </svg>
                                                 <div style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.3px", textAlign: "center" }}>{resumoAvancado}</div>
