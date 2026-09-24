@@ -685,8 +685,8 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const broadcast = useCallback(() => {
         if (syncRef.current) return
         if (!touchedRef.current) return
-        broadcastFieldSync("escores", { idade, sexo, ct: colTotal, hdl, trig: triglicerideos, cr: creatinina, hba1c })
-    }, [idade, sexo, colTotal, hdl, triglicerideos, creatinina, hba1c])
+        broadcastFieldSync("escores", { idade, sexo, ct: colTotal, hdl, trig: triglicerideos, cr: creatinina, hba1c, rac })
+    }, [idade, sexo, colTotal, hdl, triglicerideos, creatinina, hba1c, rac])
 
     useEffect(() => broadcast(), [broadcast])
 
@@ -702,6 +702,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             if (snap.trig !== undefined) setTriglicerideos(snap.trig)
             if (snap.cr !== undefined) setCreatinina(snap.cr.replace(/,/g, "."))
             if (snap.hba1c !== undefined) setHba1c(snap.hba1c.replace(/,/g, "."))
+            if (snap.rac !== undefined) setRac(snap.rac.replace(/,/g, "."))
             setTimeout(() => { syncRef.current = false }, 0)
         }
         return listenFieldSync(({ source, values }) => {
@@ -715,6 +716,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             if (values.trig !== undefined) setTriglicerideos(values.trig)
             if (values.cr !== undefined) setCreatinina(values.cr.replace(/,/g, "."))
             if (values.hba1c !== undefined) setHba1c(values.hba1c.replace(/,/g, "."))
+            if (values.rac !== undefined) setRac(values.rac.replace(/,/g, "."))
             setTimeout(() => { syncRef.current = false }, 0)
         })
     }, [])

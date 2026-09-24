@@ -636,6 +636,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (snap.trig !== undefined) next["trig"] = snap.trig
         if (snap.cr !== undefined) next["cr"] = snap.cr
         if (snap.hba1c !== undefined) next["hba1c"] = snap.hba1c
+        if (snap.rac !== undefined) next["rac"] = snap.rac
         return next
       })
       setTimeout(() => { syncRef.current = false }, 0)
@@ -653,6 +654,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (values.trig !== undefined) next["trig"] = values.trig
         if (values.cr !== undefined) next["cr"] = values.cr
         if (values.hba1c !== undefined) next["hba1c"] = values.hba1c
+        if (values.rac !== undefined) next["rac"] = values.rac
         return next
       })
       setTimeout(() => { syncRef.current = false }, 0)
@@ -666,12 +668,13 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   const trig = values["trig"]
   const cr = values["cr"]
   const hba1c = values["hba1c"]
+  const rac = values["rac"]
 
   useEffect(() => {
     if (syncRef.current) return
     if (!touchedRef.current) return
-    broadcastFieldSync("exames", { idade: idade || "", sexo: sexo || "", ct: ct || "", hdl: hdl || "", trig: trig || "", cr: cr || "", hba1c: hba1c || "" })
-  }, [idade, sexo, ct, hdl, trig, cr, hba1c])
+    broadcastFieldSync("exames", { idade: idade || "", sexo: sexo || "", ct: ct || "", hdl: hdl || "", trig: trig || "", cr: cr || "", hba1c: hba1c || "", rac: rac || "" })
+  }, [idade, sexo, ct, hdl, trig, cr, hba1c, rac])
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {
