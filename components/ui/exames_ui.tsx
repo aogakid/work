@@ -678,6 +678,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {
+    if (groupId === "ampa") return ampaOutput || null
+    if (groupId === "glicemia") return glicemiaOutput || null
     if (groupId !== "todos") return null
     const dateBr = formatDateBR(date)
     const parts = FIELDS.filter(isField)

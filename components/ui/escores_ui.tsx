@@ -277,6 +277,13 @@ const styles = {
         fontWeight: 600,
         color: "var(--prevent-text)",
     },
+    resultHeader: {
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        gap: "10px",
+        marginBottom: "4px",
+    },
     legendaBox: {
         marginTop: "12px",
         padding: "10px 12px",
@@ -626,6 +633,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const [lpa, setLpa] = useState("")
     const [checklistEstrat, setChecklistEstrat] = useState<Record<string, boolean>>({})
     const [resultado, setResultado] = useState<ResultadoEscore | null>(null)
+    const [copiado, setCopiado] = useState(false)
 
     const [escuro, setEscuro] = useState(false)
 
@@ -782,6 +790,11 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
 
     const todayBR = new Date().toLocaleDateString("pt-BR")
 
+    const textoOutputRisco = (r: ResultadoEscore): string => {
+        const cat = r.categoriaRisco.toLowerCase()
+        return `PREVENT (${todayBR}): ${r.risco10Anos} (${cat}) = LDL ${r.alvoLdl}`
+    }
+
     const formatScoreOutput = useCallback((name: string, s: ScoreOutput) => {
         return `${name} (${todayBR}): ${s.total}/${s.maxScore}`
     }, [todayBR])
@@ -789,8 +802,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
     const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
     getOutputRef.current = (groupId: string): string | null => {
         if (groupId === "risco" && resultado) {
-            const cat = resultado.categoriaRisco.toLowerCase()
-            return `PREVENT (${todayBR}): ${resultado.risco10Anos} (${cat}) = LDL ${resultado.alvoLdl}`
+            return textoOutputRisco(resultado)
         }
         if (groupId === "ipss") return formatScoreOutput("IPSS", ipss)
         if (groupId === "gad7") return formatScoreOutput("GAD-7", gad7)
@@ -811,6 +823,15 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             return partes.length > 0 ? partes.join(". ") : "Tabagista ativo"
         }
         return null
+    }
+
+    const copiarTextoRisco = () => {
+        if (!resultado) return
+        const texto = textoOutputRisco(resultado)
+        navigator.clipboard.writeText(texto).then(() => {
+            setCopiado(true)
+            window.setTimeout(() => setCopiado(false), 1600)
+        })
     }
 
     const resetAllTools = useCallback(() => {
@@ -2526,22 +2547,62 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                                 border: `1px solid ${CONFIG_RISCOS[resultado.categoriaRisco].border}`,
                             }}
                         >
-                            <span
-                                className="prevent-badge-risco"
-                                style={{
-                                    background: CONFIG_RISCOS[
-                                        resultado.categoriaRisco
-                                    ].t,
-                                    color: legivelSobre(
-                                        CONFIG_RISCOS[
+                            <div style={styles.resultHeader}>
+                                <span
+                                    className="prevent-badge-risco"
+                                    style={{
+                                        background: CONFIG_RISCOS[
                                             resultado.categoriaRisco
-                                        ].t
-                                    ),
-                                    border: `1px solid ${CONFIG_RISCOS[resultado.categoriaRisco].border}`,
-                                }}
-                            >
-                                Risco Global: {resultado.categoriaRisco}
-                            </span>
+                                        ].t,
+                                        color: legivelSobre(
+                                            CONFIG_RISCOS[
+                                                resultado.categoriaRisco
+                                            ].t
+                                        ),
+                                        border: `1px solid ${CONFIG_RISCOS[resultado.categoriaRisco].border}`,
+                                    }}
+                                >
+                                    Risco Global: {resultado.categoriaRisco}
+                                </span>
+                                <button
+                                    onClick={copiarTextoRisco}
+                                    title={copiado ? "Copiado!" : "Copiar PREVENT"}
+                                    style={{
+                                        flexShrink: 0,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        width: "34px",
+                                        height: "34px",
+                                        borderRadius: "8px",
+                                        border: "1px solid var(--prevent-border)",
+                                        background: copiado
+                                            ? "rgba(0, 184, 73, 0.08)"
+                                            : "var(--prevent-input-bg)",
+                                        color: copiado
+                                            ? "#007a30"
+                                            : "var(--prevent-text-muted)",
+                                        cursor: "pointer",
+                                        transition: "all 0.15s ease",
+                                        padding: "0",
+                                        borderColor: copiado
+                                            ? "rgba(0, 184, 73, 0.35)"
+                                            : undefined,
+                                        fontFamily: "inherit",
+                                    }}
+                                >
+                                    {copiado ? (
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                    ) : (
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                                        </svg>
+                                    )}
+                                </button>
+                            </div>
                             <div style={styles.label}>
                                 Estimativa em 10 Anos
                             </div>

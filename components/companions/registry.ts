@@ -30,6 +30,7 @@ import ExamesUI from "../ui/exames_ui"
 import RastreiosPreventivos from "../ui/rastreios_ui"
 import GeriatriaUI from "../ui/geriatria_ui"
 import PsiquiatriaUI from "../ui/psiquiatria_ui"
+import EncaminhaUI from "../ui/encaminha_ui"
 
 export const COMPANIONS: CompanionConfig[] = [
     {
@@ -49,10 +50,12 @@ export const COMPANIONS: CompanionConfig[] = [
     },
     {
         id: "exames",
-        label: "Exames laboratoriais",
+        label: "Exames",
         component: ExamesUI,
         outputGroups: [
             { id: "todos", label: "lab", targetSection: "objetivo" },
+            { id: "ampa", label: "AMPA", targetSection: "objetivo" },
+            { id: "glicemia", label: "Glicemia", targetSection: "objetivo" },
         ],
     },
     {
@@ -100,6 +103,14 @@ export const COMPANIONS: CompanionConfig[] = [
         outputGroups: [
             { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
             { id: "risco", label: "Risco gestacional (MS)", targetSection: "avaliacao" },
+        ],
+    },
+    {
+        id: "encaminha",
+        label: "Encaminha",
+        component: EncaminhaUI,
+        outputGroups: [
+            { id: "texto", label: "encaminhamento", targetSection: "plano" },
         ],
     },
 ]

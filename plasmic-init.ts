@@ -18,6 +18,7 @@ import PuericulturaUI from "./components/ui/puericultura_ui";
 import ExamesUI from "./components/ui/exames_ui";
 import PsiquiatriaUI from "./components/ui/psiquiatria_ui";
 import EcgUI from "./components/ui/ecg_ui";
+import EncaminhaUI from "./components/ui/encaminha_ui";
 
 // Action HOCs (code overrides)
 import {
@@ -225,6 +226,11 @@ PLASMIC.registerComponent(PsiquiatriaUI, {
 
 PLASMIC.registerComponent(EcgUI, {
   name: "EcgUI",
+  props: {},
+});
+
+PLASMIC.registerComponent(EncaminhaUI, {
+  name: "EncaminhaUI",
   props: {},
 });
 
