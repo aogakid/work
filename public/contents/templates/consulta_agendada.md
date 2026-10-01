@@ -1,23 +1,19 @@
 # Consulta Agendada
 
-## Subjetivo
+## Dados base:
 - Id: 
-- QP: 
-- HDA
-  - 
-- Queixas adicionais
-  - 
-- Antecedentes pessoais
-  - Condições
-    - 
-  - Cirurgias
-    - 
-  - Medicamentos
-    - 
-  - Alergias: 
-  - Vacinação: 
-- AF: 
-- HV
+- Antecedentes
+  - Pessoais
+    - Condições
+      - 
+    - Cirurgias
+      - 
+    - Medicamentos
+      - 
+    - Alergias: 
+    - Vacinação: 
+  - Familiares: 
+- Hábitos
   - Etilismo: 
   - Tabagismo: 
   - Drogas: 
@@ -29,6 +25,19 @@
   - Sono: 
   - Humor: 
   - Lazer: 
+
+## Lista de Problemas
+- Ativos:
+   -  
+- Latentes:
+   -  
+- Resolvidos:
+   -  
+
+## Subjetivo
+- Acompanhante: 
+1.
+   - 
 
 ## Objetivo
 - Exame físico
@@ -50,23 +59,7 @@
     - 
 
 ## Avaliação
-- QP
-  - 
-- Queixas adicionais
-  - 
-- Condições crônicas
-  - 
-- Riscos
-  - 
+- 
 
 ## Plano
-- QP
-  - 
-- Queixas adicionais
-  - 
-- Condições crônicas
-  - 
-- Riscos
-  - 
-- Seguimento
-  - 
+- 

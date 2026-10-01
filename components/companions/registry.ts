@@ -20,6 +20,8 @@ export interface CompanionConfig {
     label: string
     component: ForwardRefExoticComponent<RefAttributes<CompanionActions>>
     outputGroups: OutputGroup[]
+    placement?: "after-subjetivo" | "after-objetivo" | "after-plano" | "none"
+    when?: (ctx: ContextoPaciente) => boolean
 }
 
 /* ── Registry ─────────────────────────────────────────────────────── */
@@ -31,6 +33,19 @@ import RastreiosPreventivos from "../ui/rastreios_ui"
 import GeriatriaUI from "../ui/geriatria_ui"
 import PsiquiatriaUI from "../ui/psiquiatria_ui"
 import EncaminhaUI from "../ui/encaminha_ui"
+import { CONTEXTO_VAZIO, type ContextoPaciente } from "../../lib/contexto-paciente"
+
+/* ── Visibility rules driven by the Identificação form ────────────── */
+const ctxSeguro = (ctx: ContextoPaciente | undefined) => ctx || CONTEXTO_VAZIO
+const idadeMinima = (ctx: ContextoPaciente | undefined, min: number) => {
+    const c = ctxSeguro(ctx)
+    return c.idade !== null && c.idade >= min
+}
+const idadeMaxima = (ctx: ContextoPaciente | undefined, max: number) => {
+    const c = ctxSeguro(ctx)
+    return c.idade !== null && c.idade < max
+}
+const somenteFeminino = (ctx: ContextoPaciente | undefined) => ctxSeguro(ctx).sexo === "F"
 
 export const COMPANIONS: CompanionConfig[] = [
     {
@@ -47,6 +62,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "tabagismo", label: "Tabagismo", targetSection: "avaliacao" },
             { id: "carga", label: "Carga tabágica", targetSection: "subjetivo" },
         ],
+        placement: "after-objetivo",
+        when: (ctx) => idadeMinima(ctx, 18),
     },
     {
         id: "exames",
@@ -57,12 +74,14 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "ampa", label: "AMPA", targetSection: "objetivo" },
             { id: "glicemia", label: "Glicemia", targetSection: "objetivo" },
         ],
+        placement: "after-objetivo",
     },
     {
         id: "rastreios",
         label: "Rastreios",
         component: RastreiosPreventivos,
         outputGroups: [],
+        placement: "after-subjetivo",
     },
     {
         id: "geriatria",
@@ -77,6 +96,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "cfs", label: "CFS", targetSection: "objetivo" },
             { id: "cdr", label: "CDR", targetSection: "objetivo" },
         ],
+        placement: "after-objetivo",
+        when: (ctx) => idadeMinima(ctx, 60),
     },
     {
         id: "psiquiatria",
@@ -85,6 +106,7 @@ export const COMPANIONS: CompanionConfig[] = [
         outputGroups: [
             { id: "tudo", label: "exame do estado mental", targetSection: "objetivo" },
         ],
+        placement: "after-objetivo",
     },
     {
         id: "puericultura",
@@ -95,6 +117,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "crescimento", label: "crescimento", targetSection: "objetivo" },
             { id: "desenvolvimento", label: "desenvolvimento", targetSection: "objetivo" },
         ],
+        placement: "after-objetivo",
+        when: (ctx) => idadeMaxima(ctx, 20),
     },
     {
         id: "prenatal",
@@ -104,6 +128,8 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
             { id: "risco", label: "Risco gestacional (MS)", targetSection: "avaliacao" },
         ],
+        placement: "after-subjetivo",
+        when: somenteFeminino,
     },
     {
         id: "encaminha",
@@ -112,5 +138,6 @@ export const COMPANIONS: CompanionConfig[] = [
         outputGroups: [
             { id: "texto", label: "encaminhamento", targetSection: "plano" },
         ],
+        placement: "after-plano",
     },
 ]

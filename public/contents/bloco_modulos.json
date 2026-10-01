@@ -1,10 +1,28 @@
 {
   "modulos": {
+    "dados_base": [
+      {
+        "id": "ant_pessoais",
+        "label": "antecedentes pessoais",
+        "text": "- Antecedentes\n  - Pessoais\n    - Condições\n      - \n    - Cirurgias\n      - \n    - Medicamentos\n      - \n    - Alergias: \n    - Vacinação: \n  - Familiares: "
+      },
+      {
+        "id": "habitos",
+        "label": "hábitos de vida",
+        "text": "- Hábitos\n  - Etilismo: \n  - Tabagismo: \n  - Drogas: \n  - Exercício: \n  - Dieta: \n  - Hidratação: \n  - Evacuações: \n  - Diurese: \n  - Sono: \n  - Humor: \n  - Lazer: "
+      },
+      {
+        "id": "habitos_puericultura",
+        "label": "hábitos puericultura",
+        "text": "- Hábitos\n    - Dieta: \n    - Hidratação: \n    - Evacuações: \n    - Diurese: \n    - Sono: \n    - Escola: \n    - Lazer: \n    - Relações: "
+      }
+    ],
+    "lista_problemas": [],
     "subjetivo": [
       {
         "id": "cabecalho",
         "label": "cabeçalho",
-        "text": "- Id: \n- QP: \n- HDA\n  - "
+        "text": "- Acompanhante: \n1. \n   - "
       },
       {
         "id": "qa",
@@ -25,11 +43,6 @@
         "id": "hv",
         "label": "hábitos de vida",
         "text": "- HV\n  - Etilismo:\n  - Tabagismo:\n  - Drogas:\n  - Exercício:\n  - Dieta:\n  - Hidratação:\n  - Evacuações:\n  - Diurese:\n  - Sono:\n  - Humor:\n  - Lazer:"
-      },
-      {
-        "id": "hvp",
-        "label": "hábitos puericultura",
-        "text": "- HV\n    - Dieta: \n    - Hidratação: \n    - Evacuações: \n    - Diurese: \n    - Sono: \n    - Escola: \n    - Lazer: \n    - Relações:"
       },
       {
         "id": "gest",

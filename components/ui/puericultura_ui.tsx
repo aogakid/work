@@ -1,6 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 import {
   Indicator,
@@ -610,6 +611,37 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
   const [mobile, setMobile] = useState(true)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
   const puericulturaRef = useRef<AgeGroupForm[] | null>(null)
+
+  /* Receive idade/sexo from the Identificação section or from a sibling companion. */
+  const syncPuericulturaRef = useRef(false)
+  useEffect(() => {
+    const aplicar = (idade: string | undefined, sexoRecebido: string | undefined) => {
+      let mudou = false
+      if (idade !== undefined && idade.trim()) {
+        const anos = parseInt(idade.trim(), 10)
+        if (!Number.isNaN(anos) && String(anos) !== idadeAnos) {
+          setIdadeAnos(String(anos))
+          setIdadeMeses("")
+          mudou = true
+        }
+      }
+      if ((sexoRecebido === "M" || sexoRecebido === "F") && sexoRecebido !== sexo) {
+        setSexo(sexoRecebido)
+        mudou = true
+      }
+      if (!mudou) return
+      syncPuericulturaRef.current = true
+      setTimeout(() => { syncPuericulturaRef.current = false }, 0)
+    }
+
+    const snap = getFieldSyncSnapshot()
+    if (snap.idade !== undefined || snap.sexo !== undefined) aplicar(snap.idade, snap.sexo)
+
+    return listenFieldSync(({ source, values }) => {
+      if (source === "puericultura") return
+      aplicar(values.idade, values.sexo)
+    })
+  }, [idadeAnos, sexo])
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth <= 600)

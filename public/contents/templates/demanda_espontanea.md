@@ -1,19 +1,16 @@
 # Demanda Espontânea
 
+## Dados base:
+
+## Lista de Problemas
+
 ## Subjetivo
-- Id: 
-- QP: 
-- HDA
-  - Paciente vem ao serviço
-- AP
-  - Condições
-    - 
-  - Medicamentos
-    - 
-  - Alergias
-    - 
-  - Etilismo: 
-  - Tabagismo: 
+- Acompanhante: 
+1.
+   - Paciente vem ao serviço
+- Queixas adicionais
+  - 
+
 ## Objetivo
 - Exame físico
   - SSVV

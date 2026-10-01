@@ -3,7 +3,7 @@ import { forwardRef, useImperativeHandle, useMemo, useCallback } from "react"
 import { createPortal } from "react-dom"
 import { createClient } from "@supabase/supabase-js"
 import { useEditor, useTimer } from "../contexts/AppContext"
-import { COMPANIONS, type CompanionRef } from "../companions/registry"
+import { COMPANIONS, type CompanionConfig, type CompanionRef } from "../companions/registry"
 import GeriatriaUI from "./geriatria_ui"
 import PsiquiatriaUI from "./psiquiatria_ui"
 import CalculadoraPREVENT from "./escores_ui"
@@ -11,6 +11,16 @@ import ExamesUI from "./exames_ui"
 import RastreiosPreventivos from "./rastreios_ui"
 import PuericulturaUI from "./puericultura_ui"
 import CalculadoraGestacional from "./prenatal_ui"
+import { CONTEXTO_VAZIO, definirSexoContexto, extrairContexto } from "../../lib/contexto-paciente"
+import { DadosBaseForm, ListaProblemasForm } from "./dados_base_ui"
+import { SubjetivoForm } from "./subjetivo_ui"
+import { extrairLinhaId, compositarDadosBase, parseDadosBase } from "../../lib/dados-base"
+
+const COMPANION_BY_PLACEMENT: Record<string, CompanionConfig[]> = {
+    "after-subjetivo": COMPANIONS.filter(c => c.placement === "after-subjetivo"),
+    "after-objetivo": COMPANIONS.filter(c => c.placement === "after-objetivo"),
+    "after-plano": COMPANIONS.filter(c => c.placement === "after-plano"),
+}
 
 function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
     const Comp = component
@@ -138,11 +148,13 @@ interface Section {
     enabled: boolean
 }
 
-const SECTION_META: { id: string; title: string; letter: string; color: string; bg: string; border: string; optional: boolean }[] = [
-    { id: "subjetivo", title: "Subjetivo", letter: "S", color: "#3b82f6", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.18)", optional: false },
-    { id: "objetivo", title: "Objetivo", letter: "O", color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", optional: true },
-    { id: "avaliacao", title: "Avaliação", letter: "A", color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.18)", optional: false },
-    { id: "plano", title: "Plano", letter: "P", color: "#f97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.18)", optional: false },
+const SECTION_META: { id: string; title: string; label: string; letter: string; color: string; bg: string; border: string; optional: boolean; formulario: "dados_base" | "lista_problemas" | "subjetivo" | null; coluna: "esquerda" | "direita" }[] = [
+    { id: "dados_base", title: "Dados base:", label: "Dados base", letter: "D", color: "#8b5cf6", bg: "rgba(139,92,246,0.06)", border: "rgba(139,92,246,0.18)", optional: false, formulario: "dados_base", coluna: "esquerda" },
+    { id: "lista_problemas", title: "Lista de Problemas", label: "Lista de Problemas", letter: "L", color: "#6366f1", bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.18)", optional: false, formulario: "lista_problemas", coluna: "esquerda" },
+    { id: "subjetivo", title: "Subjetivo", label: "Subjetivo", letter: "S", color: "#3b82f6", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.18)", optional: false, formulario: "subjetivo", coluna: "direita" },
+    { id: "objetivo", title: "Objetivo", label: "Objetivo", letter: "O", color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", optional: true, formulario: null, coluna: "direita" },
+    { id: "avaliacao", title: "Avaliação", label: "Avaliação", letter: "A", color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.18)", optional: false, formulario: null, coluna: "direita" },
+    { id: "plano", title: "Plano", label: "Plano", letter: "P", color: "#f97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.18)", optional: false, formulario: null, coluna: "direita" },
 ]
 
 /* ── Timer clock helpers ── */
@@ -207,18 +219,42 @@ function parseSections(text: string): { title: string; sections: Section[] } {
 
     const sections = createDefaultSections()
     const extraChunks: string[] = []
+    /* Old notes used a standalone "## Id:" heading; it is now folded into
+       Dados base as its "- Id:" line. */
+    let idLegado = ""
     for (const chunk of sectionChunks) {
         if (!chunk.trim()) continue
         const newlineIdx = chunk.indexOf("\n")
-        const header = newlineIdx >= 0 ? chunk.substring(0, newlineIdx).trim() : chunk.trim()
+        const header = (newlineIdx >= 0 ? chunk.substring(0, newlineIdx) : chunk).trim().replace(/:\s*$/, "")
         const content = newlineIdx >= 0 ? chunk.substring(newlineIdx + 1) : ""
-        const match = sections.find(s => s.title.toLowerCase() === header.toLowerCase())
+        const chave = header.toLowerCase()
+        if (chave === "id" || chave === "id:") {
+            idLegado = content.trim()
+            continue
+        }
+        const match = sections.find(s => s.title.toLowerCase().replace(/:\s*$/, "") === chave)
         if (match) {
             match.content = content.trim()
         } else if (content.trim()) {
             extraChunks.push(`## ${header}\n${content.trim()}`)
         }
     }
+
+    /* Move "- Id:" / "Id:" out of Subjetivo into Dados base (legacy migration). */
+    const dadosBase = sections.find(s => s.id === "dados_base")
+    const subjetivo = sections.find(s => s.id === "subjetivo")
+    if (dadosBase && subjetivo && subjetivo.content) {
+        const linhas = subjetivo.content.split("\n")
+        const idxId = linhas.findIndex(l => /^\s*-\s*Id\s*:/i.test(l))
+        if (idxId >= 0) {
+            const valor = linhas[idxId].replace(/^\s*-\s*Id\s*:\s*/i, "").trim()
+            if (valor && !idLegado) idLegado = valor
+            linhas.splice(idxId, 1)
+            subjetivo.content = linhas.join("\n").trim()
+        }
+    }
+    if (dadosBase && idLegado) dadosBase.content = compositarDadosBase({ ...parseDadosBase(dadosBase.content), id: idLegado })
+
     if (extraChunks.length) {
         const plano = sections.find(s => s.id === "plano")
         if (plano) {
@@ -226,6 +262,7 @@ function parseSections(text: string): { title: string; sections: Section[] } {
             plano.content = plano.content ? plano.content + "\n\n" + extra : extra
         }
     }
+
 
     return { title, sections }
 }
@@ -317,6 +354,43 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         prenatal: CalculadoraGestacional,
     }
     const companionEverOpened = React.useRef<Record<string, boolean>>({})
+
+    const renderCompanionCard = (c: CompanionConfig) => {
+        const isOpen = expandedCompanions[c.id] || false
+        if (isOpen) companionEverOpened.current[c.id] = true
+        const shouldMount = isOpen || !!companionEverOpened.current[c.id]
+        return (
+            <div key={c.id} style={{ marginTop: "12px", marginBottom: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
+                <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
+                <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
+                    <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
+                        <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center", flexShrink: 0 }}>+</span>
+                        <span style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
+                        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px" }}>
+                            {isOpen && c.outputGroups.map(og => (
+                                <button key={og.id} onClick={e => { e.stopPropagation(); handleAppendOutput(c.id, og.id, og.targetSection) }} className="gas-scale-hover" style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontSize: "10px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
+                                    ↑ {og.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
+                    {shouldMount && (
+                        <CompanionErrorBoundary name={c.label}>
+                            {c.id === "geriatria" ? (
+                                <GeriatriaUI ref={el => { if (el) companionRefs.current[c.id] = el }} />
+                            ) : DIRETOS[c.id] ? (
+                                <DirectCompanion Comp={DIRETOS[c.id]} id={c.id} companionRefs={companionRefs} />
+                            ) : (
+                                <SafeCompanion component={c.component} id={c.id} companionRefs={companionRefs} />
+                            )}
+                        </CompanionErrorBoundary>
+                    )}
+                </div>
+            </div>
+        )
+    }
     const resetAllCompanions = React.useCallback(() => {
         Object.values(companionRefs.current).forEach(ref => ref?.reset())
     }, [])
@@ -1146,6 +1220,148 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         }
     }, [contentHash, plaintext, renderSectionHtml, renderPlainTextHtml, sections, plainTextContent])
 
+    /* ── Identificação form (structured fields, stored as one comma-separated line) ── */
+    /* ── Structured form sections (Dados base, Lista de problemas) ── */
+    const handleDadosBaseChange = useCallback((linha: string) => {
+        setSections(prev => prev.map(s => (s.id === "dados_base" ? { ...s, content: linha } : s)))
+    }, [])
+
+    const handleListaProblemasChange = useCallback((linha: string) => {
+        setSections(prev => prev.map(s => (s.id === "lista_problemas" ? { ...s, content: linha } : s)))
+    }, [])
+
+    const handleSubjetivoChange = useCallback((linha: string) => {
+        setSections(prev => prev.map(s => (s.id === "subjetivo" ? { ...s, content: linha } : s)))
+    }, [])
+
+    /* Sexo/idade drive which companions are offered (prenatal, puericultura, geriatria, escores).
+       Idade is parsed from the Identificação line; sexo comes from the form dropdown and is
+       session-scoped, since it is never written into the record. */
+    const [sexoIdentificacao, setSexoIdentificacao] = React.useState<"M" | "F" | "">("")
+
+    const contextoPaciente = useMemo(() => {
+        const sec = sections.find(s => s.id === "dados_base")
+        const linha = sec && sec.content.trim() ? extrairLinhaId(sec.content) : ""
+        const base = linha ? extrairContexto(linha) : CONTEXTO_VAZIO
+        return { ...base, sexo: sexoIdentificacao }
+    }, [sections, sexoIdentificacao])
+
+    const handleSexoChange = useCallback((sexo: "M" | "F" | "") => {
+        definirSexoContexto(sexo)
+        setSexoIdentificacao(sexo)
+    }, [])
+
+    const companionVisivel = (c: CompanionConfig) => !c.when || c.when(contextoPaciente)
+
+    /* ── Render a section card (+ its placement companions) inside a column ── */
+    const renderColuna = (coluna: "esquerda" | "direita", s: Section): React.ReactNode[] => {
+        const meta = SECTION_META.find(m => m.id === s.id)!
+        const charCount = s.content.length
+        const isOpen = openModuleDropdown === s.id
+        /* Subjetivo keeps its module dropdown: the inserted blocks (gestação,
+           hábitos de vida, ...) are preserved verbatim below the motivos. */
+        const sectionModulos = meta.formulario === "dados_base" || meta.formulario === "lista_problemas" ? [] : (modulos.modulos[s.id] || [])
+        const placementKey = coluna === "direita" && (s.id === "subjetivo" || s.id === "objetivo" || s.id === "plano") ? "after-" + s.id : null
+
+        /* Per-section timer progress (0-100, resets when section done) */
+        let sectionProgress = 0
+        if (cronometroAtivo && !arquivadoManualmente) {
+            if (s.id === "subjetivo" && segundosDecorridos < limiteSegundosS) sectionProgress = (segundosDecorridos / limiteSegundosS) * 100
+            else if (s.id === "objetivo" && segundosDecorridos >= limiteSegundosS && segundosDecorridos < limiteSegundosO) sectionProgress = ((segundosDecorridos - limiteSegundosS) / (limiteSegundosO - limiteSegundosS)) * 100
+            else if (s.id === "avaliacao" && segundosDecorridos >= limiteSegundosO && segundosDecorridos < limiteSegundosA) sectionProgress = ((segundosDecorridos - limiteSegundosO) / (limiteSegundosA - limiteSegundosO)) * 100
+            else if (s.id === "plano" && segundosDecorridos >= limiteSegundosA && segundosDecorridos < limiteSegundosP) sectionProgress = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100
+        }
+
+        const cartao = (
+            <div key={s.id} style={{ marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
+                {/* ── Section Header (sticky) ── */}
+                <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
+                <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
+                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
+                        <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>{meta.letter}</span>
+                        <span className="bloco-section-title" style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{meta.label || s.title}</span>
+
+                        {/* Right-side controls */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
+                            {/* Objetivo toggle inside chip */}
+                            {s.id === "objetivo" && (
+                                <div onClick={e => { e.stopPropagation(); toggleObjetivo() }} style={{ width: "28px", height: "16px", borderRadius: "8px", background: s.enabled ? meta.color : "rgba(120,113,108,0.25)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
+                                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#fff", position: "absolute", top: "2px", left: s.enabled ? "14px" : "2px", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+                                </div>
+                            )}
+
+                            {/* Module dropdown */}
+                            {s.enabled && sectionModulos.length > 0 && (
+                                <div ref={el => { if (el) dropdownContainerRefs.current[s.id] = el }} style={{ position: "relative" }}>
+                                    <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); if (isOpen) { setOpenModuleDropdown(null); setDropdownPos(null) } else { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setDropdownPos({ x: r.right - 180, y: r.bottom + 4 }); setOpenModuleDropdown(s.id) } }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: `1px solid ${isOpen ? meta.color : "var(--meta-border)"}`, background: isOpen ? meta.bg : "transparent", color: meta.color, fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: '"Google Sans Flex", sans-serif', padding: 0, lineHeight: 1 }}>+</button>
+                                </div>
+                            )}
+
+                            {/* Copy section button */}
+                            {s.enabled && s.content.trim() && (
+                                <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}\n${s.content.trim()}`) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.5 }} title="copiar seção">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                </button>
+                            )}
+
+                            <span style={{ fontSize: "10px", color: "var(--meta-text)", fontFamily: '"Google Sans Flex", sans-serif', opacity: 0.7, flexShrink: 0 }}>{charCount} caract.</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Section Body (white card inside color-coded card) ── */}
+                {s.enabled && !s.collapsed && (
+                    <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: "4px 14px 0 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
+                        {cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
+                            <div className="gas-section-progress" style={progressoVertical
+                                ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
+                                : { position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
+                        )}
+                        {meta.formulario ? (
+                            <div style={{ position: "relative", zIndex: 1 }}>
+                                {meta.formulario === "dados_base" ? (
+                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} onSexoChange={handleSexoChange} />
+                                ) : meta.formulario === "lista_problemas" ? (
+                                    <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} />
+                                ) : (
+                                    <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} />
+                                )}
+                            </div>
+                        ) : (
+                            <div
+                                key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}
+                                ref={el => {
+                                    if (el && !el.dataset.mounted) {
+                                        el.dataset.mounted = "1"
+                                        sectionEditorRefs.current[s.id] = el
+                                        el.innerHTML = renderSectionHtml(s.content)
+                                    } else if (el) {
+                                        sectionEditorRefs.current[s.id] = el
+                                    }
+                                }}
+                                className="bloco-section-editor"
+                                contentEditable
+                                suppressContentEditableWarning
+                                data-placeholder={`digite em ${s.title.toLowerCase()}...`}
+                                data-section-id={s.id}
+                                data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id || undefined}
+                                onInput={handleSectionInput}
+                                onBlur={() => handleSectionBlur(s.id)}
+                                onKeyDown={e => handleSectionKeyDown(e, s.id)}
+                                onPaste={handleSectionPaste}
+                                onFocus={() => setFocusedSectionId(s.id)}
+                                style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? { color: "#ffffff" } : {}) }}
+                            />
+                        )}
+                    </div>
+                )}
+            </div>
+        )
+
+        if (!placementKey) return [cartao]
+        return [cartao, ...COMPANION_BY_PLACEMENT[placementKey].filter(companionVisivel).map(renderCompanionCard)]
+    }
+
     /* ── Close dropdown on outside click ── */
     React.useEffect(() => {
         if (!openModuleDropdown) return
@@ -1233,6 +1449,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 }
 
                 .bloco-section-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 40px; font-size: 15px; line-height: 1.5; color: var(--editor-text); outline: none; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 2px 0 16px 0; overflow-x: hidden; }
+                /* Dashboard columns: the left one is narrower (structured data),
+                   the right one takes the rest (free-text SOAP + companions). */
+                .bloco-colunas { display: grid; grid-template-columns: minmax(260px, 34%) minmax(0, 1fr); gap: 0 16px; align-items: start; }
+                .bloco-coluna { min-width: 0; }
+                .bloco-coluna-esq { position: sticky; top: 0; align-self: start; max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 4px; }
+                @media (max-width: 900px) {
+                    .bloco-colunas { grid-template-columns: minmax(0, 1fr); gap: 0; }
+                    .bloco-coluna-esq { position: static; max-height: none; overflow-y: visible; padding-right: 0; }
+                }
                 .bloco-section-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
                 .bloco-section-editor[data-extrapolada]:empty:before { color: rgba(255,255,255,0.6); }
                 .bloco-section-editor[data-extrapolada] div { color: #ffffff !important; }
@@ -1390,8 +1615,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 setSections(prev => {
                                     const merged = plainTextContent.trim()
                                     if (!merged) return createDefaultSections()
-                                    const first = prev[0]
-                                    return prev.map(s => s.id === first.id ? { ...s, content: merged } : s)
+                                    const texto = limparTextoInvisivel(merged)
+                                    return prev.map(s => {
+                                        if (s.id === "subjetivo") return { ...s, content: texto }
+                                        return s.id === "dados_base" ? { ...s, content: "" } : s
+                                    })
                                 })
                                 externalUpdateRef.current = true
                                 bumpAllVersions()
@@ -1504,136 +1732,17 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     </div>
                 )}
 
-                {/* ═══ SOAP sections ═══ */}
-                {!plaintext && sections.map(s => {
-                    const meta = SECTION_META.find(m => m.id === s.id)!
-                    const charCount = s.content.length
-                    const isOpen = openModuleDropdown === s.id
-                    const sectionModulos = modulos.modulos[s.id] || []
-
-                    /* Per-section timer progress (0-100, resets when section done) */
-                    let sectionProgress = 0
-                    if (cronometroAtivo && !arquivadoManualmente) {
-                        if (s.id === "subjetivo" && segundosDecorridos < limiteSegundosS) sectionProgress = (segundosDecorridos / limiteSegundosS) * 100
-                        else if (s.id === "objetivo" && segundosDecorridos >= limiteSegundosS && segundosDecorridos < limiteSegundosO) sectionProgress = ((segundosDecorridos - limiteSegundosS) / (limiteSegundosO - limiteSegundosS)) * 100
-                        else if (s.id === "avaliacao" && segundosDecorridos >= limiteSegundosO && segundosDecorridos < limiteSegundosA) sectionProgress = ((segundosDecorridos - limiteSegundosO) / (limiteSegundosA - limiteSegundosO)) * 100
-                        else if (s.id === "plano" && segundosDecorridos >= limiteSegundosA && segundosDecorridos < limiteSegundosP) sectionProgress = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100
-                    }
-
-                    return (
-                        <div key={s.id} style={{ marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
-                            {/* ── Section Header (sticky) ── */}
-                            <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
-                            <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                                <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
-                                <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>{meta.letter}</span>
-                                <span className="bloco-section-title" style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{s.title}</span>
-
-                                {/* Right-side controls */}
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-                                    {/* Objetivo toggle inside chip */}
-                                    {s.id === "objetivo" && (
-                                        <div onClick={e => { e.stopPropagation(); toggleObjetivo() }} style={{ width: "28px", height: "16px", borderRadius: "8px", background: s.enabled ? meta.color : "rgba(120,113,108,0.25)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
-                                            <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#fff", position: "absolute", top: "2px", left: s.enabled ? "14px" : "2px", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
-                                        </div>
-                                    )}
-
-                                    {/* Module dropdown */}
-                                    {s.enabled && sectionModulos.length > 0 && (
-                                        <div ref={el => { if (el) dropdownContainerRefs.current[s.id] = el }} style={{ position: "relative" }}>
-                                            <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); if (isOpen) { setOpenModuleDropdown(null); setDropdownPos(null) } else { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setDropdownPos({ x: r.right - 180, y: r.bottom + 4 }); setOpenModuleDropdown(s.id) } }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: `1px solid ${isOpen ? meta.color : "var(--meta-border)"}`, background: isOpen ? meta.bg : "transparent", color: meta.color, fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: '"Google Sans Flex", sans-serif', padding: 0, lineHeight: 1 }}>+</button>
-                                        </div>
-                                    )}
-
-                                    {/* Copy section button */}
-                                    {s.enabled && s.content.trim() && (
-                                        <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}\n${s.content.trim()}`) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.5 }} title="copiar seção">
-                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                                        </button>
-                                    )}
-
-                                    <span style={{ fontSize: "10px", color: "var(--meta-text)", fontFamily: '"Google Sans Flex", sans-serif', opacity: 0.7, flexShrink: 0 }}>{charCount} caract.</span>
-                                </div>
-                            </div>
-                            </div>
-
-                            {/* ── Section Body (white card inside color-coded card) ── */}
-                            {s.enabled && !s.collapsed && (
-                                <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: "4px 14px 0 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
-                                    {cronometroAtivo && !arquivadoManualmente && (
-                                        <div className="gas-section-progress" style={progressoVertical
-                                            ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
-                                            : { position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
-                                    )}
-                                    <div
-                                        key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}
-                                        ref={el => {
-                                            if (el && !el.dataset.mounted) {
-                                                el.dataset.mounted = "1"
-                                                sectionEditorRefs.current[s.id] = el
-                                                el.innerHTML = renderSectionHtml(s.content)
-                                            } else if (el) {
-                                                sectionEditorRefs.current[s.id] = el
-                                            }
-                                        }}
-                                        className="bloco-section-editor"
-                                        contentEditable
-                                        suppressContentEditableWarning
-                                        data-placeholder={`digite em ${s.title.toLowerCase()}...`}
-                                        data-section-id={s.id}
-                                        data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id || undefined}
-                                        onInput={handleSectionInput}
-                                        onBlur={() => handleSectionBlur(s.id)}
-                                        onKeyDown={e => handleSectionKeyDown(e, s.id)}
-                                        onPaste={handleSectionPaste}
-                                        onFocus={() => setFocusedSectionId(s.id)}
-                                        style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? { color: "#ffffff" } : {}) }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    )
-                })}
-
-                {/* ════════════════════════════════════════════════════════════ */}
-                {/* COMPANION SECTIONS                                         */}
-                {/* ════════════════════════════════════════════════════════════ */}
-                {COMPANIONS.map(c => {
-                    const isOpen = expandedCompanions[c.id] || false
-                    if (isOpen) companionEverOpened.current[c.id] = true
-                    const shouldMount = isOpen || !!companionEverOpened.current[c.id]
-                    return (
-                        <div key={c.id} style={{ marginTop: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
-                            <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
-                            <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                                <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
-                                <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center", flexShrink: 0 }}>+</span>
-                                <span style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
-                                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px" }}>
-                                    {isOpen && c.outputGroups.map(og => (
-                                        <button key={og.id} onClick={e => { e.stopPropagation(); handleAppendOutput(c.id, og.id, og.targetSection) }} className="gas-scale-hover" style={{ padding: "4px 10px", borderRadius: "6px", border: "1px solid rgba(139,92,246,0.3)", background: "rgba(139,92,246,0.1)", color: "#8b5cf6", fontSize: "10px", fontWeight: 600, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
-                                            ↑ {og.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                            </div>
-                            <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
-                                {shouldMount && (
-                                    <CompanionErrorBoundary name={c.label}>
-                                        {c.id === "geriatria" ? (
-                                            <GeriatriaUI ref={el => { if (el) companionRefs.current[c.id] = el }} />
-                                        ) : DIRETOS[c.id] ? (
-                                            <DirectCompanion Comp={DIRETOS[c.id]} id={c.id} companionRefs={companionRefs} />
-                                        ) : (
-                                            <SafeCompanion component={c.component} id={c.id} companionRefs={companionRefs} />
-                                        )}
-                                    </CompanionErrorBoundary>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
+                {/* ═══ Dashboard: left = narrow data column, right = SOAP + companions ═══ */}
+                {!plaintext && (
+                <div className="bloco-colunas">
+                    <div className="bloco-coluna bloco-coluna-esq">
+                        {sections.filter(s => SECTION_META.find(m => m.id === s.id)?.coluna === "esquerda").flatMap(s => renderColuna("esquerda", s))}
+                    </div>
+                    <div className="bloco-coluna bloco-coluna-dir">
+                        {sections.filter(s => SECTION_META.find(m => m.id === s.id)?.coluna === "direita").flatMap(s => renderColuna("direita", s))}
+                    </div>
+                </div>
+                )}
             </div>
 
             {/* ════════════════════════════════════════════════════════════ */}

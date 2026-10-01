@@ -53,6 +53,7 @@ const injectStyles = `
       grid-template-columns: 1.2fr 1fr;
       align-items: start;
       align-content: start;
+      min-height: calc(100vh - 80px);
     }
   }
 
@@ -690,9 +691,10 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
     const labPart = parts.length === 0 ? null : `(${dateBr}): ${parts.join(" // ")}`
+    const outrosPart = outros.trim() ? outros.trim() : null
     const ampaPart = ampaOutput || null
     const glicemiaPart = glicemiaOutput || null
-    const all = [labPart, ampaPart, glicemiaPart].filter(Boolean).join("\n") || null
+    const all = [labPart, outrosPart, ampaPart, glicemiaPart].filter(Boolean).join("\n") || null
     if (!all) return null
     return all
   }

@@ -1,37 +1,19 @@
 # Consulta Agendada
 
+## Dados base:
+
+## Lista de Problemas
+
 ## Subjetivo
-- Id: 
-- QP: 
-- HDA
-  - 
+- Acompanhante: 
+1.
+   - 
 - Queixas adicionais
   - 
-- Antecedentes pessoais
-  - Parto e neonatal
-    - 
-  - Desenvolvimento
-    - 
-  - Condições
-    - 
-  - Cirurgias
-    - 
-  - Medicamentos
-    - 
-  - Alergias
-    - 
-  - Vacinação
-    - 
-- AF: 
-- HV
-    - Dieta: 
-    - Hidratação: 
-    - Evacuações: 
-    - Diurese: 
-    - Sono: 
-    - Escola: 
-    - Lazer: 
-    - Relações: 
+- Parto e neonatal
+  - 
+- Desenvolvimento
+  - 
 
 ## Objetivo
 - Exame físico

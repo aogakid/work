@@ -17,6 +17,7 @@ interface RastreioItem {
     condicao: (i: number, s: string, f: FatoresRisco) => boolean
     metodo: string
     obs?: string
+    fonte?: string
 }
 
 // --- INJEÇÃO DE CSS AVANÇADO (FOCO CIRÚRGICO, EXPANSAO NO HOVER E RESPONSIVIDADE EM 3 NÍVEIS) ---
@@ -306,6 +307,13 @@ const styles = {
         color: "var(--rastreio-text-muted)",
         lineHeight: "1.4",
     } as React.CSSProperties,
+    linhaFonte: {
+        fontSize: "11.5px",
+        color: "var(--rastreio-text-muted)",
+        fontStyle: "italic" as const,
+        marginTop: "5px",
+        opacity: 0.85,
+    } as React.CSSProperties,
     empty: {
         color: "var(--rastreio-text-muted)",
         fontSize: "14px",
@@ -442,6 +450,7 @@ function CardAnimado({ r, ticked, onToggle }: CardAnimadoProps) {
             >
                 <div style={styles.linhaMetodo}>{r.metodo}</div>
                 {r.obs && <div style={styles.linhaObservacao}>{r.obs}</div>}
+                {r.fonte && <div style={styles.linhaFonte}>Fonte: {r.fonte}</div>}
             </div>
         </div>
     )
@@ -462,6 +471,8 @@ const rData: RastreioItem[] = [
         cat: "Cardiovascular",
         condicao: (i, _s, f) => i >= 35 || (i >= 18 && f.dm),
         metodo: "Glicemia de jejum ou HbA1c a cada 3 anos.",
+        obs: "Atenção: há divergência entre documentos do MS — o Caderno de Atenção Primária nº 29 (2010) indica rastreio a partir de 35 anos, enquanto linhas-guia estaduais referem 45 anos na ausência de fatores de risco. Rastrear a partir de 20 anos se houver fator de risco: obesidade grau III, acantose nigricans, SOP, HDL ≤35 mg/dL, triglicerídeos ≥250 mg/dL ou doença cardiovascular. Pré-diabetes: repetir anualmente.",
+        fonte: "MS Caderno de Atenção Primária nº 29 (2010) — confirmar se houve atualização",
     },
     {
         id: "dislip",
@@ -472,6 +483,8 @@ const rData: RastreioItem[] = [
             (s === "F" && i >= 45) ||
             (i >= 20 && (f.dm || f.tabagista)),
         metodo: "Perfil lipídico a cada 5 anos.",
+        obs: "Atenção: o MS orienta o rastreio por risco, não por faixa etária isolada. Priorizar HAS, DM, tabagismo, obesidade, DRC e história familiar de DACV prematura. Em prevenção secundária (DACV estabelecida) o perfil lipídico é monitoramento terapêutico, não triagem.",
+        fonte: "PCDT de Dislipidemia (MS) e Diretriz Brasileira de Dislipidemias 2025",
     },
     {
         id: "obesidade",
@@ -486,21 +499,27 @@ const rData: RastreioItem[] = [
         titulo: "Câncer de mama",
         cat: "Oncologia",
         condicao: (i, s) => s === "F" && i >= 40 && i <= 74,
-        metodo: "Mamografia bienal 40–74 anos.",
+        metodo: "50–74 anos: mamografia bienal. 40–49 anos: mamografia mediante decisão compartilhada com a equipe de saúde, mesmo sem sintomas.",
+        obs: "Acima de 74 anos: indicação individualizada conforme histórico clínico e expectativa de vida. Rastreio de alto risco (BRCA1/2, Li-Fraumeni,história familiar) inicia aos 30 anos — ver tabela de alto risco do MS.",
+        fonte: "MS set/2025 (ampliação do acesso a partir dos 40 anos)",
     },
     {
         id: "utero",
         titulo: "Câncer do colo do útero",
         cat: "Oncologia",
         condicao: (i, s) => s === "F" && i >= 25 && i <= 64,
-        metodo: "Novo: DNA-HPV a cada 5 anos. Antigo: colpocitologia a cada 3 anos.",
+        metodo: "25–64 anos: teste de DNA-HPV oncogênico a cada 5 anos. Alternativa: citologia a cada 3 anos (após 2 exames normais consecutivos).",
+        obs: "O teste molecular passa a substituir gradualmente o papanicolau no SUS. Não fazer o coteste (citologia + DNA-HPV simultâneos).",
+        fonte: "Portaria Conjunta SAES/SECTICS nº 13, 29/07/2025",
     },
     {
         id: "colorretal",
         titulo: "Câncer colorretal",
         cat: "Oncologia",
-        condicao: (i) => i >= 45 && i <= 75,
-        metodo: "PSOF anual ou colonoscopia a cada 10 anos.",
+        condicao: (i) => i >= 50 && i <= 75,
+        metodo: "50–75 anos, assintomáticos: teste imunoquímico fecal (FIT) a cada 2 anos. Alternativa: colonoscopia a cada 10 anos.",
+        obs: "O FIT foi incorporado ao SUS em ago/2026 como procedimento de atenção básica. Destina-se apenas ao rastreio, não à investigação de sintomas. Repetir em 5 anos (menor intervalo) após histórico familiar.",
+        fonte: "Diretrizes Brasileiras de Rastreamento de Câncer de Cólon e Reto (Conitec/MS)",
     },
     {
         id: "pulmao",
@@ -514,16 +533,19 @@ const rData: RastreioItem[] = [
         id: "prostata",
         titulo: "Câncer de próstata",
         cat: "Oncologia",
-        condicao: (i, s) => s === "M" && i >= 50 && i <= 70,
-        metodo: "PSA.",
-        obs: "Decisão compartilhada. Antecipar 40–45 anos se afrodescendente ou hist. familiar 1º grau.",
+        condicao: (i, s) => s === "M" && i >= 45 && i <= 70,
+        metodo: "O MS NÃO recomenda rastreamento populacional para câncer de próstata.",
+        obs: "Se o paciente tiver interesse, a decisão deve ser individualizada e compartilhada, explicando riscos de falso positivo, sobrediagnóstico e tratamento excessivo de neoplasias indolentes. Início aos 40 anos para negros e para quem tem familiar de 1º grau com câncer antes dos 60 anos; para os demais, a partir dos 45 anos. Suspender acima dos 70 anos ou com expectativa de vida < 10–15 anos.",
+        fonte: "Nota Técnica nº 9/2023-COSAH/CGACI/DGCI/SAPS/MS",
     },
     {
         id: "tsh",
         titulo: "Hipotireoidismo",
         cat: "Endócrino",
         condicao: (i, s, f) => (s === "F" && i >= 60) || i >= 60 || f.gestante,
-        metodo: "TSH 1 vez na vida.",
+        metodo: "O MS não recomenda rastreamento populacional de disfunção tireoidiana em adultos assintomáticos.",
+        obs: "Rastrear apenas se houver sintomas, história pessoal ou familiar de doença tireoidiana, uso de medicação ou fator de risco (mulher em idade reprodutiva, pós-radiação cervical). Em gestantes, TSH no primeiro trimestre é indicado. O MS só recomenda triagem neonatal (Teste do Pezinho).",
+        fonte: "MS/INCA — sem recomendação de rastreio populacional; PCDT de Hipotireoidismo Congênito (Portaria Conjunta nº 5/2021)",
     },
     {
         id: "mental",
@@ -605,11 +627,13 @@ const rData: RastreioItem[] = [
         id: "osteo",
         titulo: "Osteoporose",
         cat: "Rotina",
-        condicao: (i, s) =>
+        condicao: (i, s, f) =>
             (s === "F" && i >= 65) ||
-            (s === "F" && i >= 50 && i <= 64) ||
-            (s === "M" && i >= 70),
-        metodo: "Densitometria óssea a cada 3 anos se normal ou a cada 1-2 anos se osteopenia/osteoporose.",
+            (s === "M" && i >= 70) ||
+            (i >= 50 && (f.tabagista || f.dm)),
+        metodo: "DXA (densitometria óssea): mulheres ≥ 65 anos e homens ≥ 70 anos, em qualquer idade se houver fator de risco.",
+        obs: "Fatores de risco para osteoporose: baixo peso/IMC baixo, uso prolongado de corticoide, fratura por fragilidade prévia, história familiar de fratura de fêmeur, hipogonadismo ou privação androgênica, doença reumática/hepatopatia/hiperparatireoidismo, tabagismo e consumo excessivo de álcool. Não repetir em intervalo menor que 2 anos. Em tratamento, repetir a cada 2 anos. Se a DMO for normal, o intervalo é bem mais longo (a evidência sustenta cerca de 15 anos em mulheres com 67 anos ou mais e osteopenia leve), portanto não há prazo fixo — reavaliar por idade, T-score e risco. Usar FRAX para avaliar o risco de fratura em 10 anos.",
+        fonte: "PCDT de Osteoporose (MS/Conitec), anexo atualizado em 29/01/2026",
     },
     {
         id: "cognitivo",

@@ -1,10 +1,13 @@
 # Consulta Pré-natal
 
+## Dados base:
+
+## Lista de Problemas
+
 ## Subjetivo
-- Id: 
-- QP: 
-- HDA
-  - 
+- Acompanhante: 
+1.
+   - 
 - Gestação atual
   - DUM: 
   - Planejada: 
@@ -18,30 +21,6 @@
   - A: 
   - Vivos: 
   - Intercorrências: 
-- Antecedentes pessoais
-  - Condições
-    - 
-  - Cirurgias
-    - 
-  - Medicamentos
-    - 
-  - Suplementos
-    - 
-  - Alergias
-    - 
-- AF: 
-- HV
-  - Etilismo: 
-  - Tabagismo: 
-  - Drogas: 
-  - Exercício: 
-  - Dieta: 
-  - Hidratação: 
-  - Evacuações: 
-  - Diurese: 
-  - Sono: 
-  - Humor: 
-  - Lazer: 
 
 ## Objetivo
 - Exame físico
