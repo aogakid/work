@@ -113,7 +113,7 @@ interface Section {
 }
 
 const SECTION_META: { id: string; title: string; label: string; letter: string; color: string; bg: string; border: string; optional: boolean; formulario: "dados_base" | "lista_problemas" | "subjetivo" | "objetivo" | null; coluna: "esquerda" | "direita" }[] = [
-    { id: "dados_base", title: "Dados base:", label: "Dados base", letter: "D", color: "#8b5cf6", bg: "rgba(139,92,246,0.06)", border: "rgba(139,92,246,0.18)", optional: false, formulario: "dados_base", coluna: "esquerda" },
+    { id: "dados_base", title: "Dados base", label: "Dados base", letter: "D", color: "#8b5cf6", bg: "rgba(139,92,246,0.06)", border: "rgba(139,92,246,0.18)", optional: false, formulario: "dados_base", coluna: "esquerda" },
     { id: "lista_problemas", title: "Lista de Problemas/Condições", label: "Lista de Problemas/Condições", letter: "L", color: "#6366f1", bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.18)", optional: false, formulario: "lista_problemas", coluna: "esquerda" },
     { id: "subjetivo", title: "Subjetivo", label: "Subjetivo", letter: "S", color: "#3b82f6", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.18)", optional: false, formulario: "subjetivo", coluna: "direita" },
     { id: "objetivo", title: "Objetivo", label: "Objetivo", letter: "O", color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", optional: true, formulario: "objetivo", coluna: "direita" },

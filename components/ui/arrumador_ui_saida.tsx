@@ -20,12 +20,13 @@ Regras obrigatórias:
 - Não resumir ou omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final do subjetivo
 - Não sintetizar sintomas, inferir diagnósticos ou definir condutas
 - Não inventar conteúdo
-- A identificação deve ficar na seção "## Dados base:" subseção "- Id:", e nunca dentro do Subjetivo
+- A identificação deve ficar na seção "## Dados base" subseção "- Id:", e nunca dentro do Subjetivo
 - A linha de identificação deve ser única e sequencial, com os dados separados por vírgula, na ordem: nome, idade, estado civil, composição familiar, acompanhante, religião, escolaridade, ocupação, naturalidade, residência, procedência, ACS
 - O sexo nunca deve ser escrito na linha de identificação: é um dado da interface e fica fora do texto salvo. Se o original trouxer "M" ou "F" isolado, omitir
 - O estado civil deve usar um destes valores: solteiro(a), casado(a), união estável, separado(a), divorciado(a), viúvo(a). Se casado, escrever "casado com <nome>"
 - A escolaridade deve usar um destes valores: analfabeto, alfabetizado, ensino fundamental incompleto, ensino fundamental completo, ensino médio incompleto, ensino médio completo, ensino superior incompleto, ensino superior completo, pós-graduação
 - O acompanhante deve ser escrito como "acompanhante: <nome e parentesco>", por exemplo "acompanhante: filha Maria"
+- Omitir a linha de acompanhante quando não houver informação; não deixar placeholder vazio
 - A naturalidade deve ser escrita como "natural de <lugar>", a residência como "residente em <lugar>" e a procedência como "procedente de <cidade>"
 - Não reescrever nem reinterpretar a identificação original: apenas reordenar os dados em uma linha
 - Agrupar na HDA queixas relacionadas em parágrafos
@@ -45,7 +46,7 @@ Modelo de output:
 
 # Consulta Agendada
 
-## Dados base:
+## Dados base
 - Id: 
 
 Antecedentes
@@ -86,7 +87,6 @@ Resolvidos:
 ---
 
 ## Subjetivo
-- Acompanhante: 
 
 Motivo
 - 

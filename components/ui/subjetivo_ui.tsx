@@ -74,28 +74,25 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     }, [onChange])
 
     const alterarAcompanhante = React.useCallback((novo: string) => {
-        aplicar({ ...parseSubjetivo(value), acompanhante: novo })
-    }, [aplicar, value])
+        aplicar({ ...campos, acompanhante: novo })
+    }, [aplicar, campos])
 
     const alterarMotivo = React.useCallback((indice: number, chave: "motivo" | "texto", novo: string) => {
-        const base = parseSubjetivo(value)
-        const motivos = base.motivos.map((m, i) => (i === indice ? { ...m, [chave]: novo } : m))
-        aplicar({ ...base, motivos })
-    }, [aplicar, value])
+        const motivos = campos.motivos.map((m, i) => (i === indice ? { ...m, [chave]: novo } : m))
+        aplicar({ ...campos, motivos })
+    }, [aplicar, campos])
 
     const adicionarMotivo = React.useCallback(() => {
-        const base = parseSubjetivo(value)
-        aplicar({ ...base, motivos: [...base.motivos, { ...MOTIVO_VAZIO }] })
-    }, [aplicar, value])
+        aplicar({ ...campos, motivos: [...campos.motivos, { ...MOTIVO_VAZIO }] })
+    }, [aplicar, campos])
 
     const removerMotivo = React.useCallback((indice: number) => {
-        const base = parseSubjetivo(value)
-        const motivos = base.motivos.filter((_, i) => i !== indice)
+        const motivos = campos.motivos.filter((_, i) => i !== indice)
         // Clean up ref
         delete textareaRefs.current[indice]
         setHoverMotivo(null)
-        aplicar({ ...base, motivos: motivos.length ? motivos : [{ ...MOTIVO_VAZIO }] })
-    }, [aplicar, value])
+        aplicar({ ...campos, motivos: motivos.length ? motivos : [{ ...MOTIVO_VAZIO }] })
+    }, [aplicar, campos])
 
     const handleAcompanhante = (e: React.ChangeEvent<HTMLInputElement>) => alterarAcompanhante(e.target.value)
     const handleMotivo = (indice: number) => (e: React.ChangeEvent<HTMLInputElement>) => alterarMotivo(indice, "motivo", e.target.value)
@@ -160,13 +157,17 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                             >
                                 {hovering ? "−" : `${i + 1}.`}
                             </span>
-                            <input
-                                data-motivo={i}
-                                value={motivo.motivo}
-                                onChange={handleMotivo(i)}
-                                placeholder="motivo da consulta"
-                                style={{ ...estiloCampo, width: "auto", flex: "1 1 0", minWidth: 0 }}
-                            />
+                            <div style={{ position: "relative", flex: "1 1 0", minWidth: 0 }}>
+                                <span aria-hidden="true" style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", color: "#3b82f6", fontSize: "17px", lineHeight: 1, pointerEvents: "none" }}>❝</span>
+                                <input
+                                    data-motivo={i}
+                                    value={motivo.motivo}
+                                    onChange={handleMotivo(i)}
+                                    placeholder="motivo da consulta"
+                                    style={{ ...estiloCampo, paddingLeft: "27px", paddingRight: "27px", outline: "none" }}
+                                />
+                                <span aria-hidden="true" style={{ position: "absolute", right: "9px", top: "50%", transform: "translateY(-50%)", color: "#3b82f6", fontSize: "17px", lineHeight: 1, pointerEvents: "none" }}>❞</span>
+                            </div>
                         </div>
                         {/* width:100% + margin estourava o card: o recuo vai no wrapper */}
                         <div style={{ paddingLeft: "22px" }}>

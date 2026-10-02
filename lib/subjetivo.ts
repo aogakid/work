@@ -85,7 +85,8 @@ const linhasTexto = (texto: string): string[] => {
 }
 
 export function compositarSubjetivo(s: Subjetivo): string {
-    const partes: string[] = ["- Acompanhante: " + s.acompanhante]
+    const partes: string[] = []
+    if (s.acompanhante.trim()) partes.push("- Acompanhante: " + s.acompanhante.trim())
     s.motivos.forEach(m => {
         const motivo = m.motivo.trim().replace(/^\s*[-*]\s*/, "").replace(/^\"(.*)\"$/, "$1")
         if (motivo) {

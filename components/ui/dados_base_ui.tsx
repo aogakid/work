@@ -139,12 +139,33 @@ function SubGrupo({ rotulo, children }: CampoRotuloProps) {
 interface CampoRotuloProps {
     rotulo: string
     children: React.ReactNode
+    onNega?: () => void
 }
 
-function CampoRotulado({ rotulo, children }: CampoRotuloProps) {
+function BotaoNega({ onClick }: { onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            title="Registrar nega"
+            aria-label="Registrar nega"
+            style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", opacity: 0.75, cursor: "pointer", flexShrink: 0 }}
+        >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m5.6 5.6 12.8 12.8" />
+            </svg>
+        </button>
+    )
+}
+
+function CampoRotulado({ rotulo, children, onNega }: CampoRotuloProps) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <span style={estiloRotuloCampo}>{rotulo}</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: onNega ? "20px" : undefined }}>
+                <span style={estiloRotuloCampo}>{rotulo}</span>
+                {onNega ? <BotaoNega onClick={onNega} /> : null}
+            </div>
             {children}
         </div>
     )
@@ -158,7 +179,7 @@ export interface DadosBaseFormProps {
     onSexoChange?: (sexo: "M" | "F" | "") => void
 }
 
-/* The whole "## Dados base:" block lives in `value` as template-shaped text.
+/* The whole "## Dados base" block lives in `value` as template-shaped text.
    Every edit re-parses it, patches one field and re-composites, so the stored
    text always mirrors the current consulta agendada template.
    Sexo is the one exception: it is never serialised, so it lives in state and is
@@ -469,7 +490,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 {MEDICAMENTOS_CAMPOS.map(campo => {
                     if (!campo.multilinha) {
                         return (
-                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, "Nega")}>
                                 <input
                                     data-campo={campo.chave}
                                     value={medicamentosCampos[campo.chave]}
@@ -480,7 +501,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                         )
                     }
                     return (
-                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, "Nega")}>
                             <textarea
                                 data-campo={campo.chave}
                                 value={medicamentosCampos[campo.chave]}
@@ -501,7 +522,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {HABITOS_CAMPOS.filter(c => c.sempreVisivel).map(campo => (
-                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarHabito(campo.chave, "Nega")}>
                                 <input
                                     data-campo={campo.chave}
                                     value={habitosCampos[campo.chave]}
@@ -558,6 +579,10 @@ export function ListaProblemasForm({ value, onChange, onSendToAssessment }: List
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
+                <span style={estiloRotuloCampo}>Lista de problemas</span>
+                <BotaoNega onClick={() => alterar("Nega")} />
+            </div>
             <textarea
                 data-categoria="texto"
                 value={campos.texto}

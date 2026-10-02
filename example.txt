@@ -1,6 +1,6 @@
 # Consulta de exemplo
 
-## Dados base:
+## Dados base
 - Id: Paciente Exemplo, 68 anos, casada, mora com a filha, ensino fundamental completo, aposentada, residente em Fortaleza, ACS Maria
 
 Antecedentes
