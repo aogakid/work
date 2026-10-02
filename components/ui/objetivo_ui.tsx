@@ -10,6 +10,7 @@ import {
     type Objetivo,
     type SinaisVitais,
 } from "../../lib/objetivo"
+import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 
 const estiloRotuloCampo: React.CSSProperties = {
     fontSize: "10px",
@@ -114,13 +115,15 @@ function CampoRotulado({ rotulo, children }: { rotulo: string; children: React.R
 export interface ObjetivoFormProps {
     value: string
     onChange: (v: string) => void
+    idade?: number | null
     mostrarPrenatal?: boolean
     mostrarPuericultura?: boolean
 }
 
-export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrarPuericultura = false }: ObjetivoFormProps) {
+export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = false, mostrarPuericultura = false }: ObjetivoFormProps) {
     const [, setCampos] = React.useState<Objetivo>(OBJETIVO_VAZIO)
     const emitidoRef = React.useRef<string | null>(null)
+    const sincronizandoRef = React.useRef(false)
 
     React.useEffect(() => {
         if (emitidoRef.current === value) return
@@ -177,7 +180,36 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrar
     const crescimentoDesenvolvimento = React.useMemo(() => parseObjetivo(value).crescimentoDesenvolvimento, [value])
     const exameFisicoCampos = React.useMemo(() => parseObjetivo(value).exameFisico, [value])
     const complementarCampos = React.useMemo(() => parseObjetivo(value).complementar, [value])
-    const classificacaoIMC = categoriaIMC(ssvvCampos.imc)
+    const classificacaoIMC = idade !== null && idade > 18 ? categoriaIMC(ssvvCampos.imc) : null
+
+    React.useEffect(() => {
+        if (sincronizandoRef.current) {
+            sincronizandoRef.current = false
+            return
+        }
+        broadcastFieldSync("objetivo", { pa: ssvvCampos.pa, peso: ssvvCampos.peso, altura: ssvvCampos.altura })
+    }, [value, ssvvCampos.pa, ssvvCampos.peso, ssvvCampos.altura])
+
+    React.useEffect(() => listenFieldSync(({ source, values }) => {
+        if (source === "objetivo" || (values.pa === undefined && values.peso === undefined && values.altura === undefined)) return
+        const base = parseObjetivo(value)
+        const ssvv = { ...base.ssvv }
+        if (values.pa !== undefined) {
+            if (source === "escores" && values.pa) {
+                const diastolica = base.ssvv.pa.match(/[x×/]\s*(\d+)/)?.[1]
+                ssvv.pa = `${values.pa}${diastolica ? `x${diastolica}` : ""}`
+            } else {
+                ssvv.pa = values.pa
+            }
+        }
+        if (values.peso !== undefined) ssvv.peso = values.peso
+        if (values.altura !== undefined) ssvv.altura = values.altura
+        if (ssvv.pa === base.ssvv.pa && ssvv.peso === base.ssvv.peso && ssvv.altura === base.ssvv.altura) return
+        const imc = calcularIMC(ssvv.peso, ssvv.altura)
+        if (imc) ssvv.imc = imc
+        sincronizandoRef.current = true
+        aplicar({ ...base, ssvv })
+    }), [value, aplicar])
 
     const camposSsvvMeta: { chave: keyof SinaisVitais; rotulo: string }[] = [
         { chave: "pa", rotulo: "PA" },
@@ -190,12 +222,13 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrar
         { chave: "spo2", rotulo: "SPO2 (%)" },
         { chave: "tax", rotulo: "Temperatura (Tax)" },
     ]
+    const camposResumo = camposSsvvMeta.slice(0, 4).filter(item => item.chave !== "pa" || idade === null || idade >= 18)
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
             <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={false} resumo={(
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
-                    {camposSsvvMeta.slice(0, 4).map(item => (
+                    {camposResumo.map(item => (
                         <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
                             <span style={estiloRotuloCampo}>
                                 {item.rotulo}
@@ -214,7 +247,7 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrar
                 </div>
             )}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
-                    {camposSsvvMeta.slice(4).map(item => (
+                    {camposSsvvMeta.slice(4).filter(item => item.chave !== "pa" || idade === null || idade >= 18).map(item => (
                         <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
                             <span style={estiloRotuloCampo}>{item.rotulo}</span>
                             <input

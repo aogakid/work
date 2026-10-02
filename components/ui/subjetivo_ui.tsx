@@ -10,7 +10,7 @@ const estiloRotuloCampo: React.CSSProperties = {
 }
 
 const estiloCampo = {
-    fontSize: "12px",
+    fontSize: "15px",
     fontFamily: '"Google Sans Flex", sans-serif',
     color: "var(--editor-text)",
     background: "var(--editor-bg)",
@@ -23,11 +23,9 @@ const estiloCampo = {
 
 const estiloArea = {
     ...estiloCampo,
-    resize: "none",
+    resize: "vertical",
     minHeight: "40px",
     lineHeight: 1.45,
-    overflow: "hidden",
-    height: "auto",
 } as React.CSSProperties
 
 const estiloBotao: React.CSSProperties = {
@@ -58,7 +56,6 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     const [campos, setCampos] = React.useState<Subjetivo>(SUBJETIVO_VAZIO)
     const [hoverMotivo, setHoverMotivo] = React.useState<number | null>(null)
     const emitidoRef = React.useRef<string | null>(null)
-    const textareaRefs = React.useRef<Record<number, HTMLTextAreaElement>>({})
 
     React.useEffect(() => {
         if (emitidoRef.current === value) return
@@ -88,37 +85,13 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
 
     const removerMotivo = React.useCallback((indice: number) => {
         const motivos = campos.motivos.filter((_, i) => i !== indice)
-        // Clean up ref
-        delete textareaRefs.current[indice]
         setHoverMotivo(null)
         aplicar({ ...campos, motivos: motivos.length ? motivos : [{ ...MOTIVO_VAZIO }] })
     }, [aplicar, campos])
 
     const handleAcompanhante = (e: React.ChangeEvent<HTMLInputElement>) => alterarAcompanhante(e.target.value)
     const handleMotivo = (indice: number) => (e: React.ChangeEvent<HTMLInputElement>) => alterarMotivo(indice, "motivo", e.target.value)
-    const handleTexto = (indice: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        alterarMotivo(indice, "texto", e.target.value)
-        // Auto-resize textarea
-        const textarea = textareaRefs.current[indice]
-        if (textarea) {
-            textarea.style.height = "auto"
-            textarea.style.height = textarea.scrollHeight + "px"
-        }
-    }
-
-    // Auto-resize textareas when number of motivos changes
-    React.useEffect(() => {
-        setTimeout(() => {
-            campos.motivos.forEach((_, i) => {
-                const textarea = textareaRefs.current[i]
-                if (textarea) {
-                    textarea.style.height = "auto"
-                    textarea.style.height = textarea.scrollHeight + "px"
-                }
-            })
-        }, 0)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [campos.motivos.length])
+    const handleTexto = (indice: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => alterarMotivo(indice, "texto", e.target.value)
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "10px 0 12px 0" }}>
@@ -168,7 +141,6 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                         </div>
                         <div>
                             <textarea
-                                ref={el => { if (el) textareaRefs.current[i] = el }}
                                 data-texto={i}
                                 value={motivo.texto}
                                 onChange={handleTexto(i)}

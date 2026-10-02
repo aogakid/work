@@ -113,9 +113,7 @@ export const COMPANIONS: CompanionConfig[] = [
         label: "Puericultura",
         component: PuericulturaUI,
         outputGroups: [
-            { id: "geral", label: "geral", targetSection: "subjetivo" },
-            { id: "crescimento", label: "crescimento", targetSection: "objetivo" },
-            { id: "desenvolvimento", label: "desenvolvimento", targetSection: "objetivo" },
+            { id: "resultado", label: "resultado", targetSection: "objetivo" },
         ],
         placement: "after-objetivo",
         when: (ctx) => idadeMaxima(ctx, 20),

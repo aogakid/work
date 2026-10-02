@@ -72,7 +72,7 @@ const FormularioInput = forwardRef<FormularioInputActions>(function FormularioIn
         }
     }
     const anonimizar = (texto: string): string => {
-        const match = texto.match(/Id:\s+([^,]+),\s*\d+\s*anos/i)
+        const match = texto.match(/Id:\s+([^,]+),\s*\d+\s*(?:anos?|mes(?:es)?|m[eê]s|dias?)/i)
         if (!match) return texto
         const nome = match[1].trim()
         if (!nome || nome.length < 3) return texto

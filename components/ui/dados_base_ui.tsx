@@ -54,7 +54,7 @@ const estiloRotuloCampo: React.CSSProperties = {
 }
 
 const estiloCampo = {
-    fontSize: "12px",
+    fontSize: "15px",
     fontWeight: 400,
     fontFamily: '"Google Sans Flex", sans-serif',
     color: "var(--editor-text)",
@@ -184,6 +184,7 @@ function CampoRotulado({ rotulo, children, onNega }: CampoRotuloProps) {
 export interface DadosBaseFormProps {
     value: string
     onChange: (v: string) => void
+    idade?: number | null
     onSexoChange?: (sexo: "M" | "F" | "") => void
 }
 
@@ -192,7 +193,7 @@ export interface DadosBaseFormProps {
    text always mirrors the current consulta agendada template.
    Sexo is the one exception: it is never serialised, so it lives in state and is
    only published to the companion bus. */
-export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormProps) {
+export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: DadosBaseFormProps) {
     const [campos, setCampos] = React.useState<DadosBase>(DADOS_BASE_VAZIO)
     const [idCampos, setIdCampos] = React.useState<IdentificacaoCampos>(parseIdentificacao(""))
     const emitidoRef = React.useRef<string | null>(null)
@@ -365,7 +366,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                         {CAMPOS_ID.filter(c => c.sempreVisivel).map(campo => (
-                            <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.chave === "nome" ? "1 1 100%" : campo.chave === "idade" ? "0 0 104px" : campo.chave === "sexo" ? "0 1 78px" : campo.largo ? "1 1 180px" : "0 1 118px", minWidth: campo.chave === "nome" ? "100%" : "104px" }}>
+                            <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.chave === "nome" ? "1 1 100%" : campo.chave === "idade" ? "0 0 104px" : campo.chave === "sexo" ? "0 1 78px" : campo.chave === "acs" ? "0 1 74px" : campo.largo ? "1 1 180px" : "0 1 118px", minWidth: campo.chave === "nome" ? "100%" : campo.chave === "acs" ? "70px" : "104px" }}>
                                 <span style={estiloRotuloCampo}>{campo.rotulo}</span>
                                 {campo.chave === "sexo" ? (
                                     <select
@@ -401,7 +402,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                                         data-campo={campo.chave}
                                         value={idCampos[campo.chave]}
                                         onChange={handleChangeCampo}
-                                        style={estiloCampo}
+                                        style={campo.chave === "nome" ? { ...estiloCampo, fontWeight: 700 } : estiloCampo}
                                     />
                                 )}
                             </div>
@@ -437,6 +438,16 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                                         <option key={op} value={op}>{op}</option>
                                     ))}
                                 </select>
+                            ) : campo.chave === "residencia" ? (
+                                <>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
+                                        <span style={estiloRotuloCampo}>{campo.rotulo}</span>
+                                    <button type="button" onClick={() => alterarIdCampo("residencia", idCampos.naturalidade)} title="Usar a naturalidade como residência" aria-label="Usar a naturalidade como residência" style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 8h14M5 16h14"/></svg>
+                                    </button>
+                                    </div>
+                                    <input data-campo={campo.chave} value={idCampos.residencia} onChange={handleChangeCampo} style={estiloCampo} />
+                                </>
                             ) : (
                                 <input
                                     data-campo={campo.chave}
@@ -455,7 +466,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 cor={COR_ANTECEDENTES}
                 colapsavel
                 abertoInicial={temAntecedentes}
-                sempreVisivelChildren={idCampos.sexo === "F" ? (
+                sempreVisivelChildren={idCampos.sexo === "F" && (idade === null || idade >= 15) ? (
                     <CampoRotulado rotulo="DUM">
                         <input
                             data-campo="dum"
@@ -553,7 +564,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 abertoInicial={false}
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        {HABITOS_CAMPOS.filter(c => c.sempreVisivel).map(campo => (
+                        {HABITOS_CAMPOS.filter(c => c.sempreVisivel && (idade === null || idade >= 15 || !["etilismo", "tabagismo"].includes(c.chave))).map(campo => (
                             <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarHabito(campo.chave, "Nega")}>
                                 <input
                                     data-campo={campo.chave}

@@ -36,6 +36,8 @@ export const OPCOES_ESTADO_CIVIL = [
 ]
 
 export const OPCOES_ESCOLARIDADE = [
+    "creche",
+    "ensino infantil",
     "analfabeto",
     "alfabetizado",
     "ensino fundamental incompleto",
@@ -77,8 +79,12 @@ export function compositarIdentificacao(c: IdentificacaoCampos): string {
     if (c.religiao.trim()) partes.push(c.religiao)
     if (c.escolaridade.trim()) partes.push(c.escolaridade)
     if (c.ocupacao.trim()) partes.push(c.ocupacao)
-    if (c.naturalidade.trim()) partes.push("natural de " + c.naturalidade)
-    if (c.residencia.trim()) partes.push("residente em " + c.residencia)
+    if (c.naturalidade.trim() && c.residencia.trim() && c.naturalidade.trim().toLocaleLowerCase() === c.residencia.trim().toLocaleLowerCase()) {
+        partes.push("natural e residente em " + c.naturalidade)
+    } else {
+        if (c.naturalidade.trim()) partes.push("natural de " + c.naturalidade)
+        if (c.residencia.trim()) partes.push("residente em " + c.residencia)
+    }
     if (c.procedencia.trim()) partes.push("procedente de " + c.procedencia)
     if (c.acs.trim()) partes.push("ACS " + c.acs)
     return partes.join(", ")
@@ -91,7 +97,7 @@ const RE_RES = /^residente\s+(?:em|de)\s+(.+)$/i
 const RE_IDADE = /^(\d{1,3})\s*(anos?|mes(?:es)?|m[eê]s|dias?)$/i
 const RE_SEXO = /^[MF]$/
 const RE_RELIGIAO = /^(cat[oó]lico|evang[eé]lico|esp[íi]rito de sonho|ateu|sem religi[ãa]o|outra)$/i
-const RE_ESCOLARIDADE = /^(ensino\s\w+|p[óo]s[-\s]gradua[çc][ãa]o|n[ãa]o\s+frequentou\s+a\s+escola|sem\s+instru[çc][ãa]o|alfabetizado(\s+e\s+alfab[eé]tico)?|analfabeto|nunca\s+frequentou)/i
+const RE_ESCOLARIDADE = /^(creche|ensino\s+infantil|ensino\s\w+|p[óo]s[-\s]gradua[çc][ãa]o|n[ãa]o\s+frequentou\s+a\s+escola|sem\s+instru[çc][ãa]o|alfabetizado(\s+e\s+alfab[eé]tico)?|analfabeto|nunca\s+frequentou)/i
 const RE_OCUPACAO = /(aut[ôo]nom|aposentad|desempreg|professor|estudante|do lar|comerciante|agricultor|[ãa]ritm|mar [|â]timo|advogad|m[eé]dic|enfermeir|pediatr|odontolog|farmac[eê]utic|arquitet|engenheir|contador|advog)/i
 const RE_COMPOSICAO = /(mora com|mora sozinho|vive com|tem \d|filh)/i
 const RE_ESTADO_CIVIL = /^(solteir[oa]\s*\(\s*[ao]?\s*\)|solteir[oa]?|casad[oa]\s*\(\s*[ao]?\s*\)|casad[oa](\s+com\s+.+)?|uni[ãa]o\s+est[áa]vel|[úu]ni[ãa]o\s+est[áa]vel|separad[oa]\s*\(\s*[ao]?\s*\)|separad[oa](\s+de\s+.+)?|divorciad[oa]\s*\(\s*[ao]?\s*\)|divorciad[oa]|vi[úu]v[oa]\s*\(\s*[ao]?\s*\)|vi[úu]v[oa]?|amig[oa]s?\s+de\s+.+)$/i
@@ -110,6 +116,8 @@ export function parseIdentificacao(linha: string): IdentificacaoCampos {
     for (const seg of segmentos) {
         let m = seg.match(RE_ACS)
         if (m) { campos.acs = m[1]; continue }
+        m = seg.match(/^natural\s+e\s+residente\s+em\s+(.+)$/i)
+        if (m) { campos.naturalidade = m[1]; campos.residencia = m[1]; continue }
         m = seg.match(RE_NAT_DE)
         if (m) { campos.naturalidade = m[1]; continue }
         m = seg.match(RE_NAT_OURO)

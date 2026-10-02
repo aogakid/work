@@ -16,6 +16,7 @@ import { DadosBaseForm, ListaProblemasForm } from "./dados_base_ui"
 import { SubjetivoForm } from "./subjetivo_ui"
 import { ObjetivoForm } from "./objetivo_ui"
 import { extrairLinhaId, compositarDadosBase, parseDadosBase } from "../../lib/dados-base"
+import { compositarObjetivo, parseObjetivo } from "../../lib/objetivo"
 
 function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
     const Comp = component
@@ -281,8 +282,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [sections, setSections] = React.useState<Section[]>(createDefaultSections)
 
     /* ── Editor refs ── */
-    const sectionEditorRefs = React.useRef<Record<string, HTMLDivElement>>({})
-
     const [focusedSectionId, setFocusedSectionId] = React.useState<string | null>(null)
 
     /* ── Companions ── */
@@ -476,6 +475,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 const sep = prev && !prev.endsWith("\n") ? "\n" : ""
                 return prev + sep + text
             })
+        } else if (companionId === "puericultura" && targetSection === "objetivo") {
+            contentVersionRef.current[targetSection] = (contentVersionRef.current[targetSection] || 0) + 1
+            setSections(prev => prev.map(s => {
+                if (s.id !== targetSection) return s
+                const objetivo = parseObjetivo(s.content)
+                const merged = [objetivo.crescimentoDesenvolvimento.trim(), text.trim()].filter(Boolean).join("\n\n")
+                return { ...s, content: compositarObjetivo({ ...objetivo, crescimentoDesenvolvimento: merged }) }
+            }))
         } else {
             contentVersionRef.current[targetSection] = (contentVersionRef.current[targetSection] || 0) + 1
             setSections(prev => prev.map(s => {
@@ -633,7 +640,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         document.addEventListener("framerSubstituirTexto", lidarComSubstituicaoOuvinte)
         const lidarComCopiarOuvinte = () => editor.copiar()
         window.addEventListener("framerCopiar", lidarComCopiarOuvinte)
-        const lidarComColarOuvinte = () => editor.colar()
+        const lidarComColarOuvinte = () => {
+            const active = document.activeElement
+            if (active instanceof HTMLElement && active.closest('input, textarea, select, [contenteditable="true"]')) return
+            setConfirmAction({ message: "deseja substituir o conteúdo atual pelo texto copiado?", onConfirm: () => editor.colar() })
+        }
         window.addEventListener("framerColar", lidarComColarOuvinte)
         const lidarComLimparOuvinte = () => editor.substituir("")
         window.addEventListener("framerLimpar", lidarComLimparOuvinte)
@@ -758,149 +769,23 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         },
     })) // eslint-disable-line react-hooks/exhaustive-deps
 
-    /* ── Section editor HTML rendering ── */
-    const renderSectionHtml = useCallback((content: string): string => {
-        if (!content || !content.trim()) return "<div><br></div>"
-        return content.split("\n").map(l => {
-            if (l === "") return "<div><br></div>"
-            if (/^- /i.test(l.trim())) {
-                const indent = l.match(/^(\s*)/)?.[1]?.length || 0
-                if (indent === 0) return `<div><strong>${l}</strong></div>`
-            }
-            return `<div>${l}</div>`
-        }).join("")
-    }, [])
-
     /* ── Plaintext editor HTML rendering ── */
     const renderPlainTextHtml = useCallback((content: string): string => {
         if (!content || !content.trim()) return "<div><br></div>"
         return content.split("\n").map(l => {
             if (l === "") return "<div><br></div>"
-            return `<div>${l}</div>`
+            return `<div>${l.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`
         }).join("")
     }, [])
 
     /* ── Section editor event handlers ── */
-    const handleSectionInput = useCallback(() => {
+    const handleSectionChange = useCallback((sectionId: string, value: string) => {
+        setSections(prev => prev.map(s => s.id === sectionId ? { ...s, content: value } : s))
         if (edicaoIniciadaRef.current === null) {
             edicaoIniciadaRef.current = Date.now()
             setEdicaoIniciada(true)
         }
     }, [])
-
-    const handleSectionBlur = useCallback((sectionId: string) => {
-        const el = sectionEditorRefs.current[sectionId]
-        if (!el) return
-        const text = limparTextoInvisivel(el.innerText || "")
-        setSections(prev => prev.map(s => s.id === sectionId ? { ...s, content: text } : s))
-    }, [])
-
-    const handleSectionKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>, sectionId: string) => {
-        const selection = window.getSelection()
-        if (!selection || !selection.rangeCount) return
-        const range = selection.getRangeAt(0)
-        if (!range) return
-        const el = sectionEditorRefs.current[sectionId]
-        let currentBlock: HTMLElement | null = range.startContainer as HTMLElement
-        while (currentBlock && currentBlock.parentElement !== el) {
-            currentBlock = currentBlock.parentElement as HTMLElement
-        }
-
-        if (e.key === "Enter" && currentBlock) {
-            const text = currentBlock.innerText || ""
-            const listMatch = text.match(/^([\s\t]*-\s)/)
-            if (listMatch) {
-                e.preventDefault()
-                document.execCommand("insertText", false, "\n" + listMatch[1])
-                handleSectionInput()
-            } else if (/^\s*-\s*$/.test(text) && !listMatch) {
-                e.preventDefault()
-                document.execCommand("delete")
-                document.execCommand("insertBlockquote")
-                handleSectionInput()
-            }
-        }
-
-        if (e.key === "Tab" && currentBlock) {
-            e.preventDefault()
-            const text = currentBlock.innerText || ""
-            const offset = range.startOffset
-            if (e.shiftKey && (/^  +-\s/.test(text) || text.startsWith("  - "))) {
-                currentBlock.innerText = text.substring(2)
-                const newRange = document.createRange()
-                newRange.setStart(currentBlock.firstChild || currentBlock, Math.max(0, offset - 2))
-                selection.removeAllRanges()
-                selection.addRange(newRange)
-            } else if (!e.shiftKey && /^[\s\t]*-\s/.test(text)) {
-                currentBlock.innerText = "  " + text
-                const newRange = document.createRange()
-                newRange.setStart(currentBlock.firstChild || currentBlock, offset + 2)
-                selection.removeAllRanges()
-                selection.addRange(newRange)
-            } else if (!e.shiftKey) {
-                document.execCommand("insertText", false, "  ")
-            }
-            handleSectionInput()
-        }
-    }, [handleSectionInput])
-
-    const handleSectionPaste = useCallback((e: React.ClipboardEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        const text = limparTextoInvisivel(e.clipboardData.getData("text/plain"))
-        const sectionId = (e.currentTarget as HTMLElement).getAttribute("data-section-id") || ""
-        const el = sectionEditorRefs.current[sectionId]
-        if (!el) return
-
-        const lines = text.split("\n")
-        while (lines.length > 1 && lines[lines.length - 1] === "") lines.pop()
-
-        const selection = window.getSelection()
-        const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
-        if (!range || !el.contains(range.startContainer)) {
-            document.execCommand("insertText", false, text)
-            handleSectionInput()
-            return
-        }
-
-        let cursor = range.startContainer as HTMLElement
-        while (cursor && cursor.parentElement !== el && cursor !== el) {
-            cursor = cursor.parentElement as HTMLElement
-        }
-        const block = cursor && cursor !== el ? cursor : null
-
-        range.deleteContents()
-        const firstLine = lines[0]
-        if (firstLine) range.insertNode(document.createTextNode(firstLine))
-
-        let prevBlock = block
-        for (let i = 1; i < lines.length; i += 1) {
-            const l = lines[i]
-            const d = document.createElement("div")
-            if (l === "") {
-                d.innerHTML = "<br>"
-            } else if (/^- /i.test(l.trim())) {
-                const indent = l.match(/^(\s*)/)?.[1]?.length || 0
-                if (indent === 0) {
-                    const strong = document.createElement("strong")
-                    strong.textContent = l
-                    d.appendChild(strong)
-                } else {
-                    d.textContent = l
-                }
-            } else {
-                d.textContent = l
-            }
-            if (prevBlock) prevBlock.after(d)
-            else el.appendChild(d)
-            prevBlock = d
-        }
-
-        handleSectionInput()
-        setPopupDispensado(false)
-        setEdicaoIniciada(true)
-        edicaoIniciadaRef.current = Date.now()
-    }, [handleSectionInput])
 
     /* ── Plaintext editor event handlers ── */
     const handlePlainTextInput = useCallback(() => {
@@ -921,118 +806,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         setPlainTextContent(text)
     }, [])
 
-    const handlePlainTextKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === "Enter") {
-            const selection = window.getSelection()
-            if (!selection || !selection.rangeCount) return
-            const range = selection.getRangeAt(0)
-            if (!range) return
-            const el = plainTextEditorRef.current
-            if (!el) return
-            let currentBlock: HTMLElement | null = range.startContainer as HTMLElement
-            while (currentBlock && currentBlock.parentElement !== el) {
-                currentBlock = currentBlock.parentElement as HTMLElement
-            }
-            if (currentBlock) {
-                const text = currentBlock.innerText || ""
-                const listMatch = text.match(/^([\s\t]*-\s)/)
-                if (listMatch) {
-                    e.preventDefault()
-                    document.execCommand("insertText", false, "\n" + listMatch[1])
-                    handlePlainTextInput()
-                } else if (/^\s*-\s*$/.test(text) && !listMatch) {
-                    e.preventDefault()
-                    document.execCommand("delete")
-                    document.execCommand("insertBlockquote")
-                    handlePlainTextInput()
-                }
-            }
-        }
-        if (e.key === "Tab") {
-            e.preventDefault()
-            const selection = window.getSelection()
-            if (!selection || !selection.rangeCount) return
-            const range = selection.getRangeAt(0)
-            if (!range) return
-            const el = plainTextEditorRef.current
-            if (!el) return
-            let currentBlock: HTMLElement | null = range.startContainer as HTMLElement
-            while (currentBlock && currentBlock.parentElement !== el) {
-                currentBlock = currentBlock.parentElement as HTMLElement
-            }
-            if (currentBlock) {
-                const text = currentBlock.innerText || ""
-                const offset = range.startOffset
-                if (e.shiftKey && (/^  +-\s/.test(text) || text.startsWith("  - "))) {
-                    currentBlock.innerText = text.substring(2)
-                    const newRange = document.createRange()
-                    newRange.setStart(currentBlock.firstChild || currentBlock, Math.max(0, offset - 2))
-                    selection.removeAllRanges()
-                    selection.addRange(newRange)
-                } else if (!e.shiftKey && /^[\s\t]*-\s/.test(text)) {
-                    currentBlock.innerText = "  " + text
-                    const newRange = document.createRange()
-                    newRange.setStart(currentBlock.firstChild || currentBlock, offset + 2)
-                    selection.removeAllRanges()
-                    selection.addRange(newRange)
-                } else if (!e.shiftKey) {
-                    document.execCommand("insertText", false, "  ")
-                }
-                handlePlainTextInput()
-            }
-        }
-    }, [handlePlainTextInput])
-
-    const handlePlainTextPaste = useCallback((e: React.ClipboardEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        const text = limparTextoInvisivel(e.clipboardData.getData("text/plain"))
-        const el = plainTextEditorRef.current
-        if (!el) return
-
-        const lines = text.split("\n")
-        while (lines.length > 1 && lines[lines.length - 1] === "") lines.pop()
-
-        const selection = window.getSelection()
-        const range = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
-        if (!range || !el.contains(range.startContainer)) {
-            document.execCommand("insertText", false, text)
-            handlePlainTextInput()
-            return
-        }
-
-        let cursor = range.startContainer as HTMLElement
-        while (cursor && cursor.parentElement !== el && cursor !== el) {
-            cursor = cursor.parentElement as HTMLElement
-        }
-        const block = cursor && cursor !== el ? cursor : null
-
-        range.deleteContents()
-        const firstLine = lines[0]
-        if (firstLine) range.insertNode(document.createTextNode(firstLine))
-
-        let prevBlock = block
-        for (let i = 1; i < lines.length; i += 1) {
-            const l = lines[i]
-            const d = document.createElement("div")
-            if (l === "") {
-                d.innerHTML = "<br>"
-            } else {
-                d.textContent = l
-            }
-            if (prevBlock) prevBlock.after(d)
-            else el.appendChild(d)
-            prevBlock = d
-        }
-
-        handlePlainTextInput()
-        setPopupDispensado(false)
-        setEdicaoIniciada(true)
-        edicaoIniciadaRef.current = Date.now()
-    }, [handlePlainTextInput])
-
     /* ── Global paste: replace all sections ── */
     const handleGlobalPaste = useCallback((e: React.ClipboardEvent) => {
+        const target = e.target instanceof HTMLElement ? e.target : null
+        if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
         e.preventDefault()
         const text = limparTextoInvisivel(e.clipboardData.getData("text/plain"))
         const doPaste = () => {
@@ -1155,24 +932,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const totalCaracteres = plaintext ? plainTextContent.length : sections.reduce((sum, s) => sum + (s.enabled ? s.content.length : 0), 0)
     const limiteAtingido = totalCaracteres > 4000
 
-    /* ── Re-render contentEditable divs on external changes ── */
+    /* ── Re-render plaintext contentEditable on external changes ── */
     React.useEffect(() => {
         if (!externalUpdateRef.current) return
         externalUpdateRef.current = false
         if (plaintext) {
             const el = plainTextEditorRef.current
             if (el) el.innerHTML = renderPlainTextHtml(plainTextContent)
-        } else {
-            const ids = ["subjetivo", "objetivo", "avaliacao", "plano"]
-            ids.forEach(id => {
-                const el = sectionEditorRefs.current[id]
-                const section = sections.find(s => s.id === id)
-                if (el && section) {
-                    el.innerHTML = renderSectionHtml(section.content)
-                }
-            })
         }
-    }, [contentHash, plaintext, renderSectionHtml, renderPlainTextHtml, sections, plainTextContent])
+    }, [contentHash, plaintext, renderPlainTextHtml, plainTextContent])
 
     /* ── Identificação form (structured fields, stored as one comma-separated line) ── */
     /* ── Structured form sections (Dados base, Lista de problemas) ── */
@@ -1267,7 +1035,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* ── Section Body (white card inside color-coded card) ── */}
                 {s.enabled && !s.collapsed && (
-                    <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: "4px 14px 0 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
+                    <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
                         {cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
                             <div className="gas-section-progress" style={progressoVertical
                                 ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
@@ -1276,38 +1044,26 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
                                 {meta.formulario === "dados_base" ? (
-                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} onSexoChange={handleSexoChange} />
+                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} />
                                 ) : meta.formulario === "lista_problemas" ? (
                                     <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
                                 ) : meta.formulario === "subjetivo" ? (
                                     <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} />
                                 ) : (
-                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} />
+                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} />
                                 )}
                             </div>
                         ) : (
-                            <div
+                            <textarea
                                 key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}
-                                ref={el => {
-                                    if (el && !el.dataset.mounted) {
-                                        el.dataset.mounted = "1"
-                                        sectionEditorRefs.current[s.id] = el
-                                        el.innerHTML = renderSectionHtml(s.content)
-                                    } else if (el) {
-                                        sectionEditorRefs.current[s.id] = el
-                                    }
-                                }}
+                                value={s.content}
+                                rows={4}
                                 className="bloco-section-editor"
-                                contentEditable
-                                suppressContentEditableWarning
-                                data-placeholder={`digite em ${s.title.toLowerCase()}...`}
                                 data-section-id={s.id}
                                 data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id || undefined}
-                                onInput={handleSectionInput}
-                                onBlur={() => handleSectionBlur(s.id)}
-                                onKeyDown={e => handleSectionKeyDown(e, s.id)}
-                                onPaste={handleSectionPaste}
+                                onChange={e => handleSectionChange(s.id, e.target.value)}
                                 onFocus={() => setFocusedSectionId(s.id)}
+                                onBlur={() => setFocusedSectionId(null)}
                                 style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? { color: "#ffffff" } : {}) }}
                             />
                         )}
@@ -1346,6 +1102,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     }
                 }
                 .framer-editor-container { background: var(--editor-bg); border: 1px solid var(--editor-border); box-shadow: var(--editor-shadow); }
+                .framer-editor-container input:focus,
+                .framer-editor-container textarea:focus,
+                .framer-editor-container select:focus { border-color: #000000 !important; outline: 1px solid #000000 !important; outline-offset: 0; box-shadow: none !important; }
 
                 .gas-ui-blockout { user-select: none !important; -webkit-user-select: none !important; pointer-events: auto; }
                 @keyframes gasPopIn { 0% { transform: scale(0.7) translateY(8px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
@@ -1396,7 +1155,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     .gas-order-chars { grid-row: 2; grid-column: 2; justify-self: end; margin-left: 0 !important; }
                 }
 
-                .bloco-section-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 40px; font-size: 15px; line-height: 1.5; color: var(--editor-text); outline: none; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 2px 0 16px 0; overflow-x: hidden; }
+                .bloco-section-editor { display: block; box-sizing: border-box; font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 88px; font-size: 15px; line-height: 1.45; color: var(--editor-text); background: var(--editor-bg); border: 1px solid var(--editor-border); border-radius: 6px; padding: 6px 8px; resize: vertical; overflow-x: hidden; }
+                .bloco-section-editor:focus { border-color: #000000; outline: 1px solid #000000; outline-offset: 0; }
+                .bloco-section-editor[data-extrapolada] { background: transparent; }
                 /* Dashboard columns: the left one is narrower (structured data),
                    the right one takes the rest (free-text SOAP + companions). */
                 .bloco-colunas { display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr); gap: 0 16px; align-items: start; }
@@ -1406,12 +1167,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     .bloco-colunas { grid-template-columns: minmax(0, 1fr); gap: 0; }
                     .bloco-coluna-esq { position: static; padding-right: 0; }
                 }
-                .bloco-section-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
-                .bloco-section-editor[data-extrapolada]:empty:before { color: rgba(255,255,255,0.6); }
-                .bloco-section-editor[data-extrapolada] div { color: #ffffff !important; }
-                .bloco-section-editor div { margin-bottom: 4px; color: var(--editor-text) !important; }
-                .bloco-section-editor div:empty { height: 1em; }
-                .bloco-section-editor blockquote { border-left: 3px solid var(--editor-border); padding-left: 12px; margin: 4px 0; color: var(--meta-text); font-style: italic; }
 
                 .bloco-plaintext-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 200px; font-size: 15px; line-height: 1.5; color: var(--editor-text); outline: none; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 2px 0 16px 0; overflow-x: hidden; }
                 .bloco-plaintext-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
@@ -1643,8 +1398,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null || undefined}
                                 onInput={handlePlainTextInput}
                                 onBlur={handlePlainTextBlur}
-                                onKeyDown={handlePlainTextKeyDown}
-                                onPaste={handlePlainTextPaste}
                                 onFocus={() => setFocusedSectionId(null)}
                                 style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null ? { color: "#ffffff" } : {}) }}
                             />

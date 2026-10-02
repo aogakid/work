@@ -3,6 +3,8 @@ import { forwardRef, useImperativeHandle, useState, useEffect, useRef, useCallba
 import type { CompanionActions } from "../companions/registry"
 import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
+const pasFromPa = (pa: string) => (pa || "").split(/[x×/]/)[0].replace(/[^0-9.,]/g, "").trim()
+
 
 
 const injectStyles = `
@@ -705,6 +707,9 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             touchedRef.current = true
             if (snap.idade !== undefined) setIdade(snap.idade)
             if (snap.sexo !== undefined) setSexo(snap.sexo)
+            if (snap.pa !== undefined) setPas(pasFromPa(snap.pa))
+            if (snap.peso !== undefined) setPeso(snap.peso)
+            if (snap.altura !== undefined) setAltura(snap.altura)
             if (snap.ct !== undefined) setColTotal(snap.ct)
             if (snap.hdl !== undefined) setHdl(snap.hdl)
             if (snap.trig !== undefined) setTriglicerideos(snap.trig)
@@ -719,6 +724,9 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
             touchedRef.current = true
             if (values.idade !== undefined) setIdade(values.idade)
             if (values.sexo !== undefined) setSexo(values.sexo)
+            if (values.pa !== undefined) setPas(pasFromPa(values.pa))
+            if (values.peso !== undefined) setPeso(values.peso)
+            if (values.altura !== undefined) setAltura(values.altura)
             if (values.ct !== undefined) setColTotal(values.ct)
             if (values.hdl !== undefined) setHdl(values.hdl)
             if (values.trig !== undefined) setTriglicerideos(values.trig)
@@ -2119,7 +2127,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             inputMode="decimal"
                             placeholder="Ex: 82.5"
                             value={peso}
-                            onChange={(e) => setPeso(e.target.value.replace(/,/g, "."))}
+                            onChange={(e) => { const valor = e.target.value.replace(/,/g, "."); setPeso(valor); broadcastFieldSync("escores", { peso: valor }) }}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -2140,7 +2148,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             inputMode="decimal"
                             placeholder="Ex: 175"
                             value={altura}
-                            onChange={(e) => setAltura(e.target.value.replace(/[^0-9]/g, ""))}
+                            onChange={(e) => { const valor = e.target.value.replace(/[^0-9]/g, ""); setAltura(valor); broadcastFieldSync("escores", { altura: valor }) }}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,
@@ -2275,7 +2283,7 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             inputMode="decimal"
                             placeholder="Ex: 138"
                             value={pas}
-                            onChange={(e) => setPas(e.target.value.replace(/,/g, "."))}
+                            onChange={(e) => { const valor = e.target.value.replace(/,/g, "."); setPas(valor); broadcastFieldSync("escores", { pa: valor }) }}
                             onBlur={() =>
                                 setCamposTocados({
                                     ...camposTocados,

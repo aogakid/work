@@ -1,7 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useCallback, useMemo, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
-import { getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
+import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 import {
   Indicator,
@@ -618,6 +618,20 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
   /* Receive idade/sexo from the Identificação section or from a sibling companion. */
   const syncPuericulturaRef = useRef(false)
   useEffect(() => {
+    const sincronizarMedidas = (values: Record<string, string | undefined>) => {
+      if (values.peso === undefined && values.altura === undefined) return
+      setFormFields(prev => {
+        let updated = prev.map(field => {
+          if (values.peso !== undefined && field.id === "peso") return { ...field, value: values.peso }
+          if (values.altura !== undefined && field.id === "altura") return { ...field, value: values.altura }
+          return field
+        })
+        const peso = Number.parseFloat(String(updated.find(f => f.id === "peso")?.value || "").replace(",", "."))
+        const altura = Number.parseFloat(String(updated.find(f => f.id === "altura")?.value || "").replace(",", "."))
+        if (peso > 0 && altura > 0) updated = updated.map(field => field.id === "imc" ? { ...field, value: (peso / ((altura / 100) ** 2)).toFixed(2) } : field)
+        return updated
+      })
+    }
     const aplicar = (idade: string | undefined, sexoRecebido: string | undefined) => {
       let mudou = false
       if (idade !== undefined && idade.trim()) {
@@ -646,12 +660,26 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
 
     const snap = getFieldSyncSnapshot()
     if (snap.idade !== undefined || snap.sexo !== undefined) aplicar(snap.idade, snap.sexo)
+    sincronizarMedidas(snap)
 
     return listenFieldSync(({ source, values }) => {
       if (source === "puericultura") return
       aplicar(values.idade, values.sexo)
+      sincronizarMedidas(values)
     })
   }, [idadeAnos, idadeMeses, sexo])
+
+  useEffect(() => {
+    const snapshot = getFieldSyncSnapshot()
+    setFormFields(prev => {
+      if (!prev.length || (snapshot.peso === undefined && snapshot.altura === undefined)) return prev
+      let updated = prev.map(field => field.id === "peso" && snapshot.peso !== undefined ? { ...field, value: snapshot.peso } : field.id === "altura" && snapshot.altura !== undefined ? { ...field, value: snapshot.altura } : field)
+      const peso = Number.parseFloat(String(updated.find(f => f.id === "peso")?.value || "").replace(",", "."))
+      const altura = Number.parseFloat(String(updated.find(f => f.id === "altura")?.value || "").replace(",", "."))
+      if (peso > 0 && altura > 0) updated = updated.map(field => field.id === "imc" ? { ...field, value: (peso / ((altura / 100) ** 2)).toFixed(2) } : field)
+      return updated
+    })
+  }, [faixaEtaria])
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth <= 600)
@@ -853,6 +881,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {
+    if (groupId === "resultado") return generateMarkdown() || null
     const secao = secoes.find(s => s.id === groupId)
     if (!secao) return null
     return generateSectionMarkdown(groupId, secao.label)
@@ -889,6 +918,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
 
   const updateFieldValue = (fieldId: string, newValue: string | string[]) => {
     const normalized = typeof newValue === "string" ? newValue.replace(/,/g, ".") : newValue
+    if (fieldId === "peso" || fieldId === "altura") broadcastFieldSync("puericultura", { [fieldId]: String(normalized) })
 
     setFormFields(prev => {
       let updated = prev.map(field =>
