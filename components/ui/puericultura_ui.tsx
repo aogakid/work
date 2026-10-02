@@ -621,11 +621,18 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
     const aplicar = (idade: string | undefined, sexoRecebido: string | undefined) => {
       let mudou = false
       if (idade !== undefined && idade.trim()) {
-        const anos = parseInt(idade.trim(), 10)
-        if (!Number.isNaN(anos) && String(anos) !== idadeAnos) {
-          setIdadeAnos(String(anos))
-          setIdadeMeses("")
-          mudou = true
+        const idadeAnosDecimal = Number.parseFloat(idade.trim())
+        if (Number.isFinite(idadeAnosDecimal) && idadeAnosDecimal >= 0) {
+          let anos = Math.floor(idadeAnosDecimal)
+          let meses = Math.round((idadeAnosDecimal - anos) * 12)
+          if (meses >= 12) { anos += 1; meses = 0 }
+          const anosTexto = String(anos)
+          const mesesTexto = meses ? String(meses) : ""
+          if (anosTexto !== idadeAnos || mesesTexto !== idadeMeses) {
+            setIdadeAnos(anosTexto)
+            setIdadeMeses(mesesTexto)
+            mudou = true
+          }
         }
       }
       if ((sexoRecebido === "M" || sexoRecebido === "F") && sexoRecebido !== sexo) {
@@ -644,7 +651,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
       if (source === "puericultura") return
       aplicar(values.idade, values.sexo)
     })
-  }, [idadeAnos, sexo])
+  }, [idadeAnos, idadeMeses, sexo])
 
   useEffect(() => {
     const check = () => setMobile(window.innerWidth <= 600)

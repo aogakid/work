@@ -1,6 +1,7 @@
 export interface IdentificacaoCampos {
     nome: string
     idade: string
+    idadeUnidade: "D" | "M" | "A"
     sexo: string
     estadoCivil: string
     composicao: string
@@ -49,6 +50,7 @@ export const OPCOES_ESCOLARIDADE = [
 export const IDENTIFICACAO_VAZIA: IdentificacaoCampos = {
     nome: "",
     idade: "",
+    idadeUnidade: "A",
     sexo: "",
     estadoCivil: "",
     composicao: "",
@@ -64,7 +66,12 @@ export const IDENTIFICACAO_VAZIA: IdentificacaoCampos = {
 export function compositarIdentificacao(c: IdentificacaoCampos): string {
     const partes: string[] = []
     if (c.nome.trim()) partes.push(c.nome)
-    if (c.idade.trim()) partes.push(c.idade.trim() + " anos")
+    if (c.idade.trim()) {
+        const valor = Number.parseInt(c.idade.trim(), 10)
+        const unidade = c.idadeUnidade || "A"
+        const unidades = unidade === "D" ? (valor === 1 ? "dia" : "dias") : unidade === "M" ? (valor === 1 ? "mês" : "meses") : (valor === 1 ? "ano" : "anos")
+        partes.push(`${c.idade.trim()} ${unidades}`)
+    }
     if (c.estadoCivil.trim()) partes.push(c.estadoCivil)
     if (c.composicao.trim()) partes.push(c.composicao)
     if (c.religiao.trim()) partes.push(c.religiao)
@@ -81,7 +88,7 @@ const RE_ACS = /^acs\s+(.+)$/i
 const RE_NAT_DE = /^natural\s+de\s+(.+)$/i
 const RE_NAT_OURO = /^natural\s+(?:d[o]?[sa]?\s+)?(.+)$/i
 const RE_RES = /^residente\s+(?:em|de)\s+(.+)$/i
-const RE_IDADE = /^(\d{1,3})\s*anos?$/i
+const RE_IDADE = /^(\d{1,3})\s*(anos?|mes(?:es)?|m[eê]s|dias?)$/i
 const RE_SEXO = /^[MF]$/
 const RE_RELIGIAO = /^(cat[oó]lico|evang[eé]lico|esp[íi]rito de sonho|ateu|sem religi[ãa]o|outra)$/i
 const RE_ESCOLARIDADE = /^(ensino\s\w+|p[óo]s[-\s]gradua[çc][ãa]o|n[ãa]o\s+frequentou\s+a\s+escola|sem\s+instru[çc][ãa]o|alfabetizado(\s+e\s+alfab[eé]tico)?|analfabeto|nunca\s+frequentou)/i
@@ -110,7 +117,12 @@ export function parseIdentificacao(linha: string): IdentificacaoCampos {
         m = seg.match(RE_RES)
         if (m) { campos.residencia = m[1]; continue }
         m = seg.match(RE_IDADE)
-        if (m) { campos.idade = m[1]; continue }
+        if (m) {
+            campos.idade = m[1]
+            const unidade = m[2].toLowerCase()
+            campos.idadeUnidade = unidade.startsWith("dia") ? "D" : unidade.startsWith("m") ? "M" : "A"
+            continue
+        }
         m = seg.match(RE_SEXO)
         if (m) { campos.sexo = seg.toUpperCase(); continue }
         m = seg.match(RE_ACOMPANHANTE)
@@ -161,7 +173,10 @@ export function parseIdentificacao(linha: string): IdentificacaoCampos {
 export function extrairContexto(linha: string): ContextoPaciente {
     const campos = parseIdentificacao(linha)
     const sexo = campos.sexo === "M" || campos.sexo === "F" ? campos.sexo : ""
-    const idade = campos.idade.trim() ? parseInt(campos.idade.trim(), 10) : null
+    const valorIdade = campos.idade.trim() ? parseInt(campos.idade.trim(), 10) : null
+    const idade = valorIdade === null || Number.isNaN(valorIdade)
+        ? null
+        : campos.idadeUnidade === "D" ? valorIdade / 365.25 : campos.idadeUnidade === "M" ? valorIdade / 12 : valorIdade
     return { sexo, idade: idade !== null && !Number.isNaN(idade) ? idade : null }
 }
 

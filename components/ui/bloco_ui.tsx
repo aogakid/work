@@ -17,12 +17,6 @@ import { SubjetivoForm } from "./subjetivo_ui"
 import { ObjetivoForm } from "./objetivo_ui"
 import { extrairLinhaId, compositarDadosBase, parseDadosBase } from "../../lib/dados-base"
 
-const COMPANION_BY_PLACEMENT: Record<string, CompanionConfig[]> = {
-    "after-subjetivo": COMPANIONS.filter(c => c.placement === "after-subjetivo"),
-    "after-objetivo": COMPANIONS.filter(c => c.placement === "after-objetivo"),
-    "after-plano": COMPANIONS.filter(c => c.placement === "after-plano"),
-}
-
 function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
     const Comp = component
     return <Comp ref={(el: CompanionRef | null) => { if (el) companionRefs.current[id] = el }} />
@@ -293,7 +287,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
-    const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const [activeCompanionId, setActiveCompanionId] = React.useState<string | null>(null)
     const [sexoIdentificacao, setSexoIdentificacao] = React.useState<"M" | "F" | "">("")
 
     /* ── Sticky header stuck-state (masks rounded top corners while stuck) ── */
@@ -325,15 +319,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const companionEverOpened = React.useRef<Record<string, boolean>>({})
 
     const renderCompanionCard = (c: CompanionConfig) => {
-        const isOpen = expandedCompanions[c.id] || false
+        const isOpen = activeCompanionId === c.id
         if (isOpen) companionEverOpened.current[c.id] = true
         const shouldMount = isOpen || !!companionEverOpened.current[c.id]
         return (
-            <div key={c.id} style={{ marginTop: "12px", marginBottom: "12px", borderRadius: "10px", background: isOpen ? "rgba(139,92,246,0.06)" : "transparent", border: "1px dashed rgba(139,92,246,0.25)", transition: "background 0.3s" }}>
+            <div key={c.id} role="tabpanel" aria-label={c.label} style={{ marginTop: "10px", marginBottom: "12px", borderRadius: "10px", background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.25)", display: isOpen ? "block" : "none" }}>
                 <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
                 <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                    <div onClick={() => setExpandedCompanions(prev => ({ ...prev, [c.id]: !prev[c.id] }))} style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", cursor: "pointer", userSelect: "none", background: isOpen ? "rgba(139,92,246,0.08)" : "transparent", borderRadius: "10px 10px 0 0", transition: "background 0.2s" }}>
-                        <span style={{ fontWeight: 800, color: "#8b5cf6", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center", flexShrink: 0 }}>+</span>
+                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", userSelect: "none", background: "rgba(139,92,246,0.08)", borderRadius: "10px 10px 0 0" }}>
                         <span style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)", fontFamily: '"Playfair Display", serif' }}>{c.label}</span>
                         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", gap: "6px" }}>
                             {isOpen && c.outputGroups.map(og => (
@@ -344,7 +337,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </div>
                     </div>
                 </div>
-                <div style={{ padding: isOpen ? "0 12px 12px 12px" : "0", display: isOpen ? "block" : "none", overflow: isOpen ? "visible" : "hidden" }}>
+                <div style={{ padding: "0 12px 12px 12px", overflow: "visible" }}>
                     {shouldMount && (
                         <CompanionErrorBoundary name={c.label}>
                             {c.id === "geriatria" ? (
@@ -357,6 +350,21 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </CompanionErrorBoundary>
                     )}
                 </div>
+            </div>
+        )
+    }
+    const renderCompanionShelf = () => {
+        const available = COMPANIONS.filter(c => !!c.placement && c.placement !== "none" && companionVisivel(c))
+        if (!available.length) return null
+        return (
+            <div key="companion-shelf" style={{ width: "100%", minWidth: 0, marginBottom: "8px" }}>
+                <div role="tablist" aria-label="Acompanhamentos" style={{ display: "flex", flexWrap: "nowrap", gap: "7px", overflowX: "auto", padding: "4px 1px 7px", scrollbarWidth: "thin" }}>
+                    {available.map(c => {
+                        const selected = activeCompanionId === c.id
+                        return <button key={c.id} type="button" role="tab" aria-selected={selected} onClick={() => { setActiveCompanionId(selected ? null : c.id); if (!selected) companionEverOpened.current[c.id] = true }} style={{ flex: "0 0 auto", border: `1px solid ${selected ? "rgba(139,92,246,0.65)" : "var(--editor-border)"}`, borderRadius: "999px", padding: "6px 11px", background: selected ? "rgba(139,92,246,0.14)" : "var(--editor-bg)", color: selected ? "#8b5cf6" : "var(--editor-text)", fontSize: "12px", fontWeight: selected ? 700 : 500, cursor: "pointer", whiteSpace: "nowrap" }}>{c.label}</button>
+                    })}
+                </div>
+                {available.map(renderCompanionCard)}
             </div>
         )
     }
@@ -565,7 +573,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     setTitle(parsed.title)
                     setSections(parsed.sections)
                 }
-                setExpandedCompanions({})
+                setActiveCompanionId(null)
                 setPopupDispensado(false)
                 setEdicaoIniciada(true)
                 edicaoIniciadaRef.current = Date.now()
@@ -586,7 +594,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 setTitle(parsed.title)
                 setSections(parsed.sections)
             }
-            setExpandedCompanions({})
+            setActiveCompanionId(null)
             setPopupDispensado(false)
             if (novoTexto) {
                 setEdicaoIniciada(true)
@@ -614,7 +622,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     setTitle(parsed.title)
                     setSections(parsed.sections)
                 }
-                setExpandedCompanions({})
+                setActiveCompanionId(null)
                 setPopupDispensado(false)
                 setEdicaoIniciada(true)
                 edicaoIniciadaRef.current = Date.now()
@@ -1214,7 +1222,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Render a section card (+ its placement companions) inside a column ── */
     const renderColuna = (coluna: "esquerda" | "direita", s: Section): React.ReactNode[] => {
         const meta = SECTION_META.find(m => m.id === s.id)!
-        const placementKey = coluna === "direita" && (s.id === "subjetivo" || s.id === "objetivo" || s.id === "plano") ? "after-" + s.id : null
 
         /* Per-section timer progress (0-100, resets when section done) */
         let sectionProgress = 0
@@ -1309,8 +1316,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             </div>
         )
 
-        if (!placementKey) return [cartao]
-        return [cartao, ...COMPANION_BY_PLACEMENT[placementKey].filter(companionVisivel).map(renderCompanionCard)]
+        if (coluna === "direita" && s.id === "objetivo") return [cartao, renderCompanionShelf()]
+        return [cartao]
     }
 
     /* ── Render ── */
@@ -1539,6 +1546,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     {plaintext ? (
                         <div style={{ fontFamily: '"Playfair Display", serif', fontSize: "24px", fontWeight: 900, color: "var(--editor-text)", padding: 0, minWidth: "160px", flex: 1 }}>bloco de notas</div>
                     ) : (
+                        <div aria-label="Tipo de consulta" style={{ display: "flex", alignItems: "center", gap: "2px", padding: "3px", borderRadius: "999px", border: "1px solid var(--editor-border)", background: "var(--meta-bg)", flexShrink: 0 }}>
+                            <button type="button" onClick={() => setTitle("Consulta Agendada")} title="Consulta Agendada" aria-label="Consulta Agendada" style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "50%", background: title === "Consulta Agendada" ? "rgba(59,130,246,0.14)" : "transparent", color: title === "Consulta Agendada" ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                            </button>
+                            <button type="button" onClick={() => setTitle("Demanda Espontânea")} title="Demanda Espontânea" aria-label="Demanda Espontânea" style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "50%", background: title === "Demanda Espontânea" ? "rgba(59,130,246,0.14)" : "transparent", color: title === "Demanda Espontânea" ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                            </button>
+                        </div>
+                    )}
+                    {plaintext ? null : (
                         <input
                             type="text"
                             value={title}
@@ -1586,7 +1603,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <button className="bloco-icon-btn" onClick={() => requestConfirm("deseja substituir o conteúdo atual pelo texto copiado?", () => editor.colar())} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setPlaintext(false); setPlainTextContent(""); setExpandedCompanions({}); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions(); definirSexoContexto("") })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setPlaintext(false); setPlainTextContent(""); setActiveCompanionId(null); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions(); definirSexoContexto("") })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                     </button>
                     <button className="bloco-icon-btn" onClick={() => setIsOverlay(prev => !prev)} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: `1px solid ${isOverlay ? "#3b82f6" : "var(--meta-border)"}`, background: isOverlay ? "rgba(59,130,246,0.1)" : "var(--meta-bg)", backdropFilter: "blur(4px)", color: isOverlay ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title={isOverlay ? "sair da tela cheia" : "tela cheia"}>

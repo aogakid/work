@@ -123,7 +123,7 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "10px 0 12px 0" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ ...estiloRotuloCampo, flexShrink: 0 }}>Acompanhante</span>
+                <span style={{ ...estiloRotuloCampo, color: "var(--meta-text)", flexShrink: 0 }}>Acompanhante</span>
                 <input
                     data-acompanhante="acompanhante"
                     value={campos.acompanhante}
@@ -138,39 +138,35 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                 return (
                     <div key={i} style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <span
-                                onMouseEnter={() => { if (deletavel) setHoverMotivo(i) }}
-                                onMouseLeave={() => setHoverMotivo(prev => (prev === i ? null : prev))}
-                                onClick={() => { if (hovering) removerMotivo(i) }}
-                                title={deletavel ? "Clique para excluir motivo" : undefined}
-                                style={{
-                                    fontSize: "11px",
-                                    fontWeight: 700,
-                                    color: hovering ? "#ef4444" : "var(--meta-text)",
-                                    fontFamily: '"Google Sans Flex", sans-serif',
-                                    minWidth: "16px",
-                                    textAlign: "right",
-                                    cursor: hovering ? "pointer" : "default",
-                                    userSelect: "none",
-                                    transition: "color 120ms ease",
-                                }}
-                            >
-                                {hovering ? "−" : `${i + 1}.`}
-                            </span>
                             <div style={{ position: "relative", flex: "1 1 0", minWidth: 0 }}>
-                                <span aria-hidden="true" style={{ position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)", color: "#3b82f6", fontSize: "17px", lineHeight: 1, pointerEvents: "none" }}>❝</span>
+                                <span
+                                    onMouseEnter={() => { if (deletavel) setHoverMotivo(i) }}
+                                    onMouseLeave={() => setHoverMotivo(prev => (prev === i ? null : prev))}
+                                    onClick={() => { if (hovering) removerMotivo(i) }}
+                                    title={deletavel ? "Clique para excluir motivo" : undefined}
+                                    style={{
+                                        position: "absolute", left: "9px", top: "50%", transform: "translateY(-50%)",
+                                        fontSize: "11px", fontWeight: 700,
+                                        color: hovering ? "#ef4444" : "var(--meta-text)",
+                                        fontFamily: '"Google Sans Flex", sans-serif',
+                                        cursor: hovering ? "pointer" : "default", userSelect: "none",
+                                        transition: "color 120ms ease", zIndex: 1,
+                                    }}
+                                >
+                                    {hovering ? "−" : `${i + 1}.`}
+                                </span>
+                                <span aria-hidden="true" style={{ position: "absolute", left: "27px", top: "50%", transform: "translateY(-50%)", color: "#3b82f6", fontSize: "17px", lineHeight: 1, pointerEvents: "none" }}>❝</span>
                                 <input
                                     data-motivo={i}
                                     value={motivo.motivo}
                                     onChange={handleMotivo(i)}
                                     placeholder="motivo da consulta"
-                                    style={{ ...estiloCampo, paddingLeft: "27px", paddingRight: "27px", outline: "none" }}
+                                    style={{ ...estiloCampo, paddingLeft: "46px", paddingRight: "27px", outline: "none" }}
                                 />
                                 <span aria-hidden="true" style={{ position: "absolute", right: "9px", top: "50%", transform: "translateY(-50%)", color: "#3b82f6", fontSize: "17px", lineHeight: 1, pointerEvents: "none" }}>❞</span>
                             </div>
                         </div>
-                        {/* width:100% + margin estourava o card: o recuo vai no wrapper */}
-                        <div style={{ paddingLeft: "22px" }}>
+                        <div>
                             <textarea
                                 ref={el => { if (el) textareaRefs.current[i] = el }}
                                 data-texto={i}

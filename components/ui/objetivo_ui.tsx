@@ -43,6 +43,17 @@ const COR_SSVV = "#22c55e"
 const COR_EXAME_FISICO = "#10b981"
 const COR_COMPLEMENTAR = "#14b8a6"
 
+function categoriaIMC(valor: string): { label: string; color: string; background: string } | null {
+    const imc = Number.parseFloat((valor || "").replace(",", "."))
+    if (!Number.isFinite(imc) || imc <= 0) return null
+    if (imc < 18.5) return { label: "Baixo peso", color: "#ef4444", background: "rgba(239,68,68,0.10)" }
+    if (imc < 25) return { label: "Adequado", color: "#22c55e", background: "rgba(34,197,94,0.10)" }
+    if (imc < 30) return { label: "Sobrepeso", color: "#eab308", background: "rgba(234,179,8,0.12)" }
+    if (imc < 35) return { label: "Obesidade I", color: "#f97316", background: "rgba(249,115,22,0.10)" }
+    if (imc < 40) return { label: "Obesidade II", color: "#ef4444", background: "rgba(239,68,68,0.10)" }
+    return { label: "Obesidade III", color: "#a855f7", background: "rgba(168,85,247,0.10)" }
+}
+
 interface BlocoProps {
     rotulo: string
     cor: string
@@ -50,9 +61,10 @@ interface BlocoProps {
     colapsavel?: boolean
     abertoInicial?: boolean
     semBordaSuperior?: boolean
+    resumo?: React.ReactNode
 }
 
-function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, semBordaSuperior = false }: BlocoProps) {
+function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, semBordaSuperior = false, resumo }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
 
@@ -84,6 +96,7 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
                     {cabecalho}
                 </span>
             )}
+            {resumo}
             {aberto || !colapsavel ? children : null}
         </div>
     )
@@ -164,6 +177,7 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrar
     const crescimentoDesenvolvimento = React.useMemo(() => parseObjetivo(value).crescimentoDesenvolvimento, [value])
     const exameFisicoCampos = React.useMemo(() => parseObjetivo(value).exameFisico, [value])
     const complementarCampos = React.useMemo(() => parseObjetivo(value).complementar, [value])
+    const classificacaoIMC = categoriaIMC(ssvvCampos.imc)
 
     const camposSsvvMeta: { chave: keyof SinaisVitais; rotulo: string }[] = [
         { chave: "pa", rotulo: "PA" },
@@ -179,18 +193,35 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrar
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
-            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior>
+            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={false} resumo={(
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
-                    {camposSsvvMeta.map(item => (
+                    {camposSsvvMeta.slice(0, 4).map(item => (
                         <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
-                            <span style={estiloRotuloCampo}>{item.rotulo}</span>
+                            <span style={estiloRotuloCampo}>
+                                {item.rotulo}
+                                {item.chave === "imc" && classificacaoIMC ? <span style={{ marginLeft: "5px", color: classificacaoIMC.color, fontWeight: 700 }}>{classificacaoIMC.label}</span> : null}
+                            </span>
                             <input
                                 data-campo={item.chave}
                                 value={ssvvCampos[item.chave]}
                                 onChange={e => alterarSsvv(item.chave, e.target.value)}
                                 readOnly={item.chave === "imc"}
                                 aria-readonly={item.chave === "imc"}
-                                style={item.chave === "imc" ? { ...estiloCampo, opacity: 0.75, cursor: "default" } : estiloCampo}
+                                style={item.chave === "imc" ? { ...estiloCampo, opacity: 0.9, cursor: "default", borderColor: classificacaoIMC?.color || "var(--editor-border)", background: classificacaoIMC?.background || "var(--editor-bg)" } : estiloCampo}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
+                    {camposSsvvMeta.slice(4).map(item => (
+                        <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
+                            <span style={estiloRotuloCampo}>{item.rotulo}</span>
+                            <input
+                                data-campo={item.chave}
+                                value={ssvvCampos[item.chave]}
+                                onChange={e => alterarSsvv(item.chave, e.target.value)}
+                                style={estiloCampo}
                             />
                         </div>
                     ))}

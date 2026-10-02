@@ -22,6 +22,7 @@ Regras obrigatórias:
 - Não inventar conteúdo
 - A identificação deve ficar na seção "## Dados base" subseção "- Id:", e nunca dentro do Subjetivo
 - A linha de identificação deve ser única e sequencial, com os dados separados por vírgula, na ordem: nome, idade, estado civil, composição familiar, acompanhante, religião, escolaridade, ocupação, naturalidade, residência, procedência, ACS
+- Preservar a unidade de idade informada: manter "anos", "meses" ou "dias" conforme a entrada (por exemplo, "34 anos", "8 meses" ou "12 dias"); não converter meses ou dias para anos
 - O sexo nunca deve ser escrito na linha de identificação: é um dado da interface e fica fora do texto salvo. Se o original trouxer "M" ou "F" isolado, omitir
 - O estado civil deve usar um destes valores: solteiro(a), casado(a), união estável, separado(a), divorciado(a), viúvo(a). Se casado, escrever "casado com <nome>"
 - A escolaridade deve usar um destes valores: analfabeto, alfabetizado, ensino fundamental incompleto, ensino fundamental completo, ensino médio incompleto, ensino médio completo, ensino superior incompleto, ensino superior completo, pós-graduação

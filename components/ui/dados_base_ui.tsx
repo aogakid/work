@@ -55,6 +55,7 @@ const estiloRotuloCampo: React.CSSProperties = {
 
 const estiloCampo = {
     fontSize: "12px",
+    fontWeight: 400,
     fontFamily: '"Google Sans Flex", sans-serif',
     color: "var(--editor-text)",
     background: "var(--editor-bg)",
@@ -76,6 +77,13 @@ const estiloArea = {
 const COR_IDENTIFICACAO = "#ec4899"
 const COR_ANTECEDENTES = "#8b5cf6"
 const COR_HABITOS = "#0ea5e9"
+
+function idadeEmAnos(campos: IdentificacaoCampos): string {
+    const idade = Number.parseInt(campos.idade.trim(), 10)
+    if (!Number.isFinite(idade)) return ""
+    const anos = campos.idadeUnidade === "D" ? idade / 365.25 : campos.idadeUnidade === "M" ? idade / 12 : idade
+    return String(Number(anos.toFixed(4)))
+}
 
 interface BlocoProps {
     rotulo: string
@@ -235,7 +243,13 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
         const anterior = idCampos
         const atualizado: IdentificacaoCampos = { ...anterior, [chave]: novo }
         commitId(atualizado)
-        publicarContexto(atualizado.idade.trim(), atualizado.sexo)
+        publicarContexto(idadeEmAnos(atualizado), atualizado.sexo)
+    }, [commitId, idCampos, publicarContexto])
+
+    const alterarUnidadeIdade = React.useCallback((unidade: "D" | "M" | "A") => {
+        const atualizado = { ...idCampos, idadeUnidade: unidade }
+        commitId(atualizado)
+        publicarContexto(idadeEmAnos(atualizado), atualizado.sexo)
     }, [commitId, idCampos, publicarContexto])
 
     const alterarSexo = React.useCallback((bruto: string) => {
@@ -244,7 +258,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
         setIdCampos({ ...anterior, sexo })
         definirSexoContexto(sexo)
         if (onSexoChange) onSexoChange(sexo)
-        publicarContexto(anterior.idade.trim(), sexo)
+        publicarContexto(idadeEmAnos(anterior), sexo)
     }, [idCampos, onSexoChange, publicarContexto])
 
     const handleChangeCampo = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -277,6 +291,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
             const novo: IdentificacaoCampos = { ...idCampos }
             if (idade !== undefined && idade.trim() && idade.trim() !== novo.idade.trim()) {
                 novo.idade = idade.trim()
+                novo.idadeUnidade = "A"
                 mudou = true
             }
             if (sexo === "M" || sexo === "F") {
@@ -350,7 +365,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                         {CAMPOS_ID.filter(c => c.sempreVisivel).map(campo => (
-                            <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.largo ? "1 1 180px" : "0 1 118px", minWidth: "104px" }}>
+                            <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.chave === "nome" ? "1 1 100%" : campo.chave === "idade" ? "0 0 104px" : campo.chave === "sexo" ? "0 1 78px" : campo.largo ? "1 1 180px" : "0 1 118px", minWidth: campo.chave === "nome" ? "100%" : "104px" }}>
                                 <span style={estiloRotuloCampo}>{campo.rotulo}</span>
                                 {campo.chave === "sexo" ? (
                                     <select
@@ -359,11 +374,28 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                                         onChange={handleSexo}
                                         style={estiloCampo}
                                     >
-                                        <option value="">Selecionar...</option>
+                                        <option value="">...</option>
                                         {OPCOES_SEXO.map(op => (
                                             <option key={op.valor} value={op.valor}>{op.rotulo}</option>
                                         ))}
                                     </select>
+                                ) : campo.chave === "idade" ? (
+                                    <div style={{ display: "flex", alignItems: "stretch", gap: "3px", minWidth: 0 }}>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            data-campo={campo.chave}
+                                            value={idCampos.idade}
+                                            onChange={handleChangeCampo}
+                                            style={{ ...estiloCampo, fontWeight: 700, flex: "0 0 42px", width: "42px", minWidth: 0, paddingLeft: "6px", paddingRight: "4px" }}
+                                        />
+                                        <div role="group" aria-label="Unidade da idade" style={{ display: "flex", alignItems: "center", gap: "1px", padding: "2px", borderRadius: "6px", border: "1px solid var(--editor-border)", background: "var(--meta-bg)" }}>
+                                            {([ ["D", "D"], ["M", "M"], ["A", "A"] ] as const).map(([unidade, label]) => (
+                                                <button key={unidade} type="button" onClick={() => alterarUnidadeIdade(unidade)} aria-pressed={idCampos.idadeUnidade === unidade} title={unidade === "D" ? "Dias" : unidade === "M" ? "Meses" : "Anos"} style={{ width: "16px", height: "22px", border: "none", borderRadius: "4px", background: idCampos.idadeUnidade === unidade ? "rgba(236,72,153,0.14)" : "transparent", color: idCampos.idadeUnidade === unidade ? COR_IDENTIFICACAO : "var(--meta-text)", fontSize: "10px", fontWeight: idCampos.idadeUnidade === unidade ? 700 : 500, cursor: "pointer", padding: 0 }}>{label}</button>
+                                            ))}
+                                        </div>
+                                    </div>
                                 ) : (
                                     <input
                                         data-campo={campo.chave}
@@ -580,7 +612,7 @@ export function ListaProblemasForm({ value, onChange, onSendToAssessment }: List
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
-                <span style={estiloRotuloCampo}>Lista de problemas</span>
+                <span style={estiloRotuloCampo}>Problemas/Condições</span>
                 <BotaoNega onClick={() => alterar("Nega")} />
             </div>
             <textarea
