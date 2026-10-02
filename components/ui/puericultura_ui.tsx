@@ -8,7 +8,7 @@ import {
   Sex,
   INDICATOR_LABEL,
   MIN_AGE_DAYS,
-  MAX_AGE_DAYS,
+  MAX_AGE_MONTHS,
   STANDARD_Z_LINES,
   buildCurve,
   evaluate,
@@ -342,10 +342,7 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
   const PAD_T = 20
   const PAD_B = 44
 
-  const ageDays = Math.min(
-    Math.max(monthsToDays(ageMonths), MIN_AGE_DAYS),
-    MAX_AGE_DAYS
-  );
+  const ageDays = Math.max(monthsToDays(ageMonths), MIN_AGE_DAYS);
 
   const effectiveValue =
     indicator === "bmi" && value != null && heightCm
@@ -360,7 +357,8 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
   const finalValue = indicator === "bmi" && bmiValue != null ? bmiValue : effectiveValue;
 
   const dataMinDays = 0
-  const dataMaxDays = monthsToDays(maxMonths)
+  const chartMaxMonths = Math.min(maxMonths, MAX_AGE_MONTHS[indicator])
+  const dataMaxDays = monthsToDays(chartMaxMonths)
 
   const curves = React.useMemo(
     () =>
@@ -373,9 +371,9 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
 
   // 24-month zoom window, centered on the patient's age
   const ZOOM_MONTHS = 24
-  const viewCenterMonths = Math.max(12, ageMonths)
-  const viewMinMonths = Math.max(0, viewCenterMonths - 12)
-  const viewMaxMonths = viewMinMonths + ZOOM_MONTHS
+  const viewCenterMonths = Math.min(Math.max(12, ageMonths), chartMaxMonths)
+  const viewMinMonths = Math.max(0, Math.min(viewCenterMonths - 12, chartMaxMonths - ZOOM_MONTHS))
+  const viewMaxMonths = Math.min(viewMinMonths + ZOOM_MONTHS, chartMaxMonths)
   const viewMinDays = Math.floor(monthsToDays(viewMinMonths))
   const viewMaxDays = Math.ceil(monthsToDays(viewMaxMonths))
 
@@ -441,6 +439,11 @@ const GrowthChart: React.FC<GrowthChartProps> = ({
             <span>
               <strong>Percentil:</strong> {result.percentile.toFixed(1)}
             </span>
+          </div>
+        )}
+        {!result && ageMonths > 0 && (
+          <div style={{ fontSize: 12, color: "var(--growth-fg-muted, #6b7280)" }}>
+            Referência OMS indisponível para este indicador nesta idade.
           </div>
         )}
       </div>
@@ -1350,8 +1353,10 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
                 const mesesNum = parseInt(idadeMeses) || 0
                 ageMonths = anosNum * 12 + mesesNum
               } else if (dataNascimento) {
-                const nasc = new Date(dataNascimento.split('/').reverse().join('-'))
+                const [ano, mes, dia] = dataNascimento.split("-").map(Number)
+                const nasc = new Date(ano, mes - 1, dia)
                 const hoje = new Date()
+                hoje.setHours(0, 0, 0, 0)
                 const diffDays = Math.floor((hoje.getTime() - nasc.getTime()) / (1000 * 60 * 60 * 24))
                 ageMonths = Math.max(0, diffDays) / 30.4375
               }

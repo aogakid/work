@@ -2,11 +2,8 @@
 // Cálculo de z-score e percentil pelas Curvas de Crescimento da OMS (WHO Child Growth
 // Standards, 2006/2007) usando o método LMS (Cole & Green).
 //
-// Fonte dos dados: WHO Multicentre Growth Reference Study — pacote oficial "anthro" (R),
-// tabelas de referência diárias (0–1826 dias, nascimento a 5 anos), reamostradas com
-// resolução adaptativa (diária nos primeiros 60 dias, depois a cada 3 e 7 dias) e
-// interpoladas linearmente. Validado contra as tabelas mensais oficiais da OMS
-// (concordância em 4 casas decimais).
+// Dados: OMS "anthro" (R), tabelas diárias para 0–5 anos, mais referência WHO 2007
+// mensal para 5–19 anos (altura e IMC) e 5–10 anos (peso), interpoladas por LMS.
 //
 // Indicadores disponíveis: peso-idade, estatura/comprimento-idade, IMC-idade,
 // perímetro cefálico-idade — 0 a 60 meses, sexo masculino e feminino.
@@ -18,6 +15,7 @@ interface LMSArrays {
 }
 
 import * as whoData from './who-lms-data';
+import { WHO_REFERENCE_2007, WHO_REFERENCE_INDICATOR_MAX_MONTH, WHO_REFERENCE_START_MONTH } from './who-reference-2007-data';
 
 export const WHO_DAYS = whoData.WHO_DAYS;
 export const WHO_WEIGHT_M = whoData.WHO_WEIGHT_M;
@@ -48,7 +46,8 @@ export const INDICATOR_UNIT: Record<Indicator, string> = {
 };
 
 // Comprimento é medido em decúbito até 731 dias (2 anos); altura em pé depois disso.
-// Isso segue a convenção oficial da OMS (não afeta o cálculo, apenas o rótulo exibido).
+// Isso identifica a convenção etária da OMS; a UI deve informar se a medida foi em pé ou deitado
+// para aplicar a conversão de 0,7 cm quando a posição não corresponder à faixa etária.
 export function lengthOrHeightLabel(ageDays: number): "Comprimento" | "Altura" {
   return ageDays < 731 ? "Comprimento" : "Altura";
 }
@@ -71,6 +70,12 @@ function getArrays(indicator: Indicator, sex: Sex): LMSArrays {
 
 export const MIN_AGE_DAYS = WHO_DAYS[0];
 export const MAX_AGE_DAYS = WHO_DAYS[WHO_DAYS.length - 1];
+export const MAX_AGE_MONTHS: Record<Indicator, number> = {
+  weight: WHO_REFERENCE_INDICATOR_MAX_MONTH.weight,
+  length_height: WHO_REFERENCE_INDICATOR_MAX_MONTH.length_height,
+  bmi: WHO_REFERENCE_INDICATOR_MAX_MONTH.bmi,
+  head_circ: 60,
+};
 
 /** Converte idade em meses completos (float) para dias, usando a convenção da OMS (1 mês = 30.4375 dias). */
 export function monthsToDays(months: number): number {
@@ -109,18 +114,59 @@ export function lookupLMS(
   };
 }
 
+function lookupReferenceLMS(indicator: Indicator, sex: Sex, ageMonths: number): LMSArrays | null {
+  const maxMonth = MAX_AGE_MONTHS[indicator];
+  if (ageMonths < WHO_REFERENCE_START_MONTH || ageMonths >= maxMonth) return null;
+  if (indicator === "head_circ") return null;
+  const values = WHO_REFERENCE_2007[indicator as "weight" | "length_height" | "bmi"][sex];
+  const index = Math.floor(ageMonths - WHO_REFERENCE_START_MONTH);
+  const fraction = ageMonths - Math.floor(ageMonths);
+  const next = index + 1;
+  return {
+    L: [values[index][0] + fraction * (values[next][0] - values[index][0])],
+    M: [values[index][1] + fraction * (values[next][1] - values[index][1])],
+    S: [values[index][2] + fraction * (values[next][2] - values[index][2])],
+  };
+}
+
+function lookupForAge(indicator: Indicator, sex: Sex, ageDays: number): { L: number; M: number; S: number } | null {
+  const ageMonths = daysToMonths(ageDays);
+  if (ageMonths >= 60 && indicator !== "head_circ") {
+    const ref = lookupReferenceLMS(indicator, sex, ageMonths);
+    return ref ? { L: ref.L[0], M: ref.M[0], S: ref.S[0] } : null;
+  }
+  if (ageMonths > 60) return null;
+  if (ageMonths > MAX_AGE_MONTHS[indicator]) return null;
+  return lookupLMS(indicator, sex, ageDays);
+}
+
 /** Z-score pelo método LMS (Cole & Green, 1992). */
 export function zScoreFromValue(
   indicator: Indicator,
   sex: Sex,
   ageDays: number,
   value: number
-): number {
-  const { L, M, S } = lookupLMS(indicator, sex, ageDays);
-  if (Math.abs(L) < 1e-8) {
-    return Math.log(value / M) / S;
+): number | null {
+  const lms = lookupForAge(indicator, sex, ageDays);
+  if (!lms || value <= 0) return null;
+  const { L, M, S } = lms;
+  const z = Math.abs(L) < 1e-8
+    ? Math.log(value / M) / S
+    : (Math.pow(value / M, L) - 1) / (L * S);
+  if ((indicator !== "weight" && indicator !== "bmi") || Math.abs(z) <= 3) return z;
+
+  // WHO Anthro/AnthroPlus linearize weight and BMI scores beyond ±3 SD.
+  const valueAtZ = (score: number) => Math.abs(L) < 1e-8
+    ? M * Math.exp(S * score)
+    : M * Math.pow(1 + L * S * score, 1 / L);
+  if (z > 3) {
+    const sd3 = valueAtZ(3);
+    const sd2 = valueAtZ(2);
+    return 3 + (value - sd3) / (sd3 - sd2);
   }
-  return (Math.pow(value / M, L) - 1) / (L * S);
+  const sd3 = valueAtZ(-3);
+  const sd2 = valueAtZ(-2);
+  return -3 + (value - sd3) / (sd2 - sd3);
 }
 
 /** Valor da medida correspondente a um z-score dado (inverso do LMS) — usado para desenhar as curvas de percentil. */
@@ -130,7 +176,9 @@ export function valueFromZScore(
   ageDays: number,
   z: number
 ): number {
-  const { L, M, S } = lookupLMS(indicator, sex, ageDays);
+  const lms = lookupForAge(indicator, sex, ageDays);
+  if (!lms) return Number.NaN;
+  const { L, M, S } = lms;
   if (Math.abs(L) < 1e-8) {
     return M * Math.exp(S * z);
   }
@@ -180,6 +228,13 @@ function classify(indicator: Indicator, z: number, ageDays?: number): string {
     return "Adequad" + s;
   }
   if (indicator === "bmi") {
+    if (ageDays !== undefined && daysToMonths(ageDays) >= 60) {
+      if (z < -3) return "Magreza acentuada";
+      if (z < -2) return "Magreza";
+      if (z > 2) return "Obesidade";
+      if (z > 1) return "Sobrepeso";
+      return "Eutrófico";
+    }
     if (z < -3) return "Magreza acentuada";
     if (z < -2) return "Magreza";
     if (z > 3) return "Obesidade";
@@ -199,8 +254,9 @@ export function evaluate(
   sex: Sex,
   ageDays: number,
   value: number
-): GrowthResult {
+): GrowthResult | null {
   const z = zScoreFromValue(indicator, sex, ageDays, value);
+  if (z === null) return null;
   return {
     ageDays,
     ageMonths: daysToMonths(ageDays),
@@ -222,7 +278,8 @@ export function buildCurve(
   const points: { ageDays: number; value: number }[] = [];
   for (let i = 0; i <= numPoints; i++) {
     const ageDays = minAgeDays + ((maxAgeDays - minAgeDays) * i) / numPoints;
-    points.push({ ageDays, value: valueFromZScore(indicator, sex, ageDays, z) });
+    const value = valueFromZScore(indicator, sex, ageDays, z);
+    if (Number.isFinite(value)) points.push({ ageDays, value });
   }
   return points;
 }

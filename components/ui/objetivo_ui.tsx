@@ -102,9 +102,10 @@ export interface ObjetivoFormProps {
     value: string
     onChange: (v: string) => void
     mostrarPrenatal?: boolean
+    mostrarPuericultura?: boolean
 }
 
-export function ObjetivoForm({ value, onChange, mostrarPrenatal = false }: ObjetivoFormProps) {
+export function ObjetivoForm({ value, onChange, mostrarPrenatal = false, mostrarPuericultura = false }: ObjetivoFormProps) {
     const [, setCampos] = React.useState<Objetivo>(OBJETIVO_VAZIO)
     const emitidoRef = React.useRef<string | null>(null)
 
@@ -144,6 +145,11 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false }: Objet
         aplicar({ ...base, exameFisico: { ...base.exameFisico, [chave]: novo } })
     }, [aplicar, value])
 
+    const alterarCrescimentoDesenvolvimento = React.useCallback((novo: string) => {
+        const base = parseObjetivo(value)
+        aplicar({ ...base, crescimentoDesenvolvimento: novo })
+    }, [aplicar, value])
+
     const alterarComplementar = React.useCallback((chave: keyof Complementar, novo: string) => {
         const base = parseObjetivo(value)
         aplicar({ ...base, complementar: { ...base.complementar, [chave]: novo } })
@@ -155,6 +161,7 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false }: Objet
     }, [aplicar, value])
 
     const ssvvCampos = React.useMemo(() => parseObjetivo(value).ssvv, [value])
+    const crescimentoDesenvolvimento = React.useMemo(() => parseObjetivo(value).crescimentoDesenvolvimento, [value])
     const exameFisicoCampos = React.useMemo(() => parseObjetivo(value).exameFisico, [value])
     const complementarCampos = React.useMemo(() => parseObjetivo(value).complementar, [value])
 
@@ -189,6 +196,18 @@ export function ObjetivoForm({ value, onChange, mostrarPrenatal = false }: Objet
                     ))}
                 </div>
             </Bloco>
+
+            {mostrarPuericultura ? (
+                <Bloco rotulo="Crescimento e desenvolvimento" cor={COR_EXAME_FISICO}>
+                    <textarea
+                        data-campo="crescimento-desenvolvimento"
+                        value={crescimentoDesenvolvimento}
+                        rows={3}
+                        onChange={e => alterarCrescimentoDesenvolvimento(e.target.value)}
+                        style={estiloArea}
+                    />
+                </Bloco>
+            ) : null}
 
             <Bloco rotulo="Exame físico" cor={COR_EXAME_FISICO} colapsavel abertoInicial={false}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>

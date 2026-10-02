@@ -27,6 +27,7 @@ export interface Complementar {
 
 export interface Objetivo {
     ssvv: SinaisVitais
+    crescimentoDesenvolvimento: string
     exameFisico: ExameFisico
     complementar: Complementar
 }
@@ -60,6 +61,7 @@ export const COMPLEMENTAR_VAZIO: Complementar = {
 
 export const OBJETIVO_VAZIO: Objetivo = {
     ssvv: SINAIS_VITAIS_VAZIO,
+    crescimentoDesenvolvimento: "",
     exameFisico: EXAME_FISICO_VAZIO,
     complementar: COMPLEMENTAR_VAZIO,
 }
@@ -136,13 +138,18 @@ function itensLista(bloco: string[]): string {
 export function parseObjetivo(texto: string): Objetivo {
     const linhas = paraLinhas(texto)
 
+    const indiceCrescimentoPlano = linhas.findIndex(l => /^Crescimento\s+e\s+desenvolvimento\s*:?\s*$/i.test(l.trim()))
     const indiceFisicoPlano = linhas.findIndex(l => /^Exame\s+f[íi]sico\s*:?\s*$/i.test(l.trim()))
     const indiceComplementarPlano = linhas.findIndex(l => /^Complementar\s*:?\s*$/i.test(l.trim()))
-    const formatoPlano = indiceFisicoPlano >= 0 || indiceComplementarPlano >= 0
+    const formatoPlano = indiceCrescimentoPlano >= 0 || indiceFisicoPlano >= 0 || indiceComplementarPlano >= 0
+    const indiceFimCrescimento = [indiceFisicoPlano, indiceComplementarPlano].filter(i => i > indiceCrescimentoPlano).sort((a, b) => a - b)[0] ?? linhas.length
+    const crescimentoDesenvolvimento = formatoPlano && indiceCrescimentoPlano >= 0
+        ? linhas.slice(indiceCrescimentoPlano + 1, indiceFimCrescimento).join("\n").trim()
+        : ""
     const blocoFisico = formatoPlano
-        ? linhas.slice(indiceFisicoPlano + 1, indiceComplementarPlano >= 0 ? indiceComplementarPlano : linhas.length)
+        ? indiceFisicoPlano >= 0 ? linhas.slice(indiceFisicoPlano + 1, indiceComplementarPlano >= 0 ? indiceComplementarPlano : linhas.length) : []
         : blocoRotulo(linhas, /^\s*-\s*Exame\s+f[íi]sico\s*:?\s*$/i)
-    const blocoFisicoTarget = blocoFisico.length ? blocoFisico : linhas
+    const blocoFisicoTarget = formatoPlano ? blocoFisico : blocoFisico.length ? blocoFisico : linhas
     const blocoSsvv = blocoRotulo(blocoFisicoTarget, /^\s*-\s*SSVV\s*:?\s*.*$/i)
     const blocoSsvvTarget = blocoSsvv.length ? blocoSsvv : blocoFisicoTarget
 
@@ -251,11 +258,16 @@ export function parseObjetivo(texto: string): Objetivo {
         escores: formatoPlano ? valoresCategoria("Escores", ["laboratório", "imagem"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Escores\s*:?\s*$/i)),
     }
 
-    return { ssvv, exameFisico, complementar }
+    return { ssvv, crescimentoDesenvolvimento, exameFisico, complementar }
 }
 
 export function compositarObjetivo(o: Objetivo): string {
     const partes: string[] = []
+
+    if (o.crescimentoDesenvolvimento.trim()) {
+        partes.push("Crescimento e desenvolvimento")
+        partes.push(o.crescimentoDesenvolvimento.trim())
+    }
 
     const hasSsvv = Object.values(o.ssvv).some(v => v.trim())
     const hasPrenatal = Object.values(o.exameFisico.prenatal).some(v => v.trim())

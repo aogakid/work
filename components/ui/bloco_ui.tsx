@@ -294,6 +294,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
     const [expandedCompanions, setExpandedCompanions] = React.useState<Record<string, boolean>>({})
+    const [sexoIdentificacao, setSexoIdentificacao] = React.useState<"M" | "F" | "">("")
 
     /* ── Sticky header stuck-state (masks rounded top corners while stuck) ── */
     const scrollContentRef = React.useRef<HTMLDivElement | null>(null)
@@ -487,6 +488,27 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         if (plaintext ? !plainTextContent.trim() : !sections.some(s => s.content.trim())) { onConfirm(); return }
         setConfirmAction({ message, onConfirm })
     }, [sections, plaintext, plainTextContent])
+
+    const clearSection = useCallback((sectionId: string) => {
+        const section = sections.find(s => s.id === sectionId)
+        if (!section?.content.trim()) return
+        setConfirmAction({
+            message: `limpar somente a seção "${section.title}"?`,
+            onConfirm: () => {
+                externalUpdateRef.current = true
+                contentVersionRef.current[sectionId] = (contentVersionRef.current[sectionId] || 0) + 1
+                setSections(prev => prev.map(s => s.id === sectionId ? { ...s, content: "" } : s))
+                if (sectionId === "dados_base") {
+                    definirSexoContexto("")
+                    setSexoIdentificacao("")
+                }
+                if (edicaoIniciadaRef.current === null) {
+                    edicaoIniciadaRef.current = Date.now()
+                    setEdicaoIniciada(true)
+                }
+            },
+        })
+    }, [sections])
 
     React.useEffect(() => {
         if (!companionToast) return
@@ -1173,8 +1195,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* Sexo/idade drive which companions are offered (prenatal, puericultura, geriatria, escores).
        Idade is parsed from the Identificação line; sexo comes from the form dropdown and is
        session-scoped, since it is never written into the record. */
-    const [sexoIdentificacao, setSexoIdentificacao] = React.useState<"M" | "F" | "">("")
-
     const contextoPaciente = useMemo(() => {
         const sec = sections.find(s => s.id === "dados_base")
         const linha = sec && sec.content.trim() ? extrairLinhaId(sec.content) : ""
@@ -1188,6 +1208,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     }, [])
 
     const companionVisivel = (c: CompanionConfig) => !c.when || c.when(contextoPaciente)
+    const puericulturaCompanion = COMPANIONS.find(c => c.id === "puericultura")
+    const mostrarCrescimentoDesenvolvimento = puericulturaCompanion ? companionVisivel(puericulturaCompanion) : false
 
     /* ── Render a section card (+ its placement companions) inside a column ── */
     const renderColuna = (coluna: "esquerda" | "direita", s: Section): React.ReactNode[] => {
@@ -1228,6 +1250,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 </button>
                             )}
 
+                            <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); clearSection(s.id) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.8 }} title={`limpar somente a seção ${s.title}`} aria-label={`limpar somente a seção ${s.title}`}>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                            </button>
+
                         </div>
                     </div>
                 </div>
@@ -1249,7 +1275,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 ) : meta.formulario === "subjetivo" ? (
                                     <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} />
                                 ) : (
-                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} />
+                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} />
                                 )}
                             </div>
                         ) : (
