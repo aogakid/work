@@ -58,7 +58,9 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
 
     const cabecalho = (
         <>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: cor, display: "inline-block", flexShrink: 0 }} />
+            <svg width="9" height="11" viewBox="0 0 9 11" aria-hidden="true" style={{ display: "inline-block", flexShrink: 0 }}>
+                <path d="M1.5 0.75h6v9.5L4.5 8.1l-3 2.15z" fill={cor} />
+            </svg>
             <span style={{ flex: "1 1 auto", textAlign: "left" }}>{rotulo}</span>
             {colapsavel ? (
                 <span style={{ fontSize: "10px", lineHeight: 1, color: cor, transform: aberto ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 120ms ease", display: "inline-block" }}>▼</span>
@@ -67,7 +69,7 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
     )
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "8px", paddingTop: "12px", marginTop: "4px", borderTop: semBordaSuperior ? "none" : "1px solid var(--editor-border)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "8px", paddingTop: semBordaSuperior ? "0" : "12px", marginTop: semBordaSuperior ? "0" : "4px", borderTop: semBordaSuperior ? "none" : "1px solid var(--editor-border)" }}>
             {colapsavel ? (
                 <button
                     type="button"

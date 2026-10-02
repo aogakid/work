@@ -95,7 +95,9 @@ function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = fals
 
     const cabecalho = (
         <>
-            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: cor, display: "inline-block", flexShrink: 0 }} />
+            <svg width="9" height="11" viewBox="0 0 9 11" aria-hidden="true" style={{ display: "inline-block", flexShrink: 0 }}>
+                <path d="M1.5 0.75h6v9.5L4.5 8.1l-3 2.15z" fill={cor} />
+            </svg>
             <span style={{ flex: "1 1 auto", textAlign: "left" }}>{rotulo}</span>
             {colapsavel ? (
                 <span style={{ fontSize: "10px", lineHeight: 1, color: cor, transform: aberto ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 120ms ease", display: "inline-block" }}>▼</span>
@@ -104,7 +106,7 @@ function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = fals
     )
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "8px", paddingTop: "12px", marginTop: "4px", ...(semBordaSuperior ? {} : { borderTop: "1px solid var(--editor-border)" }) }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "8px", paddingTop: semBordaSuperior ? "0" : "12px", marginTop: semBordaSuperior ? "0" : "4px", ...(semBordaSuperior ? {} : { borderTop: "1px solid var(--editor-border)" }) }}>
             {colapsavel ? (
                 <button
                     type="button"
@@ -395,7 +397,23 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 </div>
             </Bloco>
 
-            <Bloco rotulo="Antecedentes" cor={COR_ANTECEDENTES} colapsavel abertoInicial={temAntecedentes}>
+            <Bloco
+                rotulo="Antecedentes"
+                cor={COR_ANTECEDENTES}
+                colapsavel
+                abertoInicial={temAntecedentes}
+                sempreVisivelChildren={idCampos.sexo === "F" ? (
+                    <CampoRotulado rotulo="DUM">
+                        <input
+                            data-campo="dum"
+                            type="date"
+                            value={antecedentesCampos.dum}
+                            onChange={e => alterarAntecedente("dum", e.target.value)}
+                            style={estiloCampo}
+                        />
+                    </CampoRotulado>
+                ) : null}
+            >
                 <SubGrupo rotulo="Pessoais">
                     {ANTECEDENTES_CAMPOS.map(campo => {
                         if (!campo.multilinha) {
@@ -422,24 +440,19 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                             </CampoRotulado>
                         )
                     })}
-                    <CampoRotulado rotulo="Obstétrico">
-                        <textarea
-                            data-campo="obstetrico"
-                            value={antecedentesCampos.obstetrico}
-                            rows={2}
-                            onChange={e => alterarAntecedente("obstetrico", e.target.value)}
-                            style={estiloArea}
-                        />
-                    </CampoRotulado>
-                    <CampoRotulado rotulo="DUM">
-                        <input
-                            data-campo="dum"
-                            type="date"
-                            value={antecedentesCampos.dum}
-                            onChange={e => alterarAntecedente("dum", e.target.value)}
-                            style={estiloCampo}
-                        />
-                    </CampoRotulado>
+                    {idCampos.sexo === "F" && (
+                        <>
+                            <CampoRotulado rotulo="Obstétrico">
+                                <textarea
+                                    data-campo="obstetrico"
+                                    value={antecedentesCampos.obstetrico}
+                                    rows={2}
+                                    onChange={e => alterarAntecedente("obstetrico", e.target.value)}
+                                    style={estiloArea}
+                                />
+                            </CampoRotulado>
+                        </>
+                    )}
                 </SubGrupo>
                 <CampoRotulado rotulo="Familiares">
                     <textarea

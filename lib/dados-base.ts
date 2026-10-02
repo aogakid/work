@@ -1,5 +1,5 @@
 export interface Antecedentes {
-    cirurgias: string
+    hospitalar: string
     vacinacao: string
     obstetrico: string
     dum: string
@@ -37,7 +37,7 @@ export interface ListaProblemas {
 }
 
 export const ANTECEDENTES_VAZIO: Antecedentes = {
-    cirurgias: "",
+    hospitalar: "",
     vacinacao: "",
     obstetrico: "",
     dum: "",
@@ -89,7 +89,7 @@ export const HABITOS_CAMPOS: { chave: keyof Habitos; rotulo: string; sempreVisiv
 ]
 
 export const ANTECEDENTES_CAMPOS: { chave: Exclude<keyof Antecedentes, "familiares" | "obstetrico" | "dum">; rotulo: string; multilinha: boolean }[] = [
-    { chave: "cirurgias", rotulo: "Cirurgias", multilinha: true },
+    { chave: "hospitalar", rotulo: "Hospitalar", multilinha: true },
     { chave: "vacinacao", rotulo: "Vacinação", multilinha: false },
 ]
 
@@ -158,20 +158,20 @@ export function parseDadosBase(texto: string): DadosBase {
     const idxId = linhas.findIndex(l => /^\s*-\s*Id\s*:/i.test(l))
     if (idxId >= 0) id = linhas[idxId].replace(/^\s*-\s*Id\s*:\s*/i, "")
 
-    const cabecalhosPlanos = ["Antecedentes", "Pessoais", "Cirurgias", "Medicamentos", "Em uso", "Hábitos"]
+    const cabecalhosPlanos = ["Antecedentes", "Pessoais", "Hospitalar", "Cirurgias", "Medicamentos", "Em uso", "Hábitos"]
     if (linhas.some(l => cabecalhosPlanos.includes(l.trim().replace(/^[-*]\s*/, "")))) {
         const indice = (nome: string) => linhas.findIndex(l => l.trim().replace(/^[-*]\s*/, "") === nome)
         const indiceMedicamentos = indice("Medicamentos")
         const indiceHabitos = indice("Hábitos")
         const fimAntecedentes = indiceMedicamentos >= 0 ? indiceMedicamentos : (indiceHabitos >= 0 ? indiceHabitos : linhas.length)
         const limparMarcador = (l: string) => l.trim().replace(/^[-*]\s*/, "")
-        const indiceCirurgias = indice("Cirurgias")
-        const indiceObstetrico = linhas.findIndex((l, i) => i > indiceCirurgias && i < fimAntecedentes && /^\s*-\s*Obst[ée]trico\s*$/i.test(l))
-        const indiceDum = linhas.findIndex((l, i) => i > indiceCirurgias && i < fimAntecedentes && /^\s*-\s*DUM\s*:/i.test(l))
-        const indiceVacina = linhas.findIndex((l, i) => i > indiceCirurgias && i < fimAntecedentes && /^\s*-\s*Vacina[çc][ãa]o\s*:/i.test(l))
-        const indiceFamiliares = linhas.findIndex((l, i) => i > indiceCirurgias && i < fimAntecedentes && /^\s*-\s*Familiares\s*:/i.test(l))
-        const limiteCirurgias = [indiceVacina, indiceFamiliares, indiceMedicamentos].filter(i => i >= 0).reduce((a, b) => Math.min(a, b), indiceMedicamentos)
-        const cirurgias = indiceCirurgias >= 0 ? linhas.slice(indiceCirurgias + 1, limiteCirurgias).map(limparMarcador).filter(Boolean).join("\n") : ""
+        const indiceHospitalar = linhas.findIndex((l, i) => i > -1 && i < fimAntecedentes && /^(?:Hospitalar|Cirurgias)$/i.test(l.trim().replace(/^[-*]\s*/, "")))
+        const indiceObstetrico = linhas.findIndex((l, i) => i > indiceHospitalar && i < fimAntecedentes && /^\s*-\s*Obst[ée]trico\s*$/i.test(l))
+        const indiceDum = linhas.findIndex((l, i) => i > indiceHospitalar && i < fimAntecedentes && /^\s*-\s*DUM\s*:/i.test(l))
+        const indiceVacina = linhas.findIndex((l, i) => i > indiceHospitalar && i < fimAntecedentes && /^\s*-\s*Vacina[çc][ãa]o\s*:/i.test(l))
+        const indiceFamiliares = linhas.findIndex((l, i) => i > indiceHospitalar && i < fimAntecedentes && /^\s*-\s*Familiares\s*:/i.test(l))
+        const limiteHospitalar = [indiceObstetrico, indiceDum, indiceVacina, indiceFamiliares, indiceMedicamentos].filter(i => i >= 0).reduce((a, b) => Math.min(a, b), fimAntecedentes)
+        const hospitalar = indiceHospitalar >= 0 ? linhas.slice(indiceHospitalar + 1, limiteHospitalar).map(limparMarcador).filter(Boolean).join("\n") : ""
         const blocoAntecedentesFim = fimAntecedentes
         const familiares = indiceFamiliares >= 0
             ? linhas.slice(indiceFamiliares, blocoAntecedentesFim).map(limparMarcador).map(l => l.replace(/^Familiares\s*:\s*/i, "")).filter(Boolean).join("\n")
@@ -193,7 +193,7 @@ export function parseDadosBase(texto: string): DadosBase {
         return {
             id,
             antecedentes: {
-                cirurgias,
+                hospitalar,
                 vacinacao: indiceVacina >= 0 ? linhas[indiceVacina].replace(/^\s*-\s*Vacina[çc][ãa]o\s*:\s*/i, "") : "",
                 obstetrico: indiceObstetrico >= 0 ? linhas.slice(indiceObstetrico + 1, indiceDum >= 0 ? indiceDum : indiceMedicamentos).map(limparMarcador).filter(Boolean).join("\n") : "",
                 dum: indiceDum >= 0 ? linhas[indiceDum].replace(/^\s*-\s*DUM\s*:\s*/i, "") : "",
@@ -208,7 +208,7 @@ export function parseDadosBase(texto: string): DadosBase {
     const blocoPessoais = blocoRotulo(blocoAntecedentes, /^\s*-\s*Pessoais\s*:?\s*$/i)
 
     const antecedentes: Antecedentes = {
-        cirurgias: itensLista(blocoRotulo(blocoPessoais, /^\s*-\s*Cirurgias\s*:?\s*$/i)),
+        hospitalar: itensLista(blocoRotulo(blocoPessoais, /^\s*-\s*(?:Hospitalar|Cirurgias)\s*:?\s*$/i)),
         vacinacao: valorInline(blocoPessoais, /^\s*-\s*Vacina[çc][ãa]o\s*:\s*(.*)$/i),
         obstetrico: itensLista(blocoRotulo(blocoPessoais, /^\s*-\s*Obst[ée]trico\s*:?\s*$/i)),
         dum: valorInline(blocoPessoais, /^\s*-\s*DUM\s*:\s*(.*)$/i),
