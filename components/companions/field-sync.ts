@@ -7,9 +7,9 @@ export interface FieldSyncPayload {
     values: Record<string, string>
 }
 
-export function broadcastFieldSync(source: string, values: Record<string, string>) {
+export function broadcastFieldSync(source: string, values: Record<string, string>, rememberEmpty = false) {
     for (const key of Object.keys(values)) {
-        if (values[key] !== undefined && values[key] !== "") lastValues[key] = values[key]
+        if (values[key] !== undefined && (rememberEmpty || values[key] !== "")) lastValues[key] = values[key]
     }
     window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: { source, values } }))
 }

@@ -10,7 +10,13 @@ Objetivo:
 Transformar o texto em estrutura SOAP preservando o máximo possível do conteúdo original
 
 Regras obrigatórias:
-- Manter espaços de indentação das listas
+- Preservar todos os níveis e itens das listas: não achatar nem omitir subitens
+- Item de primeiro nível sem subitens: escrever como "- Item"
+- Item de primeiro nível com subitens: escrever o texto sem hífen; seus itens filhos começam na linha seguinte como "- Item filho"
+- Terceiro nível: usar dois espaços antes de "- "; níveis seguintes acrescentam dois espaços por nível
+- Em campos multilinha, cada quebra de linha vira um item com hífen no mesmo nível do primeiro item
+- Inserir uma linha em branco antes de um grupo de primeiro nível com subitens quando ele não for o primeiro item após o cabeçalho "##"
+- Inserir "---" em uma linha própria imediatamente antes de "## Subjetivo", separando Dados base/Lista de Problemas das seções SOAP
 - Não resumir ou omitir informações: aquelas que não encaixar em nenhum tópico devem ser colocadas no final do subjetivo
 - Não sintetizar sintomas, inferir diagnósticos ou definir condutas
 - Não inventar conteúdo
@@ -41,61 +47,65 @@ Modelo de output:
 
 ## Dados base:
 - Id: 
-- Antecedentes
-  - Pessoais
-    - Condições
-      - 
-    - Cirurgias
-      - 
-    - Medicamentos
-      - 
-    - Alergias: 
-    - Vacinação: 
-  - Familiares: 
-- Hábitos
-  - Etilismo: 
-  - Tabagismo: 
-  - Drogas: 
-  - Exercício: 
-  - Dieta: 
-  - Hidratação: 
-  - Evacuações: 
-  - Diurese: 
-  - Sono: 
-  - Humor: 
-  - Lazer: 
+
+Antecedentes
+- Pessoais
+  - Condições
+    - 
+  - Cirurgias
+    - 
+  - Medicamentos
+    - 
+  - Alergias: 
+  - Vacinação: 
+- Familiares: 
+
+Hábitos
+- Etilismo: 
+- Tabagismo: 
+- Drogas: 
+- Exercício: 
+- Dieta: 
+- Hidratação: 
+- Evacuações: 
+- Diurese: 
+- Sono: 
+- Humor: 
+- Lazer: 
 
 ## Lista de Problemas
-- Ativos:
-   -  
-- Latentes:
-   -  
-- Resolvidos:
-   -  
+Ativos:
+- 
+
+Latentes:
+- 
+
+Resolvidos:
+- 
+
+---
 
 ## Subjetivo
-- Fonte: 
-- Motivo 1: 
-  - 
+- Acompanhante: 
+
+Motivo
+- 
 
 ## Objetivo
-- Exame físico
-  - SSVV
-    - PA: 
-    - Peso: 
-    - Alt: 
-    - IMC: 
-  - Ect: 
-  - AC: 
-  - AR: 
-  - Ext: 
-- Complementar
-  - Laboratório
-    - 
-  - Imagem
-    - 
-  - Escores
-    - 
+Exame físico
+- SSVV: 
+- Ect: 
+- AC: 
+- AR: 
+- Ext: 
+
+Complementar
+- Laboratório
+  - 
+- Imagem
+  - 
+- Escores
+  - 
 
 ## Avaliação
 - 

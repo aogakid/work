@@ -52,21 +52,22 @@ export function parseSubjetivo(texto: string): Subjetivo {
 
         const mNum = linha.match(RE_NUM)
         const mLegado = linha.match(RE_MOTIVO_LEGADO)
-        if (mNum || mLegado) {
-            const motivo = (mNum ? mNum[2] : mLegado![1]) || ""
-            /* The lines that follow, while indented, are this item's text box. */
+        const proximaLinha = linhas[i + 1] || ""
+        const motivoPlano = !/^\s*[-*]\s/.test(linha) && (/^\s*-\s/.test(proximaLinha) || /^\s*".*"\s*$/.test(linha))
+        if (mNum || mLegado || motivoPlano) {
+            const motivo = (mNum ? mNum[2] : mLegado ? mLegado[1] : linha.trim()) || ""
             const textos: string[] = []
             let j = i + 1
             while (j < linhas.length) {
                 const prox = linhas[j]
                 if (!prox.trim()) { j += 1; continue }
-                if (recuo(prox) === 0) break
-                const mItem = prox.match(RE_SUB_ITEM)
+                if (motivoPlano ? !/^\s*-\s/.test(prox) : recuo(prox) === 0) break
+                const mItem = prox.match(RE_SUB_ITEM) || prox.match(/^\s*[-*]\s?(.*)$/)
                 textos.push(mItem ? mItem[1] : prox.trim())
                 j += 1
             }
             i = j - 1
-            motivos.push({ motivo, texto: textos.join("\n") })
+            motivos.push({ motivo: motivo.replace(/^\"(.*)\"$/, "$1"), texto: textos.join("\n") })
             continue
         }
 
@@ -80,15 +81,19 @@ export function parseSubjetivo(texto: string): Subjetivo {
 const linhasTexto = (texto: string): string[] => {
     const partes = texto.split("\n")
     while (partes.length && !partes[partes.length - 1].trim()) partes.pop()
-    return partes.map(p => "   - " + p)
+    return partes.map(p => "- " + p.replace(/^\s*[-*]\s*/, ""))
 }
 
 export function compositarSubjetivo(s: Subjetivo): string {
     const partes: string[] = ["- Acompanhante: " + s.acompanhante]
-    s.motivos.forEach((m, i) => {
-        partes.push((i + 1) + "." + (m.motivo ? " " + m.motivo : ""))
+    s.motivos.forEach(m => {
+        const motivo = m.motivo.trim().replace(/^\s*[-*]\s*/, "").replace(/^\"(.*)\"$/, "$1")
+        if (motivo) {
+            if (partes.length) partes.push("")
+            partes.push(`"${motivo}"`)
+        }
         const textos = linhasTexto(m.texto)
-        partes.push(...(textos.length ? textos : ["   - "]))
+        partes.push(...textos)
     })
     if (s.extras.length) partes.push(...s.extras)
     return partes.join("\n")

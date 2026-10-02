@@ -789,8 +789,8 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
                             style={styles.select}
                         >
                             <option value="">Selecione</option>
-                            <option value="F">Feminino</option>
-                            <option value="M">Masculino</option>
+                            <option value="F">F</option>
+                            <option value="M">M</option>
                         </select>
                     </div>
                 </div>

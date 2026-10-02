@@ -1,10 +1,10 @@
 import * as React from "react"
 import {
     ANTECEDENTES_CAMPOS,
-    CATEGORIAS_LISTA,
     DADOS_BASE_VAZIO,
     HABITOS_CAMPOS,
     LISTA_PROBLEMAS_VAZIO,
+    MEDICAMENTOS_CAMPOS,
     compositarDadosBase,
     compositarListaProblemas,
     parseDadosBase,
@@ -13,6 +13,7 @@ import {
     type DadosBase,
     type Habitos,
     type ListaProblemas,
+    type Medicamentos,
 } from "../../lib/dados-base"
 import {
     OPCOES_ESCOLARIDADE,
@@ -27,10 +28,11 @@ import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../co
 
 /* ── Identificação fields (owned by Dados base, stored as the "- Id:" line) ── */
 
-const CAMPOS_ID: { chave: keyof IdentificacaoCampos; rotulo: string; largo: boolean }[] = [
-    { chave: "nome", rotulo: "Nome", largo: true },
-    { chave: "idade", rotulo: "Idade", largo: false },
-    { chave: "sexo", rotulo: "Sexo", largo: false },
+const CAMPOS_ID: { chave: keyof IdentificacaoCampos; rotulo: string; largo: boolean; sempreVisivel?: boolean }[] = [
+    { chave: "nome", rotulo: "Nome", largo: true, sempreVisivel: true },
+    { chave: "idade", rotulo: "Idade", largo: false, sempreVisivel: true },
+    { chave: "sexo", rotulo: "Sexo", largo: false, sempreVisivel: true },
+    { chave: "acs", rotulo: "ACS", largo: false, sempreVisivel: true },
     { chave: "estadoCivil", rotulo: "Estado civil", largo: false },
     { chave: "composicao", rotulo: "Composição familiar", largo: true },
     { chave: "religiao", rotulo: "Religião", largo: false },
@@ -39,7 +41,6 @@ const CAMPOS_ID: { chave: keyof IdentificacaoCampos; rotulo: string; largo: bool
     { chave: "naturalidade", rotulo: "Naturalidade", largo: false },
     { chave: "residencia", rotulo: "Residência", largo: true },
     { chave: "procedencia", rotulo: "Procedência", largo: true },
-    { chave: "acs", rotulo: "ACS", largo: false },
 ]
 
 /* ── Shared styles ─────────────────────────────────────────────────── */
@@ -76,23 +77,19 @@ const COR_IDENTIFICACAO = "#ec4899"
 const COR_ANTECEDENTES = "#8b5cf6"
 const COR_HABITOS = "#0ea5e9"
 
-const COR_CATEGORIA: Record<keyof ListaProblemas, string> = {
-    ativos: "#ef4444",
-    latentes: "#eab308",
-    resolvidos: "#22c55e",
-}
-
 interface BlocoProps {
     rotulo: string
     cor: string
     children: React.ReactNode
+    sempreVisivelChildren?: React.ReactNode
     colapsavel?: boolean
     abertoInicial?: boolean
+    semBordaSuperior?: boolean
 }
 
 /* Sections the user never touched start folded away, so the left column opens
    straight onto Identificação instead of a wall of empty inputs. */
-function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true }: BlocoProps) {
+function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = false, abertoInicial = true, semBordaSuperior = false }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
 
@@ -107,7 +104,7 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
     )
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "0px", paddingTop: "12px", marginTop: "4px", borderTop: "1px solid var(--editor-border)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: aberto ? "10px" : "8px", paddingTop: "12px", marginTop: "4px", ...(semBordaSuperior ? {} : { borderTop: "1px solid var(--editor-border)" }) }}>
             {colapsavel ? (
                 <button
                     type="button"
@@ -122,6 +119,7 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
                     {cabecalho}
                 </span>
             )}
+            {sempreVisivelChildren}
             {aberto || !colapsavel ? children : null}
         </div>
     )
@@ -196,8 +194,7 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
        Only once both are known, otherwise clearing a field would push an empty value
        into the shared snapshot and wipe the siblings. */
     const publicarContexto = React.useCallback((idade: string, sexo: string) => {
-        if (!idade || !sexo) return
-        broadcastFieldSync("id", { idade, sexo })
+        broadcastFieldSync("id", { idade, sexo }, true)
     }, [])
 
     const commitId = React.useCallback((novo: IdentificacaoCampos) => {
@@ -288,6 +285,25 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
     const alterarAntecedente = React.useCallback((chave: keyof Antecedentes, novo: string) => {
         const base = parseDadosBase(value)
         aplicar({ ...base, antecedentes: { ...base.antecedentes, [chave]: novo } })
+        if (chave === "dum") broadcastFieldSync("dados_base", { dum: novo }, true)
+    }, [aplicar, value])
+
+    React.useEffect(() => listenFieldSync(({ source, values }) => {
+        if (source !== "prenatal" || values.dum === undefined) return
+        const base = parseDadosBase(value)
+        if (base.antecedentes.dum === values.dum) return
+        aplicar({ ...base, antecedentes: { ...base.antecedentes, dum: values.dum } })
+    }), [aplicar, value])
+
+    const initialDum = React.useRef(parseDadosBase(value).antecedentes.dum)
+    React.useEffect(() => {
+        const dum = initialDum.current
+        if (dum) broadcastFieldSync("dados_base", { dum }, true)
+    }, [])
+
+    const alterarMedicamento = React.useCallback((chave: keyof Medicamentos, novo: string) => {
+        const base = parseDadosBase(value)
+        aplicar({ ...base, medicamentos: { ...base.medicamentos, [chave]: novo } })
     }, [aplicar, value])
 
     const alterarHabito = React.useCallback((chave: keyof Habitos, novo: string) => {
@@ -296,30 +312,53 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
     }, [aplicar, value])
 
     const antecedentesCampos = React.useMemo(() => parseDadosBase(value).antecedentes, [value])
+    const medicamentosCampos = React.useMemo(() => parseDadosBase(value).medicamentos, [value])
     const habitosCampos = React.useMemo(() => parseDadosBase(value).habitos, [value])
     const temAntecedentes = React.useMemo(() => Object.values(antecedentesCampos).some(v => v.trim() !== ""), [antecedentesCampos])
-    const temHabitos = React.useMemo(() => Object.values(habitosCampos).some(v => v.trim() !== ""), [habitosCampos])
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
-            <Bloco rotulo="Identificação" cor={COR_IDENTIFICACAO}>
+            <Bloco
+                rotulo="Identificação"
+                cor={COR_IDENTIFICACAO}
+                colapsavel
+                abertoInicial={false}
+                semBordaSuperior
+                sempreVisivelChildren={
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
+                        {CAMPOS_ID.filter(c => c.sempreVisivel).map(campo => (
+                            <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.largo ? "1 1 180px" : "0 1 118px", minWidth: "104px" }}>
+                                <span style={estiloRotuloCampo}>{campo.rotulo}</span>
+                                {campo.chave === "sexo" ? (
+                                    <select
+                                        data-campo={campo.chave}
+                                        value={idCampos.sexo}
+                                        onChange={handleSexo}
+                                        style={estiloCampo}
+                                    >
+                                        <option value="">Selecionar...</option>
+                                        {OPCOES_SEXO.map(op => (
+                                            <option key={op.valor} value={op.valor}>{op.rotulo}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        data-campo={campo.chave}
+                                        value={idCampos[campo.chave]}
+                                        onChange={handleChangeCampo}
+                                        style={estiloCampo}
+                                    />
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                }
+            >
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
-                    {CAMPOS_ID.map(campo => (
+                    {CAMPOS_ID.filter(c => !c.sempreVisivel).map(campo => (
                         <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.largo ? "1 1 180px" : "0 1 118px", minWidth: "104px" }}>
                             <span style={estiloRotuloCampo}>{campo.rotulo}</span>
-                            {campo.chave === "sexo" ? (
-                                <select
-                                    data-campo={campo.chave}
-                                    value={idCampos.sexo}
-                                    onChange={handleSexo}
-                                    style={estiloCampo}
-                                >
-                                    <option value="">Selecionar...</option>
-                                    {OPCOES_SEXO.map(op => (
-                                        <option key={op.valor} value={op.valor}>{op.rotulo}</option>
-                                    ))}
-                                </select>
-                            ) : campo.chave === "estadoCivil" ? (
+                            {campo.chave === "estadoCivil" ? (
                                 <select
                                     data-campo={campo.chave}
                                     value={idCampos.estadoCivil}
@@ -383,6 +422,24 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                             </CampoRotulado>
                         )
                     })}
+                    <CampoRotulado rotulo="Obstétrico">
+                        <textarea
+                            data-campo="obstetrico"
+                            value={antecedentesCampos.obstetrico}
+                            rows={2}
+                            onChange={e => alterarAntecedente("obstetrico", e.target.value)}
+                            style={estiloArea}
+                        />
+                    </CampoRotulado>
+                    <CampoRotulado rotulo="DUM">
+                        <input
+                            data-campo="dum"
+                            type="date"
+                            value={antecedentesCampos.dum}
+                            onChange={e => alterarAntecedente("dum", e.target.value)}
+                            style={estiloCampo}
+                        />
+                    </CampoRotulado>
                 </SubGrupo>
                 <CampoRotulado rotulo="Familiares">
                     <textarea
@@ -395,17 +452,66 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
                 </CampoRotulado>
             </Bloco>
 
-            <Bloco rotulo="Hábitos" cor={COR_HABITOS} colapsavel abertoInicial={temHabitos}>
-                {HABITOS_CAMPOS.map(campo => (
-                    <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
-                        <input
-                            data-campo={campo.chave}
-                            value={habitosCampos[campo.chave]}
-                            onChange={e => alterarHabito(campo.chave, e.target.value)}
-                            style={estiloCampo}
-                        />
-                    </CampoRotulado>
-                ))}
+            <Bloco rotulo="Medicamentos" cor="#f59e0b" colapsavel abertoInicial={true}>
+                {MEDICAMENTOS_CAMPOS.map(campo => {
+                    if (!campo.multilinha) {
+                        return (
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                                <input
+                                    data-campo={campo.chave}
+                                    value={medicamentosCampos[campo.chave]}
+                                    onChange={e => alterarMedicamento(campo.chave, e.target.value)}
+                                    style={estiloCampo}
+                                />
+                            </CampoRotulado>
+                        )
+                    }
+                    return (
+                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                            <textarea
+                                data-campo={campo.chave}
+                                value={medicamentosCampos[campo.chave]}
+                                rows={2}
+                                onChange={e => alterarMedicamento(campo.chave, e.target.value)}
+                                style={estiloArea}
+                            />
+                        </CampoRotulado>
+                    )
+                })}
+            </Bloco>
+
+            <Bloco
+                rotulo="Hábitos"
+                cor={COR_HABITOS}
+                colapsavel
+                abertoInicial={false}
+                sempreVisivelChildren={
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {HABITOS_CAMPOS.filter(c => c.sempreVisivel).map(campo => (
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                                <input
+                                    data-campo={campo.chave}
+                                    value={habitosCampos[campo.chave]}
+                                    onChange={e => alterarHabito(campo.chave, e.target.value)}
+                                    style={estiloCampo}
+                                />
+                            </CampoRotulado>
+                        ))}
+                    </div>
+                }
+            >
+                <SubGrupo rotulo="Outros hábitos">
+                    {HABITOS_CAMPOS.filter(c => !c.sempreVisivel).map(campo => (
+                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                            <input
+                                data-campo={campo.chave}
+                                value={habitosCampos[campo.chave]}
+                                onChange={e => alterarHabito(campo.chave, e.target.value)}
+                                style={estiloCampo}
+                            />
+                        </CampoRotulado>
+                    ))}
+                </SubGrupo>
             </Bloco>
         </div>
     )
@@ -416,9 +522,10 @@ export function DadosBaseForm({ value, onChange, onSexoChange }: DadosBaseFormPr
 export interface ListaProblemasFormProps {
     value: string
     onChange: (v: string) => void
+    onSendToAssessment: (texto: string) => void
 }
 
-export function ListaProblemasForm({ value, onChange }: ListaProblemasFormProps) {
+export function ListaProblemasForm({ value, onChange, onSendToAssessment }: ListaProblemasFormProps) {
     const [campos, setCampos] = React.useState<ListaProblemas>(LISTA_PROBLEMAS_VAZIO)
     const emitidoRef = React.useRef<string | null>(null)
 
@@ -428,33 +535,31 @@ export function ListaProblemasForm({ value, onChange }: ListaProblemasFormProps)
         setCampos(parseListaProblemas(value))
     }, [value])
 
-    const alterar = React.useCallback((chave: keyof ListaProblemas, novo: string) => {
-        const proximo = { ...parseListaProblemas(value), [chave]: novo }
+    const alterar = React.useCallback((novo: string) => {
+        const proximo = { texto: novo }
         setCampos(proximo)
         const linha = compositarListaProblemas(proximo)
         emitidoRef.current = linha
         onChange(linha)
-    }, [onChange, value])
-
-    const categorias = CATEGORIAS_LISTA
+    }, [onChange])
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px", padding: "8px 0 12px 0" }}>
-            {categorias.map(categoria => (
-                <div key={categoria.chave} style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <span style={{ fontSize: "11px", fontWeight: 700, color: COR_CATEGORIA[categoria.chave], fontFamily: '"Google Sans Flex", sans-serif', display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: COR_CATEGORIA[categoria.chave], display: "inline-block", flexShrink: 0 }} />
-                        {categoria.rotulo}
-                    </span>
-                    <textarea
-                        data-categoria={categoria.chave}
-                        value={campos[categoria.chave]}
-                        rows={3}
-                        onChange={e => alterar(categoria.chave, e.target.value)}
-                        style={{ ...estiloArea, minHeight: "68px" }}
-                    />
-                </div>
-            ))}
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
+            <textarea
+                data-categoria="texto"
+                value={campos.texto}
+                rows={4}
+                onChange={e => alterar(e.target.value)}
+                style={{ ...estiloArea, minHeight: "88px" }}
+            />
+            <button
+                type="button"
+                onClick={() => onSendToAssessment(campos.texto)}
+                disabled={!campos.texto.trim()}
+                style={{ alignSelf: "flex-end", border: "1px solid rgba(234,179,8,0.3)", borderRadius: "6px", padding: "6px 10px", background: "rgba(234,179,8,0.08)", color: "#ca8a04", fontSize: "12px", fontWeight: 600, cursor: campos.texto.trim() ? "pointer" : "default", opacity: campos.texto.trim() ? 1 : 0.45 }}
+            >
+                → Avaliação
+            </button>
         </div>
     )
 }

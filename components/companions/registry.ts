@@ -39,13 +39,20 @@ import { CONTEXTO_VAZIO, type ContextoPaciente } from "../../lib/contexto-pacien
 const ctxSeguro = (ctx: ContextoPaciente | undefined) => ctx || CONTEXTO_VAZIO
 const idadeMinima = (ctx: ContextoPaciente | undefined, min: number) => {
     const c = ctxSeguro(ctx)
-    return c.idade !== null && c.idade >= min
+    return c.idade === null || c.idade >= min
 }
 const idadeMaxima = (ctx: ContextoPaciente | undefined, max: number) => {
     const c = ctxSeguro(ctx)
-    return c.idade !== null && c.idade < max
+    return c.idade === null || c.idade < max
 }
-const somenteFeminino = (ctx: ContextoPaciente | undefined) => ctxSeguro(ctx).sexo === "F"
+const idadeAcima = (ctx: ContextoPaciente | undefined, min: number) => {
+    const idade = ctxSeguro(ctx).idade
+    return idade === null || idade > min
+}
+const somenteFeminino = (ctx: ContextoPaciente | undefined) => {
+    const sexo = ctxSeguro(ctx).sexo
+    return sexo === "" || sexo === "F"
+}
 
 export const COMPANIONS: CompanionConfig[] = [
     {
@@ -77,13 +84,6 @@ export const COMPANIONS: CompanionConfig[] = [
         placement: "after-objetivo",
     },
     {
-        id: "rastreios",
-        label: "Rastreios",
-        component: RastreiosPreventivos,
-        outputGroups: [],
-        placement: "after-subjetivo",
-    },
-    {
         id: "geriatria",
         label: "Geriatria",
         component: GeriatriaUI,
@@ -101,7 +101,7 @@ export const COMPANIONS: CompanionConfig[] = [
     },
     {
         id: "psiquiatria",
-        label: "Psiquiatria",
+        label: "Exame mental",
         component: PsiquiatriaUI,
         outputGroups: [
             { id: "tudo", label: "exame do estado mental", targetSection: "objetivo" },
@@ -128,8 +128,15 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "ig_dpp", label: "IG + DPP", targetSection: "avaliacao" },
             { id: "risco", label: "Risco gestacional (MS)", targetSection: "avaliacao" },
         ],
-        placement: "after-subjetivo",
-        when: somenteFeminino,
+        placement: "after-objetivo",
+        when: (ctx) => somenteFeminino(ctx) && idadeAcima(ctx, 14),
+    },
+    {
+        id: "rastreios",
+        label: "Rastreios",
+        component: RastreiosPreventivos,
+        outputGroups: [],
+        placement: "after-objetivo",
     },
     {
         id: "encaminha",
@@ -139,5 +146,6 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "texto", label: "encaminhamento", targetSection: "plano" },
         ],
         placement: "after-plano",
+        when: () => false,
     },
 ]

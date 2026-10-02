@@ -14,6 +14,7 @@ import CalculadoraGestacional from "./prenatal_ui"
 import { CONTEXTO_VAZIO, definirSexoContexto, extrairContexto } from "../../lib/contexto-paciente"
 import { DadosBaseForm, ListaProblemasForm } from "./dados_base_ui"
 import { SubjetivoForm } from "./subjetivo_ui"
+import { ObjetivoForm } from "./objetivo_ui"
 import { extrairLinhaId, compositarDadosBase, parseDadosBase } from "../../lib/dados-base"
 
 const COMPANION_BY_PLACEMENT: Record<string, CompanionConfig[]> = {
@@ -93,43 +94,6 @@ async function authenticateWithUsername(username: string, password: string) {
     if (upsertError) throw new Error(upsertError.message || "Erro ao salvar dados")
 }
 
-/* ── Module dictionary (lazy-loaded) ─────────────────────────────── */
-interface Modulo {
-    id: string
-    label: string
-    text: string
-}
-
-interface Template {
-    id: string
-    label: string
-    content?: string
-    file?: string
-}
-
-interface ModulosData {
-    modulos: Record<string, Modulo[]>
-    templates: Template[]
-}
-
-let modulosCache: ModulosData = { modulos: { subjetivo: [], objetivo: [], avaliacao: [], plano: [] }, templates: [] }
-let modulosLoaded = false
-async function carregarModulos(): Promise<ModulosData> {
-    if (modulosLoaded) return modulosCache
-    try {
-        const res = await fetch("/contents/bloco_modulos.json")
-        const raw = await res.json()
-        modulosCache = {
-            modulos: raw.modulos || raw,
-            templates: raw.templates || [],
-        }
-    } catch {
-        modulosCache = { modulos: { subjetivo: [], objetivo: [], avaliacao: [], plano: [] }, templates: [] }
-    }
-    modulosLoaded = true
-    return modulosCache
-}
-
 /* ── Types ───────────────────────────────────────────────────────── */
 export interface BlocoActions {
     copiar(): void
@@ -148,11 +112,11 @@ interface Section {
     enabled: boolean
 }
 
-const SECTION_META: { id: string; title: string; label: string; letter: string; color: string; bg: string; border: string; optional: boolean; formulario: "dados_base" | "lista_problemas" | "subjetivo" | null; coluna: "esquerda" | "direita" }[] = [
+const SECTION_META: { id: string; title: string; label: string; letter: string; color: string; bg: string; border: string; optional: boolean; formulario: "dados_base" | "lista_problemas" | "subjetivo" | "objetivo" | null; coluna: "esquerda" | "direita" }[] = [
     { id: "dados_base", title: "Dados base:", label: "Dados base", letter: "D", color: "#8b5cf6", bg: "rgba(139,92,246,0.06)", border: "rgba(139,92,246,0.18)", optional: false, formulario: "dados_base", coluna: "esquerda" },
     { id: "lista_problemas", title: "Lista de Problemas", label: "Lista de Problemas", letter: "L", color: "#6366f1", bg: "rgba(99,102,241,0.06)", border: "rgba(99,102,241,0.18)", optional: false, formulario: "lista_problemas", coluna: "esquerda" },
     { id: "subjetivo", title: "Subjetivo", label: "Subjetivo", letter: "S", color: "#3b82f6", bg: "rgba(59,130,246,0.06)", border: "rgba(59,130,246,0.18)", optional: false, formulario: "subjetivo", coluna: "direita" },
-    { id: "objetivo", title: "Objetivo", label: "Objetivo", letter: "O", color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", optional: true, formulario: null, coluna: "direita" },
+    { id: "objetivo", title: "Objetivo", label: "Objetivo", letter: "O", color: "#22c55e", bg: "rgba(34,197,94,0.06)", border: "rgba(34,197,94,0.18)", optional: true, formulario: "objetivo", coluna: "direita" },
     { id: "avaliacao", title: "Avaliação", label: "Avaliação", letter: "A", color: "#eab308", bg: "rgba(234,179,8,0.06)", border: "rgba(234,179,8,0.18)", optional: false, formulario: null, coluna: "direita" },
     { id: "plano", title: "Plano", label: "Plano", letter: "P", color: "#f97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.18)", optional: false, formulario: null, coluna: "direita" },
 ]
@@ -270,9 +234,19 @@ function parseSections(text: string): { title: string; sections: Section[] } {
 function mergeSections(title: string, sections: Section[]): string {
     const parts: string[] = []
     if (title.trim()) parts.push(`# ${title.trim()}`)
+    let separadorSoapAdicionado = false
     for (const s of sections) {
         if (!s.enabled && s.optional) continue
-        if (s.content.trim()) parts.push(`## ${s.title}\n${s.content}`)
+        if (s.content.trim()) {
+            if (!separadorSoapAdicionado && ["subjetivo", "objetivo", "avaliacao", "plano"].includes(s.id)) {
+                parts.push("---")
+                separadorSoapAdicionado = true
+            }
+            const content = ["avaliacao", "plano"].includes(s.id)
+                ? s.content.split("\n").map(l => l.trim() ? `- ${l.replace(/^\s*-\s*/, "")}` : "").join("\n")
+                : s.content
+            parts.push(`## ${s.title}\n${content}`)
+        }
     }
     return parts.join("\n\n")
 }
@@ -315,13 +289,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Editor refs ── */
     const sectionEditorRefs = React.useRef<Record<string, HTMLDivElement>>({})
 
-    /* ── Module dropdown ── */
-    const [openModuleDropdown, setOpenModuleDropdown] = React.useState<string | null>(null)
-    const [dropdownPos, setDropdownPos] = React.useState<{ x: number; y: number } | null>(null)
     const [focusedSectionId, setFocusedSectionId] = React.useState<string | null>(null)
-    const [openTemplateDropdown, setOpenTemplateDropdown] = React.useState(false)
-    const [modulos, setModulos] = React.useState<ModulosData>({ modulos: { subjetivo: [], objetivo: [], avaliacao: [], plano: [] }, templates: [] })
-    const dropdownContainerRefs = React.useRef<Record<string, HTMLDivElement>>({})
 
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
@@ -396,6 +364,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     }, [])
     const [companionToast, setCompanionToast] = React.useState<string | null>(null)
 
+    /* ── Overlay (fullscreen) mode ── */
+    const [isOverlay, setIsOverlay] = React.useState(false)
+
     /* ── Plaintext mode ── */
     const [plaintext, setPlaintext] = React.useState(false)
     const [plainTextContent, setPlainTextContent] = React.useState("")
@@ -414,6 +385,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [authLoading, setAuthLoading] = React.useState(false)
     const usernameInputRef = React.useRef<HTMLInputElement>(null)
     const initialContentRef = React.useRef<string | null>(null)
+
+    React.useEffect(() => {
+        if (showUsernameInput) usernameInputRef.current?.focus()
+    }, [showUsernameInput])
 
     /* ── Editing state ── */
     const [edicaoIniciada, setEdicaoIniciada] = React.useState(false)
@@ -477,58 +452,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         setSections(prev => prev.map(s =>
             s.id === "objetivo" ? { ...s, enabled: !s.enabled, collapsed: !s.enabled ? false : s.collapsed } : s
         ))
-    }, [])
-
-    /* ── Module handling ── */
-    React.useEffect(() => {
-        carregarModulos().then(setModulos)
-    }, [])
-
-    const appendModule = useCallback((sectionId: string, moduleText: string) => {
-        const el = sectionEditorRefs.current[sectionId]
-        if (el) {
-            el.focus()
-            const sel = window.getSelection()
-            if (sel && sel.rangeCount) {
-                const range = sel.getRangeAt(0)
-                if (el.contains(range.startContainer)) {
-                    const frag = document.createDocumentFragment()
-                    const lines = moduleText.split("\n")
-                    lines.forEach((line, i) => {
-                        if (i > 0) frag.appendChild(document.createElement("br"))
-                        if (line === "") {
-                            frag.appendChild(document.createElement("br"))
-                        } else {
-                            frag.appendChild(document.createTextNode(line))
-                        }
-                    })
-                    range.deleteContents()
-                    range.insertNode(frag)
-                    range.collapse(false)
-                    sel.removeAllRanges()
-                    sel.addRange(range)
-                } else {
-                    const sep = (el.innerText || "") && !(el.innerText || "").endsWith("\n") ? "\n" : ""
-                    el.innerHTML += sep + moduleText.split("\n").map(l => l === "" ? "<div><br></div>" : `<div>${l}</div>`).join("")
-                }
-            } else {
-                const sep = (el.innerText || "") && !(el.innerText || "").endsWith("\n") ? "\n" : ""
-                el.innerHTML += sep + moduleText.split("\n").map(l => l === "" ? "<div><br></div>" : `<div>${l}</div>`).join("")
-            }
-            const text = limparTextoInvisivel(el.innerText || "")
-            setSections(prev => prev.map(s => s.id === sectionId ? { ...s, content: text } : s))
-        } else {
-            setSections(prev => prev.map(s => {
-                if (s.id !== sectionId) return s
-                const sep = s.content && !s.content.endsWith("\n") ? "\n" : ""
-                return { ...s, content: s.content + sep + moduleText }
-            }))
-        }
-        setOpenModuleDropdown(null)
-        if (edicaoIniciadaRef.current === null) {
-            edicaoIniciadaRef.current = Date.now()
-            setEdicaoIniciada(true)
-        }
     }, [])
 
     /* ── Companion output append ── */
@@ -797,6 +720,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             setEdicaoIniciada(false)
             edicaoIniciadaRef.current = null
             resetAllCompanions()
+            definirSexoContexto("")
         },
         cronometro: () => {
             fecharCronometroCompleto()
@@ -1230,8 +1154,20 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         setSections(prev => prev.map(s => (s.id === "lista_problemas" ? { ...s, content: linha } : s)))
     }, [])
 
+    const enviarListaProblemasParaAvaliacao = useCallback((texto: string) => {
+        const conteudo = texto.trim()
+        if (!conteudo) return
+        setSections(prev => prev.map(s => s.id === "avaliacao"
+            ? { ...s, content: conteudo + (s.content.trim() ? `\n${s.content.trim()}` : "") }
+            : s))
+    }, [])
+
     const handleSubjetivoChange = useCallback((linha: string) => {
         setSections(prev => prev.map(s => (s.id === "subjetivo" ? { ...s, content: linha } : s)))
+    }, [])
+
+    const handleObjetivoChange = useCallback((linha: string) => {
+        setSections(prev => prev.map(s => (s.id === "objetivo" ? { ...s, content: linha } : s)))
     }, [])
 
     /* Sexo/idade drive which companions are offered (prenatal, puericultura, geriatria, escores).
@@ -1243,7 +1179,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         const sec = sections.find(s => s.id === "dados_base")
         const linha = sec && sec.content.trim() ? extrairLinhaId(sec.content) : ""
         const base = linha ? extrairContexto(linha) : CONTEXTO_VAZIO
-        return { ...base, sexo: sexoIdentificacao }
+        return { ...base, sexo: sexoIdentificacao || base.sexo }
     }, [sections, sexoIdentificacao])
 
     const handleSexoChange = useCallback((sexo: "M" | "F" | "") => {
@@ -1256,11 +1192,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     /* ── Render a section card (+ its placement companions) inside a column ── */
     const renderColuna = (coluna: "esquerda" | "direita", s: Section): React.ReactNode[] => {
         const meta = SECTION_META.find(m => m.id === s.id)!
-        const charCount = s.content.length
-        const isOpen = openModuleDropdown === s.id
-        /* Subjetivo keeps its module dropdown: the inserted blocks (gestação,
-           hábitos de vida, ...) are preserved verbatim below the motivos. */
-        const sectionModulos = meta.formulario === "dados_base" || meta.formulario === "lista_problemas" ? [] : (modulos.modulos[s.id] || [])
         const placementKey = coluna === "direita" && (s.id === "subjetivo" || s.id === "objetivo" || s.id === "plano") ? "after-" + s.id : null
 
         /* Per-section timer progress (0-100, resets when section done) */
@@ -1290,21 +1221,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 </div>
                             )}
 
-                            {/* Module dropdown */}
-                            {s.enabled && sectionModulos.length > 0 && (
-                                <div ref={el => { if (el) dropdownContainerRefs.current[s.id] = el }} style={{ position: "relative" }}>
-                                    <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); if (isOpen) { setOpenModuleDropdown(null); setDropdownPos(null) } else { const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setDropdownPos({ x: r.right - 180, y: r.bottom + 4 }); setOpenModuleDropdown(s.id) } }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: `1px solid ${isOpen ? meta.color : "var(--meta-border)"}`, background: isOpen ? meta.bg : "transparent", color: meta.color, fontSize: "13px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: '"Google Sans Flex", sans-serif', padding: 0, lineHeight: 1 }}>+</button>
-                                </div>
-                            )}
-
                             {/* Copy section button */}
-                            {s.enabled && s.content.trim() && (
-                                <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}\n${s.content.trim()}`) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.5 }} title="copiar seção">
+                            {s.enabled && (
+                                <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}${s.content.trim() ? `\n${s.content.trim()}` : ""}`) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.75 }} title="copiar seção" aria-label={`copiar seção ${s.title}`}>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                                 </button>
                             )}
 
-                            <span style={{ fontSize: "10px", color: "var(--meta-text)", fontFamily: '"Google Sans Flex", sans-serif', opacity: 0.7, flexShrink: 0 }}>{charCount} caract.</span>
                         </div>
                     </div>
                 </div>
@@ -1322,9 +1245,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 {meta.formulario === "dados_base" ? (
                                     <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} onSexoChange={handleSexoChange} />
                                 ) : meta.formulario === "lista_problemas" ? (
-                                    <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} />
-                                ) : (
+                                    <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
+                                ) : meta.formulario === "subjetivo" ? (
                                     <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} />
+                                ) : (
+                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} />
                                 )}
                             </div>
                         ) : (
@@ -1362,23 +1287,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         return [cartao, ...COMPANION_BY_PLACEMENT[placementKey].filter(companionVisivel).map(renderCompanionCard)]
     }
 
-    /* ── Close dropdown on outside click ── */
-    React.useEffect(() => {
-        if (!openModuleDropdown) return
-        const handler = (e: MouseEvent) => {
-            const container = dropdownContainerRefs.current[openModuleDropdown]
-            if (container && !container.contains(e.target as Node) && !(e.target as HTMLElement)?.closest?.("[data-bloco-dropdown]")) {
-                setOpenModuleDropdown(null)
-                setDropdownPos(null)
-            }
-        }
-        document.addEventListener("mousedown", handler)
-        return () => document.removeEventListener("mousedown", handler)
-    }, [openModuleDropdown])
-
     /* ── Render ── */
     return (
-        <div className="framer-editor-container" style={{ width: "100%", height: "100%", borderRadius: "10px", boxSizing: "border-box", overflow: "hidden", position: "relative", overflowX: "hidden" }}>
+        <>{isOverlay && createPortal(
+            <div onClick={() => setIsOverlay(false)} style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 9998 }} />,
+            document.body
+        )}
+        <div className="framer-editor-container" style={{ ...(isOverlay ? { position: "fixed", top: "16px", left: "16px", right: "16px", bottom: "16px", width: "auto", height: "auto", zIndex: 9999, borderRadius: "16px", boxShadow: "0 25px 60px rgba(0,0,0,0.4)" } : { width: "100%", height: "100%", borderRadius: "10px" }), boxSizing: "border-box", overflow: "hidden", position: isOverlay ? "fixed" : "relative", overflowX: "hidden" }}>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
                 :root {
@@ -1451,12 +1366,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .bloco-section-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 40px; font-size: 15px; line-height: 1.5; color: var(--editor-text); outline: none; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 2px 0 16px 0; overflow-x: hidden; }
                 /* Dashboard columns: the left one is narrower (structured data),
                    the right one takes the rest (free-text SOAP + companions). */
-                .bloco-colunas { display: grid; grid-template-columns: minmax(260px, 34%) minmax(0, 1fr); gap: 0 16px; align-items: start; }
+                .bloco-colunas { display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr); gap: 0 16px; align-items: start; }
                 .bloco-coluna { min-width: 0; }
-                .bloco-coluna-esq { position: sticky; top: 0; align-self: start; max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 4px; }
+                .bloco-coluna-esq { position: sticky; top: 0; align-self: start; max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 4px; overflow-x: hidden; }
                 @media (max-width: 900px) {
                     .bloco-colunas { grid-template-columns: minmax(0, 1fr); gap: 0; }
-                    .bloco-coluna-esq { position: static; max-height: none; overflow-y: visible; padding-right: 0; }
+                    .bloco-coluna-esq { position: static; max-height: none; overflow-y: visible; padding-right: 0; overflow-x: hidden; }
                 }
                 .bloco-section-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
                 .bloco-section-editor[data-extrapolada]:empty:before { color: rgba(255,255,255,0.6); }
@@ -1473,7 +1388,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .bloco-plaintext-editor div:empty { height: 1em; }
 
 
-                .bloco-module-item:hover { background: var(--meta-bg) !important; }
                 .bloco-icon-btn { transition: background 0.15s, color 0.15s, opacity 0.15s, transform 0.1s; }
                 .bloco-icon-btn:hover { background: var(--meta-bg) !important; color: var(--editor-text) !important; opacity: 1 !important; }
                 .bloco-icon-btn:active { transform: scale(0.9); }
@@ -1646,53 +1560,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <button className="bloco-icon-btn" onClick={() => requestConfirm("deseja substituir o conteúdo atual pelo texto copiado?", () => editor.colar())} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setPlaintext(false); setPlainTextContent(""); setExpandedCompanions({}); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions() })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setPlaintext(false); setPlainTextContent(""); setExpandedCompanions({}); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions(); definirSexoContexto("") })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                     </button>
-                    {modulos.templates.length > 0 && (
-                        <div style={{ position: "relative" }}>
-                            <button className="bloco-icon-btn" onClick={() => setOpenTemplateDropdown(!openTemplateDropdown)} style={{ flexShrink: 0, height: "28px", borderRadius: "6px", border: `1px solid ${openTemplateDropdown ? "#3b82f6" : "var(--meta-border)"}`, background: openTemplateDropdown ? "rgba(59,130,246,0.06)" : "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 10px", fontSize: "11px", fontWeight: 600, fontFamily: '"Google Sans Flex", sans-serif', gap: "4px" }} title="modelos">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                                Modelos
-                            </button>
-                            {openTemplateDropdown && (
-                                <>
-                                    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 99 }} onClick={() => setOpenTemplateDropdown(false)} />
-                                    <div style={{ position: "absolute", top: "calc(100% + 4px)", right: 0, background: "var(--editor-bg)", border: "1px solid var(--editor-border)", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 100, minWidth: "180px", overflow: "hidden" }}>
-                                        {modulos.templates.map(t => (
-                                            <button key={t.id} onClick={async () => {
-                                                const loadAndApply = async () => {
-                                                    let text = t.content || ""
-                                                    if (!text && t.file) {
-                                                        try { const res = await fetch(t.file); text = await res.text() } catch {}
-                                                    }
-                                                    if (plaintext) {
-                                                        externalUpdateRef.current = true; plainTextVersionRef.current++
-                                                        setPlainTextContent(text)
-                                                    } else {
-                                                        externalUpdateRef.current = true; bumpAllVersions()
-                                                        const parsed = parseSections(text)
-                                                        setTitle(parsed.title)
-                                                        setSections(parsed.sections)
-                                                    }
-                                                    setExpandedCompanions({})
-                                                    setOpenTemplateDropdown(false)
-                                                    setEdicaoIniciada(true)
-                                                    edicaoIniciadaRef.current = Date.now()
-                                                    resetAllCompanions()
-                                                    agendarSugestaoTimer()
-                                                }
-                                                if (!sections.some(s => s.content.trim())) { await loadAndApply(); return }
-                                                setConfirmAction({ message: "deseja substituir o conteúdo atual por este modelo?", onConfirm: loadAndApply })
-                                            }} className="bloco-module-item" data-bg="rgba(59,130,246,0.06)" style={{ display: "block", width: "100%", padding: "8px 12px", border: "none", background: "transparent", color: "var(--editor-text)", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', textAlign: "left", cursor: "pointer" }}>
-                                                {t.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    )}
+                    <button className="bloco-icon-btn" onClick={() => setIsOverlay(prev => !prev)} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: `1px solid ${isOverlay ? "#3b82f6" : "var(--meta-border)"}`, background: isOverlay ? "rgba(59,130,246,0.1)" : "var(--meta-bg)", backdropFilter: "blur(4px)", color: isOverlay ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title={isOverlay ? "sair da tela cheia" : "tela cheia"}>
+                        {isOverlay ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                        )}
+                    </button>
                     </div>
                 </div>
 
@@ -1856,17 +1733,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <span>✓</span><span>{companionToast}</span>
                 </div>
             )}
-            {openModuleDropdown && dropdownPos && createPortal(
-                <div data-bloco-dropdown onClick={e => e.stopPropagation()} style={{ position: "fixed", top: dropdownPos.y, left: dropdownPos.x, background: "var(--editor-bg)", border: "1px solid var(--editor-border)", borderRadius: "8px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 9999, minWidth: "180px", overflow: "hidden" }}>
-                    {(modulos.modulos[openModuleDropdown] || []).map(m => (
-                        <button key={m.id} onClick={() => { appendModule(openModuleDropdown, m.text); setOpenModuleDropdown(null); setDropdownPos(null) }} className="bloco-module-item" style={{ display: "block", width: "100%", padding: "8px 12px", border: "none", background: "transparent", color: "var(--editor-text)", fontSize: "12px", fontFamily: '"Google Sans Flex", sans-serif', textAlign: "left", cursor: "pointer" }}>
-                            {m.label}
-                        </button>
-                    ))}
-                </div>,
-                document.body
-            )}
+
         </div>
+        </>
     )
 })
 

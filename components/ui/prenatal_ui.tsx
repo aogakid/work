@@ -1,6 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle, useRef, useState, useMemo } from "react"
 import type { CompanionActions } from "../companions/registry"
+import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 
 
 const injectStyles = `
@@ -2212,6 +2213,19 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
     const [usSemanas, setUsSemanas] = useState("")
     const [usDias, setUsDias] = useState("")
 
+    React.useEffect(() => {
+        const snapshot = getFieldSyncSnapshot()
+        if (snapshot.dum !== undefined) setDum(snapshot.dum)
+        return listenFieldSync(({ source, values }) => {
+            if (source !== "prenatal" && values.dum !== undefined) setDum(values.dum)
+        })
+    }, [])
+
+    const alterarDum = (novo: string) => {
+        setDum(novo)
+        broadcastFieldSync("prenatal", { dum: novo }, true)
+    }
+
     const [riscoMarcados, setRiscoMarcados] = useState<Record<string, boolean>>({})
 
     const riscoResultado = useMemo(
@@ -2258,7 +2272,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset() {
             setActiveTab("calc")
-            setDum(""); setUsDate(""); setUsSemanas(""); setUsDias("")
+            alterarDum(""); setUsDate(""); setUsSemanas(""); setUsDias("")
             setRiscoMarcados({})
         },
     }), [])
@@ -2317,7 +2331,7 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
                             type="date"
                             value={dum}
                             max={new Date().toISOString().split("T")[0]}
-                            onChange={(e) => setDum(e.target.value)}
+                            onChange={(e) => alterarDum(e.target.value)}
                             style={styles.input}
                         />
                     </div>
@@ -2636,4 +2650,3 @@ export default forwardRef<CompanionActions, Props>(function CalculadoraGestacion
         </div>
     )
 })
-

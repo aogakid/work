@@ -21,8 +21,8 @@ export interface ContextoPaciente {
 export const CONTEXTO_VAZIO: ContextoPaciente = { sexo: "", idade: null }
 
 export const OPCOES_SEXO: { valor: "M" | "F"; rotulo: string }[] = [
-    { valor: "M", rotulo: "Masculino (M)" },
-    { valor: "F", rotulo: "Feminino (F)" },
+    { valor: "M", rotulo: "M" },
+    { valor: "F", rotulo: "F" },
 ]
 
 export const OPCOES_ESTADO_CIVIL = [
@@ -63,17 +63,17 @@ export const IDENTIFICACAO_VAZIA: IdentificacaoCampos = {
 
 export function compositarIdentificacao(c: IdentificacaoCampos): string {
     const partes: string[] = []
-    if (c.nome.trim()) partes.push(c.nome.trim())
+    if (c.nome.trim()) partes.push(c.nome)
     if (c.idade.trim()) partes.push(c.idade.trim() + " anos")
-    if (c.estadoCivil.trim()) partes.push(c.estadoCivil.trim())
-    if (c.composicao.trim()) partes.push(c.composicao.trim())
-    if (c.religiao.trim()) partes.push(c.religiao.trim())
-    if (c.escolaridade.trim()) partes.push(c.escolaridade.trim())
-    if (c.ocupacao.trim()) partes.push(c.ocupacao.trim())
-    if (c.naturalidade.trim()) partes.push("natural de " + c.naturalidade.trim())
-    if (c.residencia.trim()) partes.push("residente em " + c.residencia.trim())
-    if (c.procedencia.trim()) partes.push("procedente de " + c.procedencia.trim())
-    if (c.acs.trim()) partes.push("ACS " + c.acs.trim())
+    if (c.estadoCivil.trim()) partes.push(c.estadoCivil)
+    if (c.composicao.trim()) partes.push(c.composicao)
+    if (c.religiao.trim()) partes.push(c.religiao)
+    if (c.escolaridade.trim()) partes.push(c.escolaridade)
+    if (c.ocupacao.trim()) partes.push(c.ocupacao)
+    if (c.naturalidade.trim()) partes.push("natural de " + c.naturalidade)
+    if (c.residencia.trim()) partes.push("residente em " + c.residencia)
+    if (c.procedencia.trim()) partes.push("procedente de " + c.procedencia)
+    if (c.acs.trim()) partes.push("ACS " + c.acs)
     return partes.join(", ")
 }
 

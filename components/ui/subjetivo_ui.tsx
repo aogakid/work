@@ -23,9 +23,11 @@ const estiloCampo = {
 
 const estiloArea = {
     ...estiloCampo,
-    resize: "vertical",
-    minHeight: "52px",
+    resize: "none",
+    minHeight: "40px",
     lineHeight: 1.45,
+    overflow: "hidden",
+    height: "auto",
 } as React.CSSProperties
 
 const estiloBotao: React.CSSProperties = {
@@ -54,7 +56,9 @@ export interface SubjetivoFormProps {
    pair, and numbering is re-derived on every compose. */
 export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     const [campos, setCampos] = React.useState<Subjetivo>(SUBJETIVO_VAZIO)
+    const [hoverMotivo, setHoverMotivo] = React.useState<number | null>(null)
     const emitidoRef = React.useRef<string | null>(null)
+    const textareaRefs = React.useRef<Record<number, HTMLTextAreaElement>>({})
 
     React.useEffect(() => {
         if (emitidoRef.current === value) return
@@ -87,13 +91,37 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     const removerMotivo = React.useCallback((indice: number) => {
         const base = parseSubjetivo(value)
         const motivos = base.motivos.filter((_, i) => i !== indice)
+        // Clean up ref
+        delete textareaRefs.current[indice]
+        setHoverMotivo(null)
         aplicar({ ...base, motivos: motivos.length ? motivos : [{ ...MOTIVO_VAZIO }] })
     }, [aplicar, value])
 
     const handleAcompanhante = (e: React.ChangeEvent<HTMLInputElement>) => alterarAcompanhante(e.target.value)
     const handleMotivo = (indice: number) => (e: React.ChangeEvent<HTMLInputElement>) => alterarMotivo(indice, "motivo", e.target.value)
-    const handleTexto = (indice: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => alterarMotivo(indice, "texto", e.target.value)
-    const handleRemover = (indice: number) => () => removerMotivo(indice)
+    const handleTexto = (indice: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        alterarMotivo(indice, "texto", e.target.value)
+        // Auto-resize textarea
+        const textarea = textareaRefs.current[indice]
+        if (textarea) {
+            textarea.style.height = "auto"
+            textarea.style.height = textarea.scrollHeight + "px"
+        }
+    }
+
+    // Auto-resize textareas when number of motivos changes
+    React.useEffect(() => {
+        setTimeout(() => {
+            campos.motivos.forEach((_, i) => {
+                const textarea = textareaRefs.current[i]
+                if (textarea) {
+                    textarea.style.height = "auto"
+                    textarea.style.height = textarea.scrollHeight + "px"
+                }
+            })
+        }, 0)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [campos.motivos.length])
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "10px 0 12px 0" }}>
@@ -107,38 +135,52 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                 />
             </div>
 
-            {campos.motivos.map((motivo, i) => (
-                <div key={i} style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--meta-text)", fontFamily: '"Google Sans Flex", sans-serif', minWidth: "12px", textAlign: "right" }}>{i + 1}.</span>
-                        <input
-                            data-motivo={i}
-                            value={motivo.motivo}
-                            onChange={handleMotivo(i)}
-                            placeholder="motivo da consulta"
-                            style={{ ...estiloCampo, width: "auto", flex: "1 1 0", minWidth: 0 }}
-                        />
-                        <button
-                            type="button"
-                            aria-label={`Remover motivo ${i + 1}`}
-                            onClick={handleRemover(i)}
-                            style={{ flexShrink: 0, width: "24px", height: "24px", borderRadius: "6px", border: "1px solid var(--editor-border)", background: "transparent", color: "var(--meta-text)", fontSize: "13px", lineHeight: 1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                        >
-                            ×
-                        </button>
+            {campos.motivos.map((motivo, i) => {
+                const deletavel = campos.motivos.length > 1 || motivo.motivo.trim() !== "" || motivo.texto.trim() !== ""
+                const hovering = deletavel && hoverMotivo === i
+                return (
+                    <div key={i} style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <span
+                                onMouseEnter={() => { if (deletavel) setHoverMotivo(i) }}
+                                onMouseLeave={() => setHoverMotivo(prev => (prev === i ? null : prev))}
+                                onClick={() => { if (hovering) removerMotivo(i) }}
+                                title={deletavel ? "Clique para excluir motivo" : undefined}
+                                style={{
+                                    fontSize: "11px",
+                                    fontWeight: 700,
+                                    color: hovering ? "#ef4444" : "var(--meta-text)",
+                                    fontFamily: '"Google Sans Flex", sans-serif',
+                                    minWidth: "16px",
+                                    textAlign: "right",
+                                    cursor: hovering ? "pointer" : "default",
+                                    userSelect: "none",
+                                    transition: "color 120ms ease",
+                                }}
+                            >
+                                {hovering ? "−" : `${i + 1}.`}
+                            </span>
+                            <input
+                                data-motivo={i}
+                                value={motivo.motivo}
+                                onChange={handleMotivo(i)}
+                                placeholder="motivo da consulta"
+                                style={{ ...estiloCampo, width: "auto", flex: "1 1 0", minWidth: 0 }}
+                            />
+                        </div>
+                        {/* width:100% + margin estourava o card: o recuo vai no wrapper */}
+                        <div style={{ paddingLeft: "22px" }}>
+                            <textarea
+                                ref={el => { if (el) textareaRefs.current[i] = el }}
+                                data-texto={i}
+                                value={motivo.texto}
+                                onChange={handleTexto(i)}
+                                style={estiloArea}
+                            />
+                        </div>
                     </div>
-                    {/* width:100% + margin estourava o card: o recuo vai no wrapper */}
-                    <div style={{ paddingLeft: "18px" }}>
-                        <textarea
-                            data-texto={i}
-                            value={motivo.texto}
-                            onChange={handleTexto(i)}
-                            rows={2}
-                            style={estiloArea}
-                        />
-                    </div>
-                </div>
-            ))}
+                )
+            })}
 
             <button type="button" onClick={adicionarMotivo} style={estiloBotao}>
                 + Adicionar motivo

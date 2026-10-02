@@ -2108,8 +2108,8 @@ const CalculadoraPREVENT = forwardRef<CompanionActions, Props>(function Calculad
                             style={styles.select}
                         >
                             <option value="">Selecione</option>
-                            <option value="F">Feminino</option>
-                            <option value="M">Masculino</option>
+                            <option value="F">F</option>
+                            <option value="M">M</option>
                         </select>
                     </div>
                     <div style={styles.inputGroup}>

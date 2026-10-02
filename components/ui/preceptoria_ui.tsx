@@ -29,15 +29,7 @@ const SECTION_META: SecaoMeta[] = [
 
 const BUROCRACIA_META: SecaoMeta = { id: "burocracia", title: "Burocracia", letter: "B", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.35)" }
 
-const MAPA_SECAO_ID: Record<string, string> = { S: "subjetivo", O: "objetivo", A: "avaliacao", P: "plano" }
-
 const corSecao = (secao: string) => secao === "S" ? "#3b82f6" : secao === "O" ? "#22c55e" : secao === "A" ? "#d9a707" : secao === "P" ? "#f97316" : secao === "B" ? "#8b5cf6" : "#ef4444"
-
-const TIPOS: { id: string; label: string }[] = [
-    { id: "consulta_agendada", label: "consulta agendada" },
-    { id: "pre_natal", label: "pré natal" },
-    { id: "puericultura", label: "puericultura" },
-]
 
 type Graus = Record<string, number>;
 const GRAUS_DEFAULT: Graus = { S: 180, O: 216, A: 252, P: 360 }
@@ -72,48 +64,6 @@ for (let i = 0; i < 12; i += 1) {
     MARCAS_RELOGIO.push({ x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], principal: i === 0 })
 }
 
-/* ── Template loading (per tipo / per section) ───────────────────── */
-type TemplatesData = { [tipo: string]: { [secId: string]: string } };
-
-let templatesCache: TemplatesData | null = null
-
-function parseTemplate(text: string): { [secId: string]: string } {
-    const out: { [secId: string]: string } = {}
-    const chunks = (text || "").split(/^## /m)
-    for (const chunk of chunks) {
-        if (!chunk.trim()) continue
-        const newlineIdx = chunk.indexOf("\n")
-        const header = newlineIdx >= 0 ? chunk.substring(0, newlineIdx).trim() : chunk.trim()
-        const content = newlineIdx >= 0 ? chunk.substring(newlineIdx + 1) : ""
-        const match = SECTION_META.find(m => m.title.toLowerCase() === header.toLowerCase())
-        if (match && content.trim()) out[match.id] = content.trim()
-    }
-    return out
-}
-
-async function carregarTemplateArquivo(id: string): Promise<string> {
-    const caminhos = [`/contents/templates/${id}.md`, `public/contents/templates/${id}.md`]
-    for (const caminho of caminhos) {
-        try {
-            const res = await fetch(caminho)
-            if (res.ok) return await res.text()
-        } catch {
-        }
-    }
-    return ""
-}
-
-async function carregarTemplates(): Promise<TemplatesData> {
-    if (templatesCache) return templatesCache
-    const result: TemplatesData = {}
-    for (const t of TIPOS) {
-        const text = await carregarTemplateArquivo(t.id)
-        result[t.id] = parseTemplate(text)
-    }
-    templatesCache = result
-    return result
-}
-
 /* ── Timer session ────────────────────────────────────────────────── */
 interface SessaoTimer {
     id: number
@@ -123,7 +73,6 @@ interface SessaoTimer {
     graus: Graus
     mostrarBurocracia: boolean
     tempoBurocracia: number
-    tipoSelecionado: string
 }
 
 const calcularLimites = (tempoLimite: number, graus: Graus, mostrarBurocracia: boolean, tempoBurocracia: number): Graus => ({
@@ -139,15 +88,13 @@ interface CronometroDashboardProps {
     graus: Graus
     mostrarBurocracia: boolean
     tempoBurocracia: number
-    tipoSelecionado: string
-    onAbrirTemplate: (secId: string) => void
     onSecaoChange: (secao: string) => void
     onReiniciar: () => void
     onExtrapolacaoChange?: (extrapolada: boolean) => void
 }
 
 const CronometroDashboard = (props: CronometroDashboardProps) => {
-    const { tempoLimite, graus, mostrarBurocracia, tempoBurocracia, tipoSelecionado, onAbrirTemplate, onSecaoChange, onReiniciar, onExtrapolacaoChange } = props
+    const { tempoLimite, graus, mostrarBurocracia, tempoBurocracia, onSecaoChange, onReiniciar, onExtrapolacaoChange } = props
 
     /* ── Timer state ── */
     const [segundosDecorridos, setSegundosDecorridos] = React.useState<number>(0)
@@ -292,7 +239,6 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
     if (arquivadoManualmente) displayTitle = "atendimento arquivado"
 
     const metaTotal = tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)
-    const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
 
     /* ── Single color-coded wheel ── */
     const ordemSecoes = mostrarBurocracia ? ["S", "O", "A", "P", "B"] : ["S", "O", "A", "P"]
@@ -395,7 +341,6 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
                         <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "clamp(24px, 7vw, 34px)", fontWeight: 800, lineHeight: 1, color: secaoExtrapolada ? "rgba(255,255,255,0.85)" : (metaAtual?.color || "#f5f5f4") }}>{secaoExtrapolada ? "!" : (metaAtual ? metaAtual.letter : "•")}</span>
                         <span style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", fontWeight: 600, color: secaoExtrapolada ? "rgba(255,255,255,0.65)" : "var(--meta-text)", textAlign: "center", maxWidth: "88%", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{displayTitle}</span>
                     </div>
-                    <div onClick={() => { const secId = MAPA_SECAO_ID[secaoAtual]; if (secId) onAbrirTemplate(secId) }} title={MAPA_SECAO_ID[secaoAtual] ? "ver modelo" : undefined} style={{ position: "absolute", inset: 0, borderRadius: "50%", cursor: MAPA_SECAO_ID[secaoAtual] ? "pointer" : "default" }} />
                 </div>
             )}
             {!arquivadoManualmente && (
@@ -447,7 +392,6 @@ const CronometroDashboard = (props: CronometroDashboardProps) => {
                         <span style={{ width: "32px", height: "32px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(34,197,94,0.14)", color: "#22c55e", fontSize: "15px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>✓</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "13px", fontWeight: 600, color: "#f5f5f4" }}>resumo do atendimento</div>
-                            <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>{labelTipo}</div>
                         </div>
                     </div>
                     <div style={{ padding: "6px 0" }}>
@@ -493,7 +437,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const [tempoBurocracia, setTempoBurocracia] = React.useState<number>(15)
     const [mostrarAvancado, setMostrarAvancado] = React.useState<boolean>(false)
     const [graus, setGraus] = React.useState<Graus>(GRAUS_DEFAULT)
-    const [tipoSelecionado, setTipoSelecionado] = React.useState<string>("consulta_agendada")
     const relogioRef = React.useRef<SVGSVGElement>(null)
     const relogioAvancadoRef = React.useRef<SVGSVGElement>(null)
     const grausRef = React.useRef<Graus>(GRAUS_DEFAULT)
@@ -504,16 +447,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
         const check = () => setIsMobile(window.innerWidth <= 500)
         window.addEventListener("resize", check)
         return () => window.removeEventListener("resize", check)
-    }, [])
-
-    /* ── Preceptoria state ── */
-    const [mostrarTemplate, setMostrarTemplate] = React.useState<boolean>(false)
-    const [templateSecaoId, setTemplateSecaoId] = React.useState<string>("subjetivo")
-    const [templateTitulo, setTemplateTitulo] = React.useState<string>("")
-    const [templateConteudo, setTemplateConteudo] = React.useState<string>("")
-
-    React.useEffect(() => {
-        carregarTemplates()
     }, [])
 
     /* ── Clock hand drag ── */
@@ -685,7 +618,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
             graus: { ...graus },
             mostrarBurocracia,
             tempoBurocracia,
-            tipoSelecionado,
         }
         proximoIdRef.current += 1
         setSessoes(prev => [...prev, nova])
@@ -713,37 +645,6 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
     const atualizarSecaoSessao = (id: number, secao: string) => {
         setSessoes(prev => prev.map(s => s.id === id ? { ...s, secao } : s))
     }
-
-    const labelTipo = TIPOS.find(t => t.id === tipoSelecionado)?.label || tipoSelecionado
-
-    const abrirTemplate = (secId: string) => {
-        const meta = SECTION_META.find(m => m.id === secId)
-        if (!meta) return
-        setTemplateSecaoId(secId)
-        setTemplateTitulo(`${meta.title} · ${labelTipo}`)
-        setTemplateConteudo("")
-        setMostrarTemplate(true)
-        carregarTemplates().then(data => {
-            const conteudo = data[tipoSelecionado]?.[secId] || ""
-            setTemplateConteudo(conteudo)
-        })
-    }
-
-    const renderTemplateLinhas = (texto: string) => {
-        const linhas = texto.split("\n")
-        return linhas.map((linha, i) => {
-            const matchIndent = linha.match(/^ +/)
-            const indent = matchIndent ? matchIndent[0].length : 0
-            const ehSub = indent > 0
-            return (
-                <div key={i} style={{ paddingLeft: `${indent * 7}px`, color: ehSub ? "var(--meta-text)" : "#f5f5f4", fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", lineHeight: 1.55, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                    {linha}
-                </div>
-            )
-        })
-    }
-
-    const templateMeta = SECTION_META.find(m => m.id === templateSecaoId) || SECTION_META[0]
 
     React.useEffect(() => {
         const lidarComCronometroOuvinte = () => abrirSetup()
@@ -893,10 +794,7 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                                                 <div style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.3px", textAlign: "center" }}>{resumoAvancado}</div>
                                             </div>
                                         )}
-                                        <select value={tipoSelecionado} onChange={e => setTipoSelecionado(e.target.value)} style={{ width: "100%", padding: m ? "12px 14px" : "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: m ? "15px" : "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", cursor: "pointer" }}>
-                                            {TIPOS.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-                                        </select>
-                                        <button className="gas-scale-hover" onClick={iniciarSessao} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: m ? "14px 0" : "6px 0", fontSize: m ? "15px" : "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
+<button className="gas-scale-hover" onClick={iniciarSessao} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: m ? "14px 0" : "6px 0", fontSize: m ? "15px" : "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.4)" }}>
                                             <span>▶</span> iniciar
                                         </button>
                                     </div>
@@ -908,35 +806,13 @@ const Preceptoria = forwardRef<PreceptoriaActions>(function Preceptoria(_props, 
                     {/* ── DASHBOARDS ── */}
                     {!mostrarSetupRelogio && sessoes.map(s => (
                         <div key={s.id} style={{ display: sessaoAtivaId === s.id ? "flex" : "none", flexDirection: "column", alignItems: "center", width: "100%" }}>
-                            <CronometroDashboard tempoLimite={s.tempoLimite} graus={s.graus} mostrarBurocracia={s.mostrarBurocracia} tempoBurocracia={s.tempoBurocracia} tipoSelecionado={s.tipoSelecionado} onAbrirTemplate={abrirTemplate} onSecaoChange={secao => atualizarSecaoSessao(s.id, secao)} onReiniciar={() => { encerrarSessao(s.id); abrirSetup() }} onExtrapolacaoChange={setSessaoExtrapolada} />
+                            <CronometroDashboard tempoLimite={s.tempoLimite} graus={s.graus} mostrarBurocracia={s.mostrarBurocracia} tempoBurocracia={s.tempoBurocracia} onSecaoChange={secao => atualizarSecaoSessao(s.id, secao)} onReiniciar={() => { encerrarSessao(s.id); abrirSetup() }} onExtrapolacaoChange={setSessaoExtrapolada} />
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* ── TEMPLATE OVERLAY ── */}
-            {mostrarTemplate && (
-                <>
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }} onClick={() => setMostrarTemplate(false)} />
-                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 101, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", padding: "20px", boxSizing: "border-box" }}>
-                        <div className="framer-timer-entrance gas-ui-blockout" style={{ width: "100%", maxWidth: "420px", maxHeight: "100%", background: "#0a0a0a", border: "1px solid #262626", borderRadius: "16px", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", boxSizing: "border-box", pointerEvents: "auto" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "14px 16px", borderBottom: "1px solid #1f1f1f", background: "rgba(255,255,255,0.02)" }}>
-                                <span style={{ width: "28px", height: "28px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: templateMeta.bg, border: `1px solid ${templateMeta.border}`, color: templateMeta.color, fontSize: "13px", fontWeight: 800, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>{templateMeta.letter}</span>
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "13px", fontWeight: 600, color: "#f5f5f4" }}>{templateTitulo}</div>
-                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "10px", color: "var(--meta-text)", letterSpacing: "0.4px", textTransform: "uppercase" }}>modelo</div>
-                                </div>
-                                <button className="gas-scale-hover" onClick={() => setMostrarTemplate(false)} style={{ width: "28px", height: "28px", borderRadius: "8px", border: "none", background: "rgba(255,255,255,0.06)", color: "#a3a3a3", cursor: "pointer", fontSize: "13px", fontWeight: 700, fontFamily: '"Google Sans Flex", sans-serif', flexShrink: 0 }}>✕</button>
-                            </div>
-                            <div style={{ padding: "14px 16px 18px 16px", overflowY: "auto", boxSizing: "border-box" }}>
-                                {templateConteudo ? renderTemplateLinhas(templateConteudo) : (
-                                    <div style={{ fontFamily: '"Google Sans Flex", sans-serif', fontSize: "12px", color: "var(--meta-text)", textAlign: "center", padding: "24px 0" }}>carregando...</div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </>
-            )}
+
         </div>
     )
 })

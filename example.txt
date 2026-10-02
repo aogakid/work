@@ -1,0 +1,76 @@
+# Consulta de exemplo
+
+## Dados base:
+- Id: Paciente Exemplo, 68 anos, casada, mora com a filha, ensino fundamental completo, aposentada, residente em Fortaleza, ACS Maria
+
+Antecedentes
+- Pessoais
+  - Cirurgias
+    - Colecistectomia (2012)
+  - Vacinação: Influenza 2026, COVID-19 atualizado
+- Familiares: Mãe com diabetes tipo 2; pai com hipertensão
+
+Medicamentos
+- Em uso
+  - Losartana 50 mg 1-0-1
+  - Metformina 850 mg 1-0-1
+- Alergias: Nega alergias medicamentosas
+
+Hábitos
+- Etilismo: Social, 1 dose por semana
+- Tabagismo: Nunca fumou
+- Drogas: Nega
+- Exercício: Caminhada 3 vezes por semana
+- Dieta: Reduzindo sal e açúcar
+- Hidratação: Cerca de 1,5 L/dia
+- Evacuações: Diárias, sem alterações
+- Diurese: Sem queixas
+- Sono: 7 horas/noite
+- Humor: Bom
+- Lazer: Convívio com família
+
+## Lista de Problemas
+- Hipertensão arterial sistêmica
+- Diabetes mellitus tipo 2
+
+---
+
+## Subjetivo
+- Acompanhante: Filha
+
+Seguimento de doenças crônicas
+- Refere boa adesão ao tratamento e uso regular das medicações.
+- Nega dor torácica, dispneia, tontura ou episódios de hipoglicemia.
+- Alimentação com redução de sal; mantém caminhadas regulares.
+
+## Objetivo
+Exame físico
+- SSVV: PA 128x76 | Peso 72 | Alt 160 | IMC 28.1 | Glic 112 | FC 74 | FR 16 | SPO2 98 | Tax 36.6
+- Ect: Bom estado geral, lúcida e orientada, hidratada, corada, afebril
+- AC: Bulhas normofonéticas em 2 tempos, sem sopros
+- AR: Murmúrio vesicular presente bilateralmente, sem ruídos adventícios
+- Ext: Sem edema, pulsos periféricos presentes
+- Abdome flácido, indolor, sem massas palpáveis.
+- Ruídos hidroaéreos presentes.
+- Sem visceromegalias.
+
+Complementar
+- Laboratório
+  - HbA1c: 7,1% (08/2026)
+  - Creatinina: 0,8 mg/dL; eTFG > 60 mL/min/1,73 m²
+- Imagem
+  - Sem exames de imagem recentes
+- Escores
+  - Risco cardiovascular revisado em consulta
+
+## Avaliação
+- Hipertensão arterial sistêmica controlada.
+- Diabetes mellitus tipo 2, controle glicêmico próximo da meta individual.
+- Sobrepeso.
+
+## Plano
+- Manter losartana 50 mg, 1 comprimido pela manhã e à noite.
+- Manter metformina 850 mg, 1 comprimido pela manhã e à noite.
+- Reforçadas medidas de alimentação saudável e atividade física regular.
+- Solicitar HbA1c, creatinina e perfil lipídico para controle em 3 meses.
+- Retorno em 3 meses ou antes se necessário.
