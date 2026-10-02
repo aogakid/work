@@ -1226,16 +1226,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         }
 
         const cartao = (
-            <div key={s.id} style={{ marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
+            <div key={s.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
                 {/* ── Section Header (sticky) ── */}
                 <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
                 <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
-                        <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", textAlign: "center" }}>{meta.letter}</span>
-                        <span className="bloco-section-title" style={{ fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{meta.label || s.title}</span>
+                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", minWidth: 0, boxSizing: "border-box", gap: "6px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
+                        <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", flexShrink: 0, textAlign: "center" }}>{meta.letter}</span>
+                        <span className="bloco-section-title" style={{ flex: "1 1 0%", minWidth: 0, overflowWrap: "anywhere", fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{meta.label || s.title}</span>
 
                         {/* Right-side controls */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
+                        <div style={{ display: "flex", alignItems: "center", flexShrink: 0, gap: "4px", marginLeft: "auto" }}>
                             {/* Objetivo toggle inside chip */}
                             {s.id === "objetivo" && (
                                 <div onClick={e => { e.stopPropagation(); toggleObjetivo() }} style={{ width: "28px", height: "16px", borderRadius: "8px", background: s.enabled ? meta.color : "rgba(120,113,108,0.25)", cursor: "pointer", position: "relative", transition: "background 0.2s", flexShrink: 0 }}>
@@ -1245,12 +1245,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                             {/* Copy section button */}
                             {s.enabled && (
-                                <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}${s.content.trim() ? `\n${s.content.trim()}` : ""}`) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.75 }} title="copiar seção" aria-label={`copiar seção ${s.title}`}>
+                                <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(`## ${s.title}${s.content.trim() ? `\n${s.content.trim()}` : ""}`) }} style={{ width: "20px", height: "20px", flexShrink: 0, borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.75 }} title="copiar seção" aria-label={`copiar seção ${s.title}`}>
                                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                                 </button>
                             )}
 
-                            <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); clearSection(s.id) }} style={{ width: "20px", height: "20px", borderRadius: "4px", border: "none", background: "transparent", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.8 }} title={`limpar somente a seção ${s.title}`} aria-label={`limpar somente a seção ${s.title}`}>
+                            <button className="bloco-icon-btn" onClick={e => { e.stopPropagation(); clearSection(s.id) }} style={{ width: "20px", height: "20px", flexShrink: 0, borderRadius: "4px", border: "none", background: "transparent", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, opacity: 0.65 }} title={`limpar somente a seção ${s.title}`} aria-label={`limpar somente a seção ${s.title}`}>
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
                             </button>
 
@@ -1394,10 +1394,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                    the right one takes the rest (free-text SOAP + companions). */
                 .bloco-colunas { display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr); gap: 0 16px; align-items: start; }
                 .bloco-coluna { min-width: 0; }
-                .bloco-coluna-esq { position: sticky; top: 0; align-self: start; max-height: calc(100vh - 120px); overflow-y: auto; padding-right: 4px; overflow-x: hidden; }
+                .bloco-coluna-esq { position: sticky; top: 0; align-self: start; padding-right: 4px; overflow-x: clip; }
                 @media (max-width: 900px) {
                     .bloco-colunas { grid-template-columns: minmax(0, 1fr); gap: 0; }
-                    .bloco-coluna-esq { position: static; max-height: none; overflow-y: visible; padding-right: 0; overflow-x: hidden; }
+                    .bloco-coluna-esq { position: static; padding-right: 0; }
                 }
                 .bloco-section-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
                 .bloco-section-editor[data-extrapolada]:empty:before { color: rgba(255,255,255,0.6); }
