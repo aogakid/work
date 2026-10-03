@@ -11,6 +11,7 @@ import {
     type SinaisVitais,
 } from "../../lib/objetivo"
 import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
+import { CaixaParagrafos } from "./caixa_paragrafos"
 
 const estiloRotuloCampo: React.CSSProperties = {
     fontSize: "10px",
@@ -30,14 +31,6 @@ const estiloCampo = {
     padding: "6px 8px",
     width: "100%",
     boxSizing: "border-box",
-} as React.CSSProperties
-
-const estiloArea = {
-    ...estiloCampo,
-    resize: "vertical",
-    minHeight: "48px",
-    lineHeight: 1.45,
-    fontFamily: '"Google Sans Flex", sans-serif',
 } as React.CSSProperties
 
 const COR_SSVV = "#22c55e"
@@ -143,8 +136,6 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
         let val = novo
         if (chave === "pa") {
             val = maskPA(novo)
-        } else if (chave === "altura") {
-            val = novo.replace(/[,.]/g, "")
         }
         const ssvvAtualizado = { ...base.ssvv, [chave]: val }
         if (chave === "peso" || chave === "altura") {
@@ -263,12 +254,10 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
 
             {mostrarPuericultura ? (
                 <Bloco rotulo="Crescimento e desenvolvimento" cor={COR_EXAME_FISICO}>
-                    <textarea
-                        data-campo="crescimento-desenvolvimento"
+                    <CaixaParagrafos
+                        dados={{ "data-campo": "crescimento-desenvolvimento" }}
                         value={crescimentoDesenvolvimento}
-                        rows={3}
-                        onChange={e => alterarCrescimentoDesenvolvimento(e.target.value)}
-                        style={estiloArea}
+                        onChange={valor => alterarCrescimentoDesenvolvimento(valor)}
                     />
                 </Bloco>
             ) : null}
@@ -320,12 +309,10 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                         />
                     </CampoRotulado>
                     <CampoRotulado rotulo="Outros">
-                        <textarea
-                            data-campo="outros"
+                        <CaixaParagrafos
+                            dados={{ "data-campo": "outros" }}
                             value={exameFisicoCampos.outros}
-                            rows={2}
-                            onChange={e => alterarExameFisico("outros", e.target.value)}
-                            style={estiloArea}
+                            onChange={valor => alterarExameFisico("outros", valor)}
                         />
                     </CampoRotulado>
                 </div>
@@ -334,30 +321,24 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
             <Bloco rotulo="Exames complementares" cor={COR_COMPLEMENTAR} colapsavel abertoInicial={false}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <CampoRotulado rotulo="Laboratório">
-                        <textarea
-                            data-campo="laboratorio"
+                        <CaixaParagrafos
+                            dados={{ "data-campo": "laboratorio" }}
                             value={complementarCampos.laboratorio}
-                            rows={2}
-                            onChange={e => alterarComplementar("laboratorio", e.target.value)}
-                            style={estiloArea}
+                            onChange={valor => alterarComplementar("laboratorio", valor)}
                         />
                     </CampoRotulado>
                     <CampoRotulado rotulo="Imagem">
-                        <textarea
-                            data-campo="imagem"
+                        <CaixaParagrafos
+                            dados={{ "data-campo": "imagem" }}
                             value={complementarCampos.imagem}
-                            rows={2}
-                            onChange={e => alterarComplementar("imagem", e.target.value)}
-                            style={estiloArea}
+                            onChange={valor => alterarComplementar("imagem", valor)}
                         />
                     </CampoRotulado>
                     <CampoRotulado rotulo="Escores">
-                        <textarea
-                            data-campo="escores"
+                        <CaixaParagrafos
+                            dados={{ "data-campo": "escores" }}
                             value={complementarCampos.escores}
-                            rows={2}
-                            onChange={e => alterarComplementar("escores", e.target.value)}
-                            style={estiloArea}
+                            onChange={valor => alterarComplementar("escores", valor)}
                         />
                     </CampoRotulado>
                 </div>

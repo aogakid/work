@@ -1,26 +1,7 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle } from "react"
 import { useEncaminha } from "../contexts/AppContext"
-
-const WORKER_URL = "https://soapformatter.aogakid.workers.dev"
-
-const SYSTEM_PROMPT = `Você é um médico de família gerando um resumo clínico para encaminhamento.
-
-Regras:
-- Output: um único parágrafo corrido, sem listas, sem formatação.
-- Incluir apenas informações relevantes para a especialidade/exame solicitado.
-- Linguagem técnica, objetiva, norma culta do português.
-- A primeira linha deve ser "ENCAMINHAMENTO" ou "SOLICITAÇÃO" e só na próxima iniciar o parágrafo.
-- A última linha deve conter o CID-10 mais próximo da hipótese diagnóstica.
-- Não inventar informações. Usar apenas o que está no prontuário.
-- Não repetir informações já presentes.
-- A ordem do output deve ser o modelo.
-- Tamanho máximo: 10 linhas.
-
-Modelo de output:
-
-Paciente de [idade] anos, portador de [condições crônicas], com queixas de [sintomas relevantes] há [tempo]. [partes do exame físico/complementar relevantes]. Considerando [hipótese diagnóstica ou objetivo do encaminhamento/exame], encaminho para avaliação da [especialidade]/solicito [exame].
-CID-10: [CID]`
+import { executarEncaminhamento } from "../../lib/encaminhar"
 
 export interface EncaminhaOutputActions {
     executarEncaminhamento(): void
@@ -45,53 +26,12 @@ const EncaminhaOutput = forwardRef<EncaminhaOutputActions>(function EncaminhaOut
         enc.isStreaming = true
         setRawText("")
 
-        const userPrompt = `Especialidade de destino: ${specialty}\n\nProntuário:\n${input}`
-
         try {
-            const res = await fetch(WORKER_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    model: "openai/gpt-oss-120b",
-                    messages: [
-                        { role: "system", content: SYSTEM_PROMPT },
-                        { role: "user", content: userPrompt },
-                    ],
-                    temperature: 0.2,
-                    max_tokens: 1000,
-                    stream: true,
-                }),
+            await executarEncaminhamento({
+                especialidade: specialty,
+                texto: input,
+                aoReceber: (acumulado) => { setRawText(acumulado) },
             })
-
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
-            const reader = res.body?.getReader()
-            const decoder = new TextDecoder()
-            let buffer = ""
-            let acumulado = ""
-            if (!reader) return
-
-            while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
-                buffer += decoder.decode(value, { stream: true })
-                const lines = buffer.split("\n")
-                buffer = lines.pop() || ""
-
-                for (const line of lines) {
-                    if (!line.startsWith("data: ")) continue
-                    const raw = line.slice(6).trim()
-                    if (!raw || raw === "[DONE]") continue
-                    try {
-                        const json = JSON.parse(raw)
-                        const part = json.choices?.[0]?.delta?.content
-                        if (part) {
-                            acumulado += part
-                            setRawText(acumulado)
-                        }
-                    } catch {}
-                }
-            }
         } catch {
             setRawText("erro ao gerar o encaminhamento.")
         } finally {

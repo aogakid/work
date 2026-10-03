@@ -33,6 +33,7 @@ import RastreiosPreventivos from "../ui/rastreios_ui"
 import GeriatriaUI from "../ui/geriatria_ui"
 import PsiquiatriaUI from "../ui/psiquiatria_ui"
 import EncaminhaUI from "../ui/encaminha_ui"
+import EncaminharBlocoUI from "../ui/encaminhar_bloco_ui"
 import { CONTEXTO_VAZIO, type ContextoPaciente } from "../../lib/contexto-paciente"
 
 /* ── Visibility rules driven by the Identificação form ────────────── */
@@ -145,5 +146,14 @@ export const COMPANIONS: CompanionConfig[] = [
         ],
         placement: "after-plano",
         when: () => false,
+    },
+    {
+        id: "encaminhar",
+        label: "Encaminhar",
+        component: EncaminharBlocoUI,
+        /* Sem outputGroup de propósito: o encaminhamento gerado é copiado,
+           nunca inserido no bloco. */
+        outputGroups: [],
+        placement: "after-plano",
     },
 ]

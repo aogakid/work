@@ -1,5 +1,6 @@
 import * as React from "react"
 import { MOTIVO_VAZIO, SUBJETIVO_VAZIO, compositarSubjetivo, parseSubjetivo, type Subjetivo } from "../../lib/subjetivo"
+import { CaixaParagrafos } from "./caixa_paragrafos"
 
 const estiloRotuloCampo: React.CSSProperties = {
     fontSize: "10px",
@@ -19,13 +20,6 @@ const estiloCampo = {
     padding: "6px 8px",
     width: "100%",
     boxSizing: "border-box",
-} as React.CSSProperties
-
-const estiloArea = {
-    ...estiloCampo,
-    resize: "vertical",
-    minHeight: "40px",
-    lineHeight: 1.45,
 } as React.CSSProperties
 
 const estiloBotao: React.CSSProperties = {
@@ -91,7 +85,7 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
 
     const handleAcompanhante = (e: React.ChangeEvent<HTMLInputElement>) => alterarAcompanhante(e.target.value)
     const handleMotivo = (indice: number) => (e: React.ChangeEvent<HTMLInputElement>) => alterarMotivo(indice, "motivo", e.target.value)
-    const handleTexto = (indice: number) => (e: React.ChangeEvent<HTMLTextAreaElement>) => alterarMotivo(indice, "texto", e.target.value)
+    const handleTexto = (indice: number) => (valor: string) => alterarMotivo(indice, "texto", valor)
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "10px 0 12px 0" }}>
@@ -140,11 +134,10 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                             </div>
                         </div>
                         <div>
-                            <textarea
-                                data-texto={i}
+                            <CaixaParagrafos
+                                dados={{ "data-texto": String(i) }}
                                 value={motivo.texto}
                                 onChange={handleTexto(i)}
-                                style={estiloArea}
                             />
                         </div>
                     </div>

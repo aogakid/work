@@ -25,6 +25,7 @@ import {
     type IdentificacaoCampos,
 } from "../../lib/contexto-paciente"
 import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
+import { CaixaParagrafos, dadosCampo } from "./caixa_paragrafos"
 
 /* ── Identificação fields (owned by Dados base, stored as the "- Id:" line) ── */
 
@@ -64,14 +65,6 @@ const estiloCampo = {
     padding: "6px 8px",
     width: "100%",
     boxSizing: "border-box",
-} as React.CSSProperties
-
-const estiloArea = {
-    ...estiloCampo,
-    resize: "vertical",
-    minHeight: "52px",
-    lineHeight: 1.45,
-    fontFamily: '"Google Sans Flex", sans-serif',
 } as React.CSSProperties
 
 const COR_IDENTIFICACAO = "#ec4899"
@@ -494,12 +487,10 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                         }
                         return (
                             <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
-                                <textarea
-                                    data-campo={campo.chave}
+                                <CaixaParagrafos
+                                    dados={dadosCampo(campo.chave)}
                                     value={antecedentesCampos[campo.chave]}
-                                    rows={2}
-                                    onChange={e => alterarAntecedente(campo.chave, e.target.value)}
-                                    style={estiloArea}
+                                    onChange={valor => alterarAntecedente(campo.chave, valor)}
                                 />
                             </CampoRotulado>
                         )
@@ -507,24 +498,20 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                     {idCampos.sexo === "F" && (
                         <>
                             <CampoRotulado rotulo="Obstétrico">
-                                <textarea
-                                    data-campo="obstetrico"
+                                <CaixaParagrafos
+                                    dados={{ "data-campo": "obstetrico" }}
                                     value={antecedentesCampos.obstetrico}
-                                    rows={2}
-                                    onChange={e => alterarAntecedente("obstetrico", e.target.value)}
-                                    style={estiloArea}
+                                    onChange={valor => alterarAntecedente("obstetrico", valor)}
                                 />
                             </CampoRotulado>
                         </>
                     )}
                 </SubGrupo>
                 <CampoRotulado rotulo="Familiares">
-                    <textarea
-                        data-campo="familiares"
+                    <CaixaParagrafos
+                        dados={{ "data-campo": "familiares" }}
                         value={antecedentesCampos.familiares}
-                        rows={2}
-                        onChange={e => alterarAntecedente("familiares", e.target.value)}
-                        style={estiloArea}
+                        onChange={valor => alterarAntecedente("familiares", valor)}
                     />
                 </CampoRotulado>
             </Bloco>
@@ -545,12 +532,10 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                     }
                     return (
                         <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, "Nega")}>
-                            <textarea
-                                data-campo={campo.chave}
+                            <CaixaParagrafos
+                                dados={dadosCampo(campo.chave)}
                                 value={medicamentosCampos[campo.chave]}
-                                rows={2}
-                                onChange={e => alterarMedicamento(campo.chave, e.target.value)}
-                                style={estiloArea}
+                                onChange={valor => alterarMedicamento(campo.chave, valor)}
                             />
                         </CampoRotulado>
                     )
@@ -626,12 +611,10 @@ export function ListaProblemasForm({ value, onChange, onSendToAssessment }: List
                 <span style={estiloRotuloCampo}>Problemas/Condições</span>
                 <BotaoNega onClick={() => alterar("Nega")} />
             </div>
-            <textarea
-                data-categoria="texto"
+            <CaixaParagrafos
+                dados={{ "data-categoria": "texto" }}
                 value={campos.texto}
-                rows={4}
-                onChange={e => alterar(e.target.value)}
-                style={{ ...estiloArea, minHeight: "88px" }}
+                onChange={alterar}
             />
             <button
                 type="button"
