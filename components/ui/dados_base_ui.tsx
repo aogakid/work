@@ -406,7 +406,14 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                     {CAMPOS_ID.filter(c => !c.sempreVisivel).map(campo => (
                         <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.largo ? "1 1 180px" : "0 1 118px", minWidth: "104px" }}>
-                            <span style={estiloRotuloCampo}>{campo.rotulo}</span>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
+                                <span style={estiloRotuloCampo}>{campo.rotulo}</span>
+                                {campo.chave === "residencia" ? (
+                                    <button type="button" onClick={() => alterarIdCampo("residencia", idCampos.naturalidade)} title="Usar a naturalidade como residência" aria-label="Usar a naturalidade como residência" style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 8h14M5 16h14"/></svg>
+                                    </button>
+                                ) : null}
+                            </div>
                             {campo.chave === "estadoCivil" ? (
                                 <select
                                     data-campo={campo.chave}
@@ -432,15 +439,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                                     ))}
                                 </select>
                             ) : campo.chave === "residencia" ? (
-                                <>
-                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
-                                        <span style={estiloRotuloCampo}>{campo.rotulo}</span>
-                                    <button type="button" onClick={() => alterarIdCampo("residencia", idCampos.naturalidade)} title="Usar a naturalidade como residência" aria-label="Usar a naturalidade como residência" style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", cursor: "pointer", padding: 0 }}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 8h14M5 16h14"/></svg>
-                                    </button>
-                                    </div>
-                                    <input data-campo={campo.chave} value={idCampos.residencia} onChange={handleChangeCampo} style={estiloCampo} />
-                                </>
+                                <input data-campo={campo.chave} value={idCampos.residencia} onChange={handleChangeCampo} style={estiloCampo} />
                             ) : (
                                 <input
                                     data-campo={campo.chave}

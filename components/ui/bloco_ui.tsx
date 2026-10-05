@@ -423,6 +423,37 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         })()
     }, [])
 
+    /* ── Depois de "copiar tudo": oferece a cópia em maiúsculas (some em 5s) ── */
+    const [popupMaiusculos, setPopupMaiusculos] = React.useState(false)
+    const popupMaiusculosTimerRef = React.useRef<number | null>(null)
+
+    const fecharPopupMaiusculos = React.useCallback(() => {
+        if (popupMaiusculosTimerRef.current) window.clearTimeout(popupMaiusculosTimerRef.current)
+        popupMaiusculosTimerRef.current = null
+        setPopupMaiusculos(false)
+    }, [])
+
+    const abrirPopupMaiusculos = React.useCallback(() => {
+        if (popupMaiusculosTimerRef.current) window.clearTimeout(popupMaiusculosTimerRef.current)
+        setPopupMaiusculos(true)
+        popupMaiusculosTimerRef.current = window.setTimeout(() => {
+            popupMaiusculosTimerRef.current = null
+            setPopupMaiusculos(false)
+        }, 5000)
+    }, [])
+
+    const copiarTudo = React.useCallback(() => {
+        copiarTexto(textoDoBloco, "all")
+        abrirPopupMaiusculos()
+    }, [abrirPopupMaiusculos, copiarTexto, textoDoBloco])
+
+    const copiarTudoMaiusculo = React.useCallback(() => {
+        copiarTexto(textoDoBloco.toLocaleUpperCase("pt-BR"), "all")
+        fecharPopupMaiusculos()
+    }, [copiarTexto, fecharPopupMaiusculos, textoDoBloco])
+
+    React.useEffect(() => () => { if (popupMaiusculosTimerRef.current) window.clearTimeout(popupMaiusculosTimerRef.current) }, [])
+
     const requestConfirm = useCallback((message: string, onConfirm: () => void) => {
         if (plaintext ? !plainTextContent.trim() : !sections.some(s => s.content.trim())) { onConfirm(); return }
         setConfirmAction({ message, onConfirm })
@@ -1236,6 +1267,20 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 </>
             )}
 
+            {popupMaiusculos && (
+                <>
+                    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 24 }} onClick={fecharPopupMaiusculos} />
+                    <div className="framer-timer-entrance gas-ui-blockout gas-maiusculo-card" style={{ position: "absolute", bottom: "56px", right: "16px", background: "var(--meta-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--meta-border)", borderRadius: "12px", padding: "10px 12px", zIndex: 25, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", gap: "8px", boxShadow: "0 10px 30px rgba(0,0,0,0.1)", boxSizing: "border-box", maxWidth: "260px" }}>
+                        <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--meta-text)", lineHeight: 1.4 }}>Copiar tudo em maiúsculas?</div>
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                            <button className="gas-scale-hover" onClick={copiarTudoMaiusculo} title="copiar tudo em maiúsculas" style={{ background: "#8b5cf6", color: "#ffffff", border: "none", borderRadius: "6px", padding: "6px 12px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif', whiteSpace: "nowrap" }}>
+                                copiar em maiúsculas
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+
             <ArrumadorBloco
                 aberto={arrumadorAberto}
                 titulo={title}
@@ -1318,7 +1363,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
                         Texto corrido
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => copiarTexto(plaintext ? limparTextoInvisivel(plainTextContent) : limparTextoInvisivel(mergeSections(title, sections)), "all")} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: copiado === "all" ? "#22c55e" : "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title={copiado === "all" ? "copiado" : "copiar tudo"}>
+                    <button className="bloco-icon-btn" onClick={copiarTudo} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: copiado === "all" ? "#22c55e" : "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title={copiado === "all" ? "copiado" : "copiar tudo"}>
                         {copiado === "all" ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>}
                     </button>
                     <button className="bloco-icon-btn" onClick={() => setArrumadorAberto(true)} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="arrumar com IA">
@@ -1485,7 +1530,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <span className="bloco-save-time" style={{ opacity: 0, whiteSpace: "nowrap", fontSize: "10px", fontWeight: 400, marginLeft: "2px", maxWidth: 0, overflow: "hidden", transition: "opacity 0.15s ease, max-width 0.2s ease" }}>salvo às {saveTime}</span>
                         </div>
                     )}
-                    <button className="bloco-icon-btn gas-scale-hover" onClick={() => copiarTexto(plaintext ? limparTextoInvisivel(plainTextContent) : limparTextoInvisivel(mergeSections(title, sections)), "all")} title={copiado === "all" ? "copiado" : "copiar tudo"} style={{ width: "28px", height: "28px", background: "rgba(120,113,108,0.1)", backdropFilter: "blur(6px)", borderRadius: "6px", border: "1px solid rgba(120,113,108,0.2)", color: copiado === "all" ? "#22c55e" : "var(--editor-text)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <button className="bloco-icon-btn gas-scale-hover" onClick={copiarTudo} title={copiado === "all" ? "copiado" : "copiar tudo"} style={{ width: "28px", height: "28px", background: "rgba(120,113,108,0.1)", backdropFilter: "blur(6px)", borderRadius: "6px", border: "1px solid rgba(120,113,108,0.2)", color: copiado === "all" ? "#22c55e" : "var(--editor-text)", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         {copiado === "all" ? <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>}
                     </button>
                     <div style={{ background: limiteAtingido ? "rgba(239,68,68,0.15)" : "rgba(120,113,108,0.1)", backdropFilter: "blur(6px)", padding: "6px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: limiteAtingido ? "var(--limite-text)" : "var(--editor-text)", border: limiteAtingido ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(120,113,108,0.2)", fontWeight: limiteAtingido ? 600 : 400, whiteSpace: "nowrap" }}>
