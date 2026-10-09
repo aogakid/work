@@ -115,6 +115,7 @@ export const COMPANIONS: CompanionConfig[] = [
         component: PuericulturaUI,
         outputGroups: [
             { id: "resultado", label: "resultado", targetSection: "objetivo" },
+            { id: "mchat", label: "M-CHAT-R", targetSection: "objetivo" },
         ],
         placement: "after-objetivo",
         when: (ctx) => idadeMaxima(ctx, 20),

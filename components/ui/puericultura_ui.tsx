@@ -283,6 +283,8 @@ interface FormField {
   optionsMd?: string[]    // textos alternativos pro markdown, na mesma ordem de `options`
   value?: string | string[]
   section?: string
+  invertido?: boolean
+  seguimento?: { pergunta: string; aux?: string }
 }
 
 interface AgeGroupForm {
@@ -299,6 +301,34 @@ interface AgeBracket {
 
 interface Props {
   style?: React.CSSProperties
+}
+
+interface InterpretacaoMchat {
+  cor: string
+  titulo: string
+  texto: string
+}
+
+function interpretarMchat(total: number): InterpretacaoMchat {
+  if (total <= 2) {
+    return {
+      cor: "#00b849",
+      titulo: "Baixo risco",
+      texto: "Não é necessária nenhuma outra medida, a não ser que a vigilância indique risco de TEA. Se a criança tiver menos de 24 meses, repetir o M-CHAT-R aos 24 meses.",
+    }
+  }
+  if (total <= 7) {
+    return {
+      cor: "#ca8a04",
+      titulo: "Risco moderado",
+      texto: "Administrar a Entrevista de Seguimento (M-CHAT-R/F). Se a pontuação do seguimento for igual ou superior a 2, encaminhar para avaliação diagnóstica e avaliação da necessidade de intervenção; se for 0–1, repetir o rastreio nas próximas consultas de rotina.",
+    }
+  }
+  return {
+    cor: "#e02424",
+    titulo: "Alto risco",
+    texto: "Pode-se prescindir da Entrevista de Seguimento: encaminhar a criança para avaliação diagnóstica e para avaliação da necessidade de intervenção.",
+  }
 }
 
 // Inlined GrowthChart component
@@ -614,6 +644,11 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
   const [mobile, setMobile] = useState(true)
   const mdTextareaRef = useRef<HTMLTextAreaElement>(null)
   const puericulturaRef = useRef<AgeGroupForm[] | null>(null)
+  const [activeTab, setActiveTab] = useState<"puericultura" | "mchat">("puericultura")
+  const [mchatFields, setMchatFields] = useState<FormField[]>([])
+  const [mchatMarkdown, setMchatMarkdown] = useState<string>("")
+  const mchatMdRef = useRef<HTMLTextAreaElement>(null)
+  const [fuRespostas, setFuRespostas] = useState<Record<string, string>>({})
 
   /* Receive idade/sexo from the Identificação section or from a sibling companion. */
   const syncPuericulturaRef = useRef(false)
@@ -705,6 +740,13 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
     })
   }
   useEffect(loadPuericultura, [])
+
+  function loadMchat() {
+    fetch("/contents/mchat.json", { cache: "no-store" }).then(function(r) { return r.json() }).then(function(data) {
+      if (Array.isArray(data)) setMchatFields(data)
+    })
+  }
+  useEffect(loadMchat, [])
 
   useEffect(() => {
     if (!dataNascimento) {
@@ -881,6 +923,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
 
   const getOutputRef = useRef<(groupId: string) => string | null>(() => null)
   getOutputRef.current = (groupId: string): string | null => {
+    if (groupId === "mchat") return generateMchatMarkdown() || null
     if (groupId === "resultado") return generateMarkdown() || null
     const secao = secoes.find(s => s.id === groupId)
     if (!secao) return null
@@ -892,6 +935,7 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
     reset() {
       setDataNascimento(""); setIdadeAnos(""); setIdadeMeses(""); setIdadeCalculada(""); setFaixaEtaria(""); setLabelClinico("")
       setSexo("M"); setCopiado(false); setMarkdownOutput("")
+      setActiveTab("puericultura"); setMchatFields([]); setMchatMarkdown(""); setFuRespostas({})
       if (puericulturaRef.current) setAgeGroupForms(puericulturaRef.current)
     },
   }), [])
@@ -959,6 +1003,69 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
       })
     )
   }
+
+  const updateMchatField = (id: string, value: string) => {
+    setMchatFields(prev => prev.map(f => f.id === id ? { ...f, value } : f))
+  }
+
+  const mchatAnswered = mchatFields.filter(f => f.value)
+  const mchatTotal = mchatFields.reduce((acc, f) => {
+    if (!f.value) return acc
+    const falhou = f.invertido ? f.value === "Sim" : f.value === "Não"
+    return acc + (falhou ? 1 : 0)
+  }, 0)
+  const mchatInterp = interpretarMchat(mchatTotal)
+
+  const mchatFails = mchatFields.filter(f => f.value && (f.invertido ? f.value === "Sim" : f.value === "Não"))
+  const showFollowUp = mchatTotal >= 3 && mchatTotal <= 7 && mchatFails.length > 0
+  const fuTotais = mchatFails.length
+  const fuFails = mchatFails.filter(f => fuRespostas[f.id] === "Falha").length
+  const fuPositivo = fuFails >= 2
+
+  const updateSegField = (id: string, resposta: string) => {
+    setFuRespostas(prev => {
+      const atual = prev[id] || ""
+      if (atual === resposta) {
+        const novo = { ...prev }
+        delete novo[id]
+        return novo
+      }
+      return { ...prev, [id]: resposta }
+    })
+  }
+
+  const generateMchatMarkdown = useCallback(() => {
+    if (mchatFields.length === 0 || mchatAnswered.length === 0) return ""
+    const hoje = new Date()
+    const data = hoje.getDate().toString().padStart(2, "0") + "/" +
+      (hoje.getMonth() + 1).toString().padStart(2, "0") + "/" + hoje.getFullYear()
+    return "- M-CHAT-R (" + data + "): " + mchatTotal + "/20 (" + mchatInterp.titulo.toLowerCase() + ")"
+  }, [mchatFields, mchatAnswered, mchatTotal, mchatInterp])
+
+  const copiarMchat = async () => {
+    const md = generateMchatMarkdown()
+    if (!md) return
+    try {
+      await navigator.clipboard.writeText(md)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      /* fallback */
+    }
+  }
+
+  useEffect(() => {
+    if (mchatFields.length > 0) {
+      setMchatMarkdown(generateMchatMarkdown())
+    }
+  }, [mchatFields, mchatTotal, generateMchatMarkdown])
+
+  useEffect(() => {
+    const el = mchatMdRef.current
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [mchatMarkdown])
 
   const copyToClipboard = async () => {
     const md = generateMarkdown()
@@ -1105,7 +1212,30 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
       <div style={styles.title}>checklist da puericultura</div>
       <div style={styles.subtitle}>baseado na caderneta da criança</div>
 
-      <div className="puericultura-root">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
+        {([["puericultura", "Puericultura"], ["mchat", "M-CHAT-R"]] as const).map(([key, label]) => (
+          <div
+            key={key}
+            onClick={() => setActiveTab(key)}
+            style={{
+              padding: "6px 16px",
+              borderRadius: "20px",
+              fontSize: "13px",
+              fontWeight: activeTab === key ? 600 : 400,
+              cursor: "pointer",
+              userSelect: "none",
+              background: activeTab === key ? "rgba(0, 184, 73, 0.12)" : "var(--puericultura-input-bg)",
+              border: `1px solid ${activeTab === key ? "#00cc52" : "var(--puericultura-border)"}`,
+              color: activeTab === key ? "#00b849" : "var(--puericultura-text-muted)",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className="puericultura-root" style={activeTab === "mchat" ? { display: "none" } : undefined}>
         <div className="puericultura-fields-grid">
 
           <div style={styles.sectionLabel}>dados iniciais</div>
@@ -1534,6 +1664,181 @@ export default forwardRef<CompanionActions, Props>(function PuericulturaUI({ sty
           </div>
         )}
       </div>
+
+    {activeTab === "mchat" && (
+      <div className="puericultura-root">
+        <div className="puericultura-fields-grid">
+          <div style={styles.sectionLabel}>M-CHAT-R — triagem de autismo (16 a 30 meses)</div>
+          {mchatFields.map(f => (
+            <div key={f.id} style={{ ...styles.inputGroup, gridColumn: "1 / -1" }}>
+              <label style={styles.label}>{f.label}</label>
+              <div className="puericultura-chips-grid" style={{ marginTop: "8px" }}>
+                {f.options?.map(opt => {
+                  const isSelected = f.value === opt
+                  const risco = isSelected && (f.invertido ? opt === "Sim" : opt === "Não")
+                  return (
+                    <div
+                      key={opt}
+                      style={styles.chip(isSelected, risco ? "#e02424" : "#00cc52", risco ? "rgba(224, 36, 36, 0.15)" : "rgba(0, 184, 73, 0.12)")}
+                      onClick={() => updateMchatField(f.id, isSelected ? "" : opt)}
+                    >
+                      {opt}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+
+              {showFollowUp && (
+                <>
+                  <div style={styles.sectionLabel}>Seguimento (M-CHAT-R/F) — faça para cada item que falhou</div>
+                  {mchatFails.map(f => (
+                    <div key={"seg-" + f.id} style={{ ...styles.inputGroup, gridColumn: "1 / -1" }}>
+                      <label style={styles.label}>{f.seguimento?.pergunta || f.label}</label>
+                      {f.seguimento?.aux && (
+                        <div style={{ fontSize: "12px", color: "var(--puericultura-text-muted)", lineHeight: 1.5, marginTop: "2px" }}>
+                          {f.seguimento.aux}
+                        </div>
+                      )}
+                      <div className="puericultura-chips-grid" style={{ marginTop: "8px" }}>
+                        {["Passa", "Falha"].map(opt => {
+                          const isSelected = fuRespostas[f.id] === opt
+                          return (
+                            <div
+                              key={opt}
+                              style={styles.chip(
+                                isSelected,
+                                opt === "Falha" ? "#e02424" : "#00cc52",
+                                isSelected ? (opt === "Falha" ? "rgba(224, 36, 36, 0.15)" : "rgba(0, 184, 73, 0.12)") : undefined
+                              )}
+                              onClick={() => updateSegField(f.id, opt)}
+                            >
+                              {opt}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div
+            className="puericultura-result-card"
+            style={{
+              background: "var(--puericultura-card-bg)",
+              border: "1px solid var(--puericultura-border)",
+            }}
+          >
+            <div
+              className="puericultura-card-header"
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "12px",
+                marginBottom: "4px",
+              }}
+            >
+              <div
+                className="puericultura-badge"
+                style={{
+                  background: mchatInterp.cor + "22",
+                  color: mchatInterp.cor,
+                }}
+              >
+                M-CHAT-R
+              </div>
+              <button
+                onClick={copiarMchat}
+                style={{
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--puericultura-border)",
+                  background: copiado ? "rgba(0, 184, 73, 0.08)" : "var(--puericultura-input-bg)",
+                  color: copiado ? "#007a30" : "var(--puericultura-text-muted)",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  padding: "0",
+                  borderColor: copiado ? "rgba(0, 184, 73, 0.35)" : undefined,
+                }}
+                title={copiado ? "Copiado!" : "Copiar markdown"}
+              >
+                {copiado ? <IconeCheck /> : <IconeCopiar />}
+              </button>
+            </div>
+            {mchatAnswered.length > 0 ? (
+              <div style={{ marginTop: "12px" }}>
+                <div style={{ fontWeight: 700, fontSize: "24px", color: mchatInterp.cor, marginBottom: "4px" }}>
+                  {mchatTotal} / 20
+                </div>
+                <div style={{ fontSize: "13px", color: "var(--puericultura-text)" }}>
+                  <b>{mchatInterp.titulo}</b> — itens com resposta de risco.
+                </div>
+<div style={{ fontSize: "12.5px", color: "var(--puericultura-text-muted)", lineHeight: 1.55, marginTop: "6px" }}>
+                    {mchatInterp.texto}
+                  </div>
+                  {showFollowUp && (
+                    <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid var(--puericultura-border)" }}>
+                      <div style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--puericultura-text-muted)", fontWeight: 700, marginBottom: "6px" }}>
+                        Seguimento M-CHAT-R/F
+                      </div>
+                      <div style={{ fontSize: "13px", color: "var(--puericultura-text)" }}>
+                        {fuFails} falha(s) em {fuTotais} item(ns) do seguimento
+                      </div>
+                      {fuPositivo ? (
+                        <div style={{ fontSize: "12.5px", color: "#e02424", lineHeight: 1.5, marginTop: "4px" }}>
+                          Triagem positiva — encaminhar para avaliação diagnóstica e avaliação da necessidade de intervenção.
+                        </div>
+                      ) : fuFails <= 1 && fuTotais > 0 && mchatFails.every(f => fuRespostas[f.id]) ? (
+                        <div style={{ fontSize: "12.5px", color: "#00730f", lineHeight: 1.5, marginTop: "4px" }}>
+                          Triagem negativa — repetir o rastreio nas consultas de rotina.
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: "12.5px", color: "var(--puericultura-text-muted)", lineHeight: 1.5, marginTop: "4px" }}>
+                          Faça o seguimento (Passa/Falha) dos itens ao lado para definir o resultado — positiva com 2 ou mais falhas.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+              <div style={{ marginTop: "12px", fontSize: "13px", color: "var(--puericultura-text-muted)" }}>
+                Responda as 20 perguntas ao lado para visualizar o rastreio.
+              </div>
+            )}
+            {mchatMarkdown && (
+              <textarea
+                ref={mchatMdRef}
+                value={mchatMarkdown}
+                onChange={(e) => setMchatMarkdown(e.target.value)}
+                style={{
+                  ...styles.markdownOutput,
+                  resize: "none",
+                  overflow: "hidden",
+                  display: "block",
+                  width: "100%",
+                  minHeight: "unset",
+                  maxHeight: "unset",
+                  height: "auto",
+                  boxSizing: "border-box",
+                  marginTop: "12px",
+                }}
+                spellCheck={false}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   )
 })

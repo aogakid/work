@@ -1,0 +1,342 @@
+[
+  {
+    "section": "mchat",
+    "id": "m01",
+    "label": "Se você apontar para qualquer coisa do outro lado do cômodo, sua criança olha para o que você está apontando? (Por exemplo: se você apontar para um brinquedo ou um animal, sua criança olha para o brinquedo ou animal?)",
+    "labelMd": "olha para o que você aponta",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "Se você apontar para qualquer coisa do outro lado do cômodo, o(a) X olha para o que você está apontando?",
+      "aux": "Pergunte um exemplo e o que ele(a) faz habitualmente. FALHA: ignora o pai/mãe, olha ao redor pelo cômodo ou olha para o dedo. PASSA: olha para o objeto, aponta, olha e comenta, ou olha quando o pai/mãe aponta e diz \"olha\"."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m02",
+    "label": "Alguma vez você já se perguntou se sua criança poderia ser surda?",
+    "labelMd": "suspeita de surdez",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": true,
+    "seguimento": {
+      "pergunta": "Você comentou que já se perguntou se o(a) X seria surdo(a). O que levou você a pensar nisso?",
+      "aux": "A audição dele(a) foi testada? Nunca foi testada ou audição abaixo do normal → FALHA. Audição dentro do normal confirmada em teste → PASSA. Resultados inconclusivos → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m03",
+    "label": "Sua criança brinca de faz-de-conta? (Por exemplo, finge que está bebendo em um copo vazio ou falando ao telefone, ou finge que dá comida a uma boneca ou a um bicho de pelúcia?)",
+    "labelMd": "brinca de faz-de-conta",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X brinca de faz-de-conta?",
+      "aux": "Ele(a) às vezes finge beber em um copo imaginário, finge comer, finge falar ao telefone, dá comida a uma boneca/bicho de pelúcia, empurra um carrinho, finge cozinhar, finge ser um personagem etc. Sim a algum → PASSA. Não a todos → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m04",
+    "label": "Sua criança gosta de subir nas coisas? (Por exemplo: móveis, brinquedos de parque ou escadas)",
+    "labelMd": "gosta de subir nas coisas",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X gosta de subir nas coisas?",
+      "aux": "Escadas, cadeiras, móveis, brinquedos do parque. Sim a algum dos acima → PASSA. Não a todos → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m05",
+    "label": "Sua criança faz movimentos incomuns com os dedos perto dos olhos? (Por exemplo, abana os dedos perto dos olhos?)",
+    "labelMd": "movimentos incomuns com os dedos perto dos olhos",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": true,
+    "seguimento": {
+      "pergunta": "O(A) X faz movimentos incomuns com os dedos perto dos olhos?",
+      "aux": "Ele(a) repetidamente... Pergunte sobre abanar os dedos (hand flapping) perto dos olhos, olhar para as mãos. Movimento rítmico/incomum com os dedos diante dos olhos → FALHA; comportamento normal de exploração das mãos → PASSA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m06",
+    "label": "Sua criança aponta com o dedo para pedir algo ou para conseguir ajuda? (Por exemplo, aponta para um alimento ou brinquedo que está fora do seu alcance?)",
+    "labelMd": "aponta para pedir algo ou pedir ajuda",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X aponta com o dedo para pedir algo ou conseguir ajuda?",
+      "aux": "Ex.: aponta para um alimento ou brinquedo fora do seu alcance pedindo a você. Aponta para pedir (PASSA) vs. guia sua mão até o objeto ou apenas aponta se você estiver segurando o objeto (FALHA)."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m07",
+    "label": "Sua criança aponta com o dedo para lhe mostrar algo interessante? (Por exemplo, aponta para um avião no céu ou um caminhão grande na estrada?)",
+    "labelMd": "aponta para mostrar algo interessante",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X aponta com o dedo para mostrar-lhe algo interessante?",
+      "aux": "Para mostrar um avião no céu ou um caminhão na estrada. O apontar compartilha o interesse (PASSA); se só aponta para pedir/obter ajuda → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m08",
+    "label": "Sua criança interessa-se por outras crianças? (Por exemplo, sua criança observa outras crianças, sorri para elas ou aproxima-se delas?",
+    "labelMd": "interessa-se por outras crianças",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X interessa-se por outras crianças?",
+      "aux": "Observa outras crianças, sorri para elas, aproxima-se delas ou tenta pegá-las (PASSA). Nunca responde à presença de crianças → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m09",
+    "label": "Sua criança mostra-lhe coisas, trazendo-as ou segurando-as para que você as veja — não para obter ajuda, mas apenas para compartilhar com você? (Por exemplo, mostra uma flor, um bicho de pelúcia ou um caminhão de brinquedo?)",
+    "labelMd": "mostra objetos para compartilhar com você",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X mostra-lhe as coisas trazendo-as ou segurando-as para que você as veja?",
+      "aux": "Ex.: traz uma figura ou brinquedo, um desenho que fez, uma flor ou um inseto que apanhou, blocos que juntou. Não para obter ajuda, apenas para compartilhar com você → PASSA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m10",
+    "label": "Sua criança responde quando você a chama pelo nome? (Por exemplo, olha, fala ou balbucia, ou para o que está fazendo, quando você a chama pelo nome?)",
+    "labelMd": "responde quando é chamada pelo nome",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X responde quando você o(a) chama pelo nome?",
+      "aux": "FALHA: não dá nenhuma resposta, parece ouvir mas ignora, responde só se o pai/mãe está de frente ao rosto, ou responde apenas se for tocado(a). PASSA: responde quando chamado(a), mesmo sem estímulo."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m11",
+    "label": "Quando você sorri para sua criança, ela sorri de volta para você?",
+    "labelMd": "sorri de volta quando você sorri",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "Quando você sorri para o(a) X, ele(a) sorri de volta para você?",
+      "aux": "FALHA: está sempre sorrindo, sorri para um brinquedo/atividade, sorri ao acaso, ou responde apenas se tocado. PASSA: sorri de volta quando alguém sorri para ele(a)."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m12",
+    "label": "Sua criança fica incomodada com os ruídos do dia a dia? (Por exemplo, sua criança grita ou chora com barulhos como o do aspirador ou de música alta?)",
+    "labelMd": "incomoda-se com os ruídos do dia a dia",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": true,
+    "seguimento": {
+      "pergunta": "O(A) X fica incomodado(a) com os ruídos do dia a dia?",
+      "aux": "Reação negativa ao som de máquina de lavar, bebês chorando, aspirador, secador, trânsito, música alta, telefone/campainha ou locais barulhentos (supermercado/restaurante). FALHA: se incomoda com vários ruídos mesmo incomuns; o incômodo atípico → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m13",
+    "label": "Sua criança já anda?",
+    "labelMd": "já anda",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X já anda?",
+      "aux": "Sim → PASSA. Não → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m14",
+    "label": "Sua criança olha você nos olhos quando você fala com ela, brinca com ela ou veste-a?",
+    "labelMd": "mantém contato visual com você",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X olha você nos olhos quando você fala, brinca ou veste?",
+      "aux": "Mantém contato visual de forma espontânea → PASSA. Raramente olha nos olhos ou só olha se forçado → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m15",
+    "label": "Sua criança tenta imitar aquilo que você faz? (Por exemplo, dá tchau, bate palmas ou faz sons engraçados quando você os faz?)",
+    "labelMd": "tenta imitar você",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X tenta imitar aquilo que você faz?",
+      "aux": "Ex.: dá tchau, bate palmas ou faz sons engraçados quando você os faz. Imita espontaneamente → PASSA. Não imita → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m16",
+    "label": "Se você virar a sua cabeça para olhar para alguma coisa, sua criança olha em volta para ver o que é que você está olhando?",
+    "labelMd": "acompanha o seu olhar",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "Se você virar a cabeça para olhar alguma coisa, o(a) X olha em volta para ver o que você está olhando?",
+      "aux": "Acompanha o seu olhar (atenção conjunta) → PASSA. Não segue o olhar/ignora → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m17",
+    "label": "Sua criança busca que você preste atenção nela? (Por exemplo, sua criança olha para você para receber um elogio ou lhe diz “olha” ou “olha para mim”?)",
+    "labelMd": "busca a sua atenção",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X busca que você preste atenção nele(a)?",
+      "aux": "Olha para você esperando elogio ou reação, ou diz \"olha\" ou \"olha para mim\" → PASSA. Faz sozinho(a), sem tentar compartilhar → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m18",
+    "label": "Sua criança compreende quando você lhe diz para fazer alguma coisa? (Por exemplo, se você não apontar, ela consegue compreender “ponha o livro na cadeira” ou “traga o cobertor”?)",
+    "labelMd": "compreende ordens simples",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X compreende quando você lhe diz para fazer alguma coisa?",
+      "aux": "Sem apontar, compreende ordens como \"ponha o livro na cadeira\" ou \"traga o cobertor\" → PASSA. Não compreende → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m19",
+    "label": "Quando alguma coisa nova acontece, sua criança olha para o seu rosto para ver sua reação? (Por exemplo, se ela ouve um barulho estranho ou engraçado, ou vê um brinquedo novo, ela olha para o seu rosto?)",
+    "labelMd": "olha seu rosto quando algo novo acontece",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "Quando acontece alguma coisa nova, o(a) X olha para o seu rosto para ver a sua reação?",
+      "aux": "Se ouve um barulho estranho/engraçado ou vê um brinquedo novo, olha para o seu rosto (PASSA). Não procura sua reação → FALHA."
+    }
+  },
+  {
+    "section": "mchat",
+    "id": "m20",
+    "label": "Sua criança gosta de atividades com movimento? (Por exemplo, ser balançada ou pular nos seus joelhos?)",
+    "labelMd": "gosta de atividades com movimento",
+    "type": "single_choice",
+    "options": [
+      "Sim",
+      "Não"
+    ],
+    "value": "",
+    "invertido": false,
+    "seguimento": {
+      "pergunta": "O(A) X gosta de atividades com movimento?",
+      "aux": "Ser balançado, pular nos joelhos, escorregar, brinquedos com movimento. Gosta e quer repetir → PASSA. Não se interessa → FALHA."
+    }
+  }
+]

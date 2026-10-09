@@ -2,12 +2,14 @@ import * as React from "react"
 import { forwardRef, useImperativeHandle, useState, useEffect, useRef } from "react"
 import type { CompanionActions } from "../companions/registry"
 import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
+import { formatarCodigoConsiderado, INDICADORES_GUIA, type FatoresRastreio, type IndicadorGuia } from "../../lib/indicadores-guia"
 
 interface FatoresRisco {
     tabagista: boolean
     dm: boolean
     hiv: boolean
     gestante: boolean
+    has: boolean
 }
 
 interface RastreioItem {
@@ -111,6 +113,12 @@ const injectStyles = `
     max-height: 300px !important;
     opacity: 1 !important;
     margin-top: 14px !important;
+  }
+
+  /* Cards de Indicadores da APS: mesmo padrão dos rastreios (expande no hover),
+     mas a área de conteúdo precisa de mais altura por card. */
+  .gas-aps-card.rastreios-card-individual:hover .rastreios-conteudo-dinamico {
+    max-height: 640px !important;
   }
 
   /* Telas Médias (Tablets, etc): 2 colunas */
@@ -689,8 +697,11 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
     const [dm, setDm] = useState<boolean>(false)
     const [hiv, setHiv] = useState<boolean>(false)
     const [gestante, setGestante] = useState<boolean>(false)
+    const [has, setHas] = useState<boolean>(false)
+    const [perfil, setPerfil] = useState<string>("Médico ou enfermeiro")
 
     const [indicados, setIndicados] = useState<RastreioItem[]>([])
+    const [recomendacoes, setRecomendacoes] = useState<IndicadorGuia[]>([])
     const [feitos, setFeitos] = useState<Record<string, boolean>>({})
 
     const syncRef = useRef(false)
@@ -738,8 +749,9 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
         getOutput: (groupId: string) => getOutputRef.current(groupId),
         reset() {
             setIdade(""); setSexo("")
-            setTabagista(false); setDm(false); setHiv(false); setGestante(false)
-            setIndicados([]); setFeitos({})
+            setPerfil("Médico ou enfermeiro")
+            setTabagista(false); setDm(false); setHiv(false); setGestante(false); setHas(false)
+            setIndicados([]); setFeitos({}); setRecomendacoes([])
         },
     }), [])
 
@@ -750,10 +762,15 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
             return
         }
 
-        const fatores = { tabagista, dm, hiv, gestante }
+        const fatores: FatoresRisco = { tabagista, dm, hiv, gestante, has }
         const filtrados = rData.filter((r) => r.condicao(i, sexo, fatores))
         setIndicados(filtrados)
-    }, [idade, sexo, tabagista, dm, hiv, gestante])
+        const recomendados = INDICADORES_GUIA.map(g => ({
+            ...g,
+            praticas: g.praticas.filter(p => p.condicao(i, sexo, fatores as FatoresRastreio)),
+        })).filter(g => g.praticas.length > 0)
+        setRecomendacoes(recomendados)
+    }, [idade, sexo, tabagista, dm, hiv, gestante, has])
 
     const toggleFeito = (id: string) => {
         setFeitos((prev) => ({ ...prev, [id]: !prev[id] }))
@@ -764,6 +781,19 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
         if (!grupos[r.cat]) grupos[r.cat] = []
         grupos[r.cat].push(r)
     })
+
+    /* Indicadores da APS: boas práticas filtradas pelo perfil profissional do
+       usuário e agrupadas pelo nome do indicador. */
+    const porIndicador: { codigo: string; nome: string; itens: { codigo: string; metodo: string; codigoLinhas: string[] }[] }[] = []
+    for (const g of recomendacoes) {
+        const itens: { codigo: string; metodo: string; codigoLinhas: string[] }[] = []
+        for (const p2 of g.praticas) {
+            const doPerfil = p2.responsavel === perfil || p2.responsavel === "Qualquer profissional"
+            if (!doPerfil) continue
+            itens.push({ codigo: p2.codigo, metodo: p2.metodo, codigoLinhas: p2.codigoConsiderado ? formatarCodigoConsiderado(p2.codigoConsiderado) : [] })
+        }
+        if (itens.length > 0) porIndicador.push({ codigo: g.codigo, nome: g.nome, itens })
+    }
 
     return (
         <div style={{ ...styles.container, ...style }} onFocus={() => { touchedRef.current = true }}>
@@ -782,7 +812,7 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
                         />
                     </div>
                     <div style={styles.inputGroup}>
-                        <label style={styles.label}>Sexo Biológico</label>
+                        <label style={styles.label}>Sexo</label>
                         <select
                             value={sexo}
                             onChange={(e) => setSexo(e.target.value)}
@@ -807,6 +837,9 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
                         <div style={styles.chip(dm)} onClick={() => setDm(!dm)}>
                             Diabetes
                         </div>
+                        <div style={styles.chip(has)} onClick={() => setHas(!has)}>
+                            Hipertenso
+                        </div>
                         <div
                             style={styles.chip(hiv)}
                             onClick={() => setHiv(!hiv)}
@@ -823,7 +856,50 @@ export default forwardRef<CompanionActions, Props>(function RastreiosPreventivos
                         )}
                     </div>
                 </div>
+                <div style={styles.inputGroup}>
+                    <label style={styles.label}>Perfil profissional</label>
+                    <select value={perfil} onChange={(e) => setPerfil(e.target.value)} style={{ ...styles.select, width: "180px" }}>
+                        <option value="Médico ou enfermeiro">Médico/Enfermeiro</option>
+                        <option value="ACS">ACS</option>
+                        <option value="Cirurgião dentista ou técnico de saúde bucal">Cirurgião-dentista</option>
+                        <option value="Qualquer profissional">Outros</option>
+                    </select>
+                </div>
             </div>
+
+            {porIndicador.length > 0 && (
+                <div style={{ marginBottom: "16px" }}>
+                    <div style={{ ...styles.sectionHeader, color: "#8b5cf6", margin: "0 0 10px 0" }}>Indicadores da APS</div>
+                    <div className="rastreios-grid-container">
+                        {porIndicador.map(card => (
+                            <div key={card.codigo} className="rastreios-card-individual gas-aps-card" style={{ background: "rgba(139,92,246,0.06)", border: "1px solid rgba(139,92,246,0.3)", borderRadius: "12px", padding: "16px 18px" }}>
+                                <div className="rastreios-card-header">
+                                    <div style={styles.leftHeader}>
+                                        <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--rastreio-text)" }}>{card.codigo} · {card.nome}</span>
+                                    </div>
+                                    <span style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", padding: "4px 10px", borderRadius: "6px", background: "rgba(139,92,246,0.16)", color: "#7c3aed", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{card.itens.length} boa{card.itens.length !== 1 ? "s" : ""} prática{card.itens.length !== 1 ? "s" : ""}</span>
+                                </div>
+                                <div className="rastreios-conteudo-dinamico" style={{ ...styles.contentArea(false), overflowY: "auto" }}>
+                                    {card.itens.map(it => (
+                                        <div key={it.codigo} style={{ display: "flex", flexDirection: "column", gap: "3px", padding: "7px 0", borderTop: "1px solid rgba(139,92,246,0.16)" }}>
+                                            <div style={{ fontSize: "12.5px", lineHeight: 1.5, color: "var(--rastreio-text)" }}>
+                                                <b>{it.codigo}</b> — {it.metodo}
+                                            </div>
+                                            {it.codigoLinhas.length > 0 ? (
+                                                <div style={{ fontSize: "11px", fontFamily: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace", color: "#7c3aed", lineHeight: 1.45, wordBreak: "break-word" }}>
+                                                    {it.codigoLinhas.map((linha, idx) => (
+                                                        <div key={idx}>{linha}</div>
+                                                    ))}
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div style={styles.metaInfo}>
                 <span
