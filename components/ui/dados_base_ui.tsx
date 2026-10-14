@@ -85,14 +85,19 @@ interface BlocoProps {
     sempreVisivelChildren?: React.ReactNode
     colapsavel?: boolean
     abertoInicial?: boolean
+    forcarAbertura?: number
     semBordaSuperior?: boolean
 }
 
 /* Sections the user never touched start folded away, so the left column opens
    straight onto Identificação instead of a wall of empty inputs. */
-function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = false, abertoInicial = true, semBordaSuperior = false }: BlocoProps) {
+function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = false, abertoInicial = true, forcarAbertura, semBordaSuperior = false }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
+    React.useEffect(() => {
+        setAberto(abertoInicial)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [forcarAbertura, abertoInicial])
 
     const cabecalho = (
         <>
@@ -179,6 +184,7 @@ export interface DadosBaseFormProps {
     onChange: (v: string) => void
     idade?: number | null
     onSexoChange?: (sexo: "M" | "F" | "") => void
+    expandirNaoVazios?: number
 }
 
 /* The whole "## Dados base" block lives in `value` as template-shaped text.
@@ -186,7 +192,7 @@ export interface DadosBaseFormProps {
    text always mirrors the current consulta agendada template.
    Sexo is the one exception: it is never serialised, so it lives in state and is
    only published to the companion bus. */
-export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: DadosBaseFormProps) {
+export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, expandirNaoVazios }: DadosBaseFormProps) {
     const [campos, setCampos] = React.useState<DadosBase>(DADOS_BASE_VAZIO)
     const [idCampos, setIdCampos] = React.useState<IdentificacaoCampos>(parseIdentificacao(""))
     const emitidoRef = React.useRef<string | null>(null)
@@ -225,13 +231,13 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
     const commitId = React.useCallback((novo: IdentificacaoCampos) => {
         setIdCampos(novo)
         const linha = compositarIdentificacao(novo)
-        const base = { ...parseDadosBase(value), id: linha }
+        const base = { ...campos, id: linha }
         setCampos(base)
         const texto = compositarDadosBase(base)
         emitidoRef.current = texto
         idEmitidoRef.current = linha
         onChange(texto)
-    }, [onChange, value])
+    }, [onChange, campos])
 
     const alterarIdCampo = React.useCallback((chave: keyof IdentificacaoCampos, novo: string) => {
         const anterior = idCampos
@@ -315,17 +321,15 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
     }, [idCampos, commitId, onSexoChange])
 
     const alterarAntecedente = React.useCallback((chave: keyof Antecedentes, novo: string) => {
-        const base = parseDadosBase(value)
-        aplicar({ ...base, antecedentes: { ...base.antecedentes, [chave]: novo } })
+        aplicar({ ...campos, antecedentes: { ...campos.antecedentes, [chave]: novo } })
         if (chave === "dum") broadcastFieldSync("dados_base", { dum: novo }, true)
-    }, [aplicar, value])
+    }, [aplicar, campos])
 
     React.useEffect(() => listenFieldSync(({ source, values }) => {
         if (source !== "prenatal" || values.dum === undefined) return
-        const base = parseDadosBase(value)
-        if (base.antecedentes.dum === values.dum) return
-        aplicar({ ...base, antecedentes: { ...base.antecedentes, dum: values.dum } })
-    }), [aplicar, value])
+        if (campos.antecedentes.dum === values.dum) return
+        aplicar({ ...campos, antecedentes: { ...campos.antecedentes, dum: values.dum } })
+    }), [aplicar, campos])
 
     const initialDum = React.useRef(parseDadosBase(value).antecedentes.dum)
     React.useEffect(() => {
@@ -334,19 +338,23 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
     }, [])
 
     const alterarMedicamento = React.useCallback((chave: keyof Medicamentos, novo: string) => {
-        const base = parseDadosBase(value)
-        aplicar({ ...base, medicamentos: { ...base.medicamentos, [chave]: novo } })
-    }, [aplicar, value])
+        aplicar({ ...campos, medicamentos: { ...campos.medicamentos, [chave]: novo } })
+    }, [aplicar, campos])
 
     const alterarHabito = React.useCallback((chave: keyof Habitos, novo: string) => {
-        const base = parseDadosBase(value)
-        aplicar({ ...base, habitos: { ...base.habitos, [chave]: novo } })
-    }, [aplicar, value])
+        aplicar({ ...campos, habitos: { ...campos.habitos, [chave]: novo } })
+    }, [aplicar, campos])
 
-    const antecedentesCampos = React.useMemo(() => parseDadosBase(value).antecedentes, [value])
-    const medicamentosCampos = React.useMemo(() => parseDadosBase(value).medicamentos, [value])
-    const habitosCampos = React.useMemo(() => parseDadosBase(value).habitos, [value])
-    const temAntecedentes = React.useMemo(() => Object.values(antecedentesCampos).some(v => v.trim() !== ""), [antecedentesCampos])
+    const antecedentesCampos = campos.antecedentes
+    const medicamentosCampos = campos.medicamentos
+    const habitosCampos = campos.habitos
+
+    /* Open state for the collapse-on-paste trigger, derived from the serialised
+       value so it is fresh on the same render the trigger arrives. */
+    const dadosValue = React.useMemo(() => parseDadosBase(value), [value])
+    const temIdentificacao = dadosValue.id.trim() !== ""
+    const temAntecedentesValue = Object.values(dadosValue.antecedentes).some(v => String(v).trim() !== "")
+    const temHabitos = Object.values(dadosValue.habitos).some(v => String(v).trim() !== "")
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
@@ -354,7 +362,8 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                 rotulo="Identificação"
                 cor={COR_IDENTIFICACAO}
                 colapsavel
-                abertoInicial={false}
+                abertoInicial={temIdentificacao}
+                forcarAbertura={expandirNaoVazios}
                 semBordaSuperior
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
@@ -457,7 +466,8 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                 rotulo="Antecedentes"
                 cor={COR_ANTECEDENTES}
                 colapsavel
-                abertoInicial={temAntecedentes}
+                abertoInicial={temAntecedentesValue}
+                forcarAbertura={expandirNaoVazios}
                 sempreVisivelChildren={idCampos.sexo === "F" && (idade === null || idade >= 15) ? (
                     <CampoRotulado rotulo="DUM">
                         <input
@@ -545,7 +555,8 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange }: D
                 rotulo="Hábitos"
                 cor={COR_HABITOS}
                 colapsavel
-                abertoInicial={false}
+                abertoInicial={temHabitos}
+                forcarAbertura={expandirNaoVazios}
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {HABITOS_CAMPOS.filter(c => c.sempreVisivel && (idade === null || idade >= 15 || !["etilismo", "tabagismo"].includes(c.chave))).map(campo => (

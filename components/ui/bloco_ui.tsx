@@ -349,7 +349,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
     /* ── Bump editor versions on external paste/load ── */
     const bumpAllVersions = useCallback(() => {
-        const ids = ["subjetivo", "objetivo", "avaliacao", "plano"]
+        const ids = ["dados_base", "lista_problemas", "subjetivo", "objetivo", "avaliacao", "plano"]
         ids.forEach(id => {
             contentVersionRef.current[id] = (contentVersionRef.current[id] || 0) + 1
         })
@@ -387,13 +387,17 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 const sep = prev && !prev.endsWith("\n") ? "\n" : ""
                 return prev + sep + text
             })
-        } else if (companionId === "puericultura" && targetSection === "objetivo") {
+        } else if (targetSection === "objetivo") {
             contentVersionRef.current[targetSection] = (contentVersionRef.current[targetSection] || 0) + 1
             setSections(prev => prev.map(s => {
                 if (s.id !== targetSection) return s
                 const objetivo = parseObjetivo(s.content)
-                const merged = [objetivo.crescimentoDesenvolvimento.trim(), text.trim()].filter(Boolean).join("\n\n")
-                return { ...s, content: compositarObjetivo({ ...objetivo, crescimentoDesenvolvimento: merged }) }
+                if (companionId === "puericultura") {
+                    const merged = [objetivo.crescimentoDesenvolvimento.trim(), text.trim()].filter(Boolean).join("\n\n")
+                    return { ...s, content: compositarObjetivo({ ...objetivo, crescimentoDesenvolvimento: merged }) }
+                }
+                const outros = [objetivo.exameFisico.outros.trim(), text.trim()].filter(Boolean).join("\n")
+                return { ...s, content: compositarObjetivo({ ...objetivo, exameFisico: { ...objetivo.exameFisico, outros } }) }
             }))
         } else {
             contentVersionRef.current[targetSection] = (contentVersionRef.current[targetSection] || 0) + 1
@@ -903,6 +907,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         setSections(prev => prev.map(s => (s.id === "subjetivo" ? { ...s, content: linha } : s)))
     }, [])
 
+    /* When the chief complaint ("motivo da consulta") is first left, offer to start
+       the timer right away instead of waiting for the 60s fallback. */
+    const sugerirTimerAoSairDoMotivo = useCallback(() => {
+        if (!username || popupDispensado || cronometroAtivo || mostrarSetupRelogio) return
+        setMostrarPopupSugestao(true)
+    }, [username, popupDispensado, cronometroAtivo, mostrarSetupRelogio])
+
     const handleObjetivoChange = useCallback((linha: string) => {
         setSections(prev => prev.map(s => (s.id === "objetivo" ? { ...s, content: linha } : s)))
     }, [])
@@ -1026,13 +1037,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
                                 {meta.formulario === "dados_base" ? (
-                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} />
+                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} expandirNaoVazios={contentVersionRef.current[s.id] || 0} />
                                 ) : meta.formulario === "lista_problemas" ? (
                                     <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
                                 ) : meta.formulario === "subjetivo" ? (
-                                    <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} />
+                                    <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} onMotivoBlur={sugerirTimerAoSairDoMotivo} />
                                 ) : (
-                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} />
+                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} expandirNaoVazios={contentVersionRef.current[s.id] || 0} />
                                 )}
                             </div>
                         ) : (
@@ -1090,7 +1101,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .framer-editor-container { background: var(--editor-bg); border: 1px solid var(--editor-border); box-shadow: var(--editor-shadow); }
                 .framer-editor-container input:focus,
                 .framer-editor-container textarea:focus,
-                .framer-editor-container select:focus { border-color: #000000 !important; outline: 1px solid #000000 !important; outline-offset: 0; box-shadow: none !important; }
+                .framer-editor-container select:focus { border-color: var(--editor-text) !important; outline: 1px solid var(--editor-text) !important; outline-offset: 0; box-shadow: none !important; }
 
                 .gas-ui-blockout { user-select: none !important; -webkit-user-select: none !important; pointer-events: auto; }
                 @keyframes gasPopIn { 0% { transform: scale(0.7) translateY(8px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
@@ -1409,7 +1420,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 contentEditable
                                 suppressContentEditableWarning
                                 data-placeholder="digite seu texto..."
-                                data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null || undefined}
+                                data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null ? "true" : undefined}
                                 onInput={handlePlainTextInput}
                                 onBlur={handlePlainTextBlur}
                                 onFocus={() => setFocusedSectionId(null)}

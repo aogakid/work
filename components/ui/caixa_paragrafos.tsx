@@ -10,7 +10,7 @@ import * as React from "react"
    identical no matter which form renders them. */
 const ESTILO_PARAGRAFOS = `
 .caixa-paragrafos { display: block; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; box-sizing: border-box; width: 100%; min-height: 88px; font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; font-size: 15px; line-height: 1.45; color: var(--editor-text); background: var(--editor-bg); border: 1px solid var(--editor-border); border-radius: 6px; padding: 6px 8px; resize: vertical; overflow-x: hidden; overflow-y: auto; }
-.caixa-paragrafos:focus { border-color: #000000; outline: 1px solid #000000; outline-offset: 0; }
+.caixa-paragrafos:focus { border-color: var(--editor-text, #000000); outline: 1px solid var(--editor-text, #000000); outline-offset: 0; }
 .caixa-paragrafos[data-extrapolada] { background: transparent; }
 .caixa-paragrafos[data-extrapolada] > * { color: #ffffff; }
 .caixa-paragrafos > * { margin: 0 0 0.36em; }

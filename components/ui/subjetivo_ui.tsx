@@ -41,15 +41,17 @@ const estiloBotao: React.CSSProperties = {
 export interface SubjetivoFormProps {
     value: string
     onChange: (v: string) => void
+    onMotivoBlur?: () => void
 }
 
 /* Each motivo is a numbered first-level item of Subjetivo: a single-line title
    plus the text box on the second level. "Adicionar motivo" appends another
    pair, and numbering is re-derived on every compose. */
-export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
+export function SubjetivoForm({ value, onChange, onMotivoBlur }: SubjetivoFormProps) {
     const [campos, setCampos] = React.useState<Subjetivo>(SUBJETIVO_VAZIO)
     const [hoverMotivo, setHoverMotivo] = React.useState<number | null>(null)
     const emitidoRef = React.useRef<string | null>(null)
+    const motivoSaiuRef = React.useRef(false)
 
     React.useEffect(() => {
         if (emitidoRef.current === value) return
@@ -86,6 +88,12 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
     const handleAcompanhante = (e: React.ChangeEvent<HTMLInputElement>) => alterarAcompanhante(e.target.value)
     const handleMotivo = (indice: number) => (e: React.ChangeEvent<HTMLInputElement>) => alterarMotivo(indice, "motivo", e.target.value)
     const handleTexto = (indice: number) => (valor: string) => alterarMotivo(indice, "texto", valor)
+
+    const aoSairDoMotivo = () => {
+        if (motivoSaiuRef.current) return
+        motivoSaiuRef.current = true
+        if (onMotivoBlur) onMotivoBlur()
+    }
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px", padding: "10px 0 12px 0" }}>
@@ -127,6 +135,7 @@ export function SubjetivoForm({ value, onChange }: SubjetivoFormProps) {
                                     data-motivo={i}
                                     value={motivo.motivo}
                                     onChange={handleMotivo(i)}
+                                    onBlur={i === 0 ? aoSairDoMotivo : undefined}
                                     placeholder="motivo da consulta"
                                     style={{ ...estiloCampo, paddingLeft: "46px", paddingRight: "27px", outline: "none" }}
                                 />

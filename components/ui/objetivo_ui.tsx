@@ -54,13 +54,18 @@ interface BlocoProps {
     children: React.ReactNode
     colapsavel?: boolean
     abertoInicial?: boolean
+    forcarAbertura?: number
     semBordaSuperior?: boolean
     resumo?: React.ReactNode
 }
 
-function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, semBordaSuperior = false, resumo }: BlocoProps) {
+function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, forcarAbertura, semBordaSuperior = false, resumo }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
+    React.useEffect(() => {
+        setAberto(abertoInicial)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [forcarAbertura, abertoInicial])
 
     const cabecalho = (
         <>
@@ -111,10 +116,11 @@ export interface ObjetivoFormProps {
     idade?: number | null
     mostrarPrenatal?: boolean
     mostrarPuericultura?: boolean
+    expandirNaoVazios?: number
 }
 
-export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = false, mostrarPuericultura = false }: ObjetivoFormProps) {
-    const [, setCampos] = React.useState<Objetivo>(OBJETIVO_VAZIO)
+export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = false, mostrarPuericultura = false, expandirNaoVazios }: ObjetivoFormProps) {
+    const [campos, setCampos] = React.useState<Objetivo>(OBJETIVO_VAZIO)
     const emitidoRef = React.useRef<string | null>(null)
     const sincronizandoRef = React.useRef(false)
 
@@ -132,46 +138,49 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
     }, [onChange])
 
     const alterarSsvv = React.useCallback((chave: keyof SinaisVitais, novo: string) => {
-        const base = parseObjetivo(value)
         let val = novo
         if (chave === "pa") {
             val = maskPA(novo)
         }
-        const ssvvAtualizado = { ...base.ssvv, [chave]: val }
+        const ssvvAtualizado = { ...campos.ssvv, [chave]: val }
         if (chave === "peso" || chave === "altura") {
             const imcCalc = calcularIMC(ssvvAtualizado.peso, ssvvAtualizado.altura)
             if (imcCalc) {
                 ssvvAtualizado.imc = imcCalc
             }
         }
-        aplicar({ ...base, ssvv: ssvvAtualizado })
-    }, [aplicar, value])
+        aplicar({ ...campos, ssvv: ssvvAtualizado })
+    }, [aplicar, campos])
 
     const alterarExameFisico = React.useCallback((chave: keyof ExameFisico, novo: string) => {
-        const base = parseObjetivo(value)
-        aplicar({ ...base, exameFisico: { ...base.exameFisico, [chave]: novo } })
-    }, [aplicar, value])
+        aplicar({ ...campos, exameFisico: { ...campos.exameFisico, [chave]: novo } })
+    }, [aplicar, campos])
 
     const alterarCrescimentoDesenvolvimento = React.useCallback((novo: string) => {
-        const base = parseObjetivo(value)
-        aplicar({ ...base, crescimentoDesenvolvimento: novo })
-    }, [aplicar, value])
+        aplicar({ ...campos, crescimentoDesenvolvimento: novo })
+    }, [aplicar, campos])
 
     const alterarComplementar = React.useCallback((chave: keyof Complementar, novo: string) => {
-        const base = parseObjetivo(value)
-        aplicar({ ...base, complementar: { ...base.complementar, [chave]: novo } })
-    }, [aplicar, value])
+        aplicar({ ...campos, complementar: { ...campos.complementar, [chave]: novo } })
+    }, [aplicar, campos])
 
     const alterarPrenatal = React.useCallback((chave: keyof ExameFisico["prenatal"], novo: string) => {
-        const base = parseObjetivo(value)
-        aplicar({ ...base, exameFisico: { ...base.exameFisico, prenatal: { ...base.exameFisico.prenatal, [chave]: novo } } })
-    }, [aplicar, value])
+        aplicar({ ...campos, exameFisico: { ...campos.exameFisico, prenatal: { ...campos.exameFisico.prenatal, [chave]: novo } } })
+    }, [aplicar, campos])
 
-    const ssvvCampos = React.useMemo(() => parseObjetivo(value).ssvv, [value])
-    const crescimentoDesenvolvimento = React.useMemo(() => parseObjetivo(value).crescimentoDesenvolvimento, [value])
-    const exameFisicoCampos = React.useMemo(() => parseObjetivo(value).exameFisico, [value])
-    const complementarCampos = React.useMemo(() => parseObjetivo(value).complementar, [value])
+    const ssvvCampos = campos.ssvv
+    const crescimentoDesenvolvimento = campos.crescimentoDesenvolvimento
+    const exameFisicoCampos = campos.exameFisico
+    const complementarCampos = campos.complementar
     const classificacaoIMC = idade !== null && idade > 18 ? categoriaIMC(ssvvCampos.imc) : null
+
+    /* Open state for the collapsible blocks, derived from the serialised value so
+       it is fresh on the same render the paste trigger arrives. */
+    const conteudoValue = React.useMemo(() => parseObjetivo(value), [value])
+    const temSsvv = Object.values(conteudoValue.ssvv).some(v => v.trim() !== "")
+    const temPrenatal = Object.values(conteudoValue.exameFisico.prenatal).some(v => v.trim() !== "")
+    const temExameFisico = conteudoValue.exameFisico.ect.trim() !== "" || conteudoValue.exameFisico.ac.trim() !== "" || conteudoValue.exameFisico.ar.trim() !== "" || conteudoValue.exameFisico.ext.trim() !== "" || conteudoValue.exameFisico.outros.trim() !== "" || temPrenatal
+    const temComplementar = Object.values(conteudoValue.complementar).some(v => v.trim() !== "")
 
     React.useEffect(() => {
         if (sincronizandoRef.current) {
@@ -179,15 +188,14 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
             return
         }
         broadcastFieldSync("objetivo", { pa: ssvvCampos.pa, peso: ssvvCampos.peso, altura: ssvvCampos.altura })
-    }, [value, ssvvCampos.pa, ssvvCampos.peso, ssvvCampos.altura])
+    }, [ssvvCampos.pa, ssvvCampos.peso, ssvvCampos.altura])
 
     React.useEffect(() => listenFieldSync(({ source, values }) => {
         if (source === "objetivo" || (values.pa === undefined && values.peso === undefined && values.altura === undefined)) return
-        const base = parseObjetivo(value)
-        const ssvv = { ...base.ssvv }
+        const ssvv = { ...campos.ssvv }
         if (values.pa !== undefined) {
             if (source === "escores" && values.pa) {
-                const diastolica = base.ssvv.pa.match(/[x×/]\s*(\d+)/)?.[1]
+                const diastolica = campos.ssvv.pa.match(/[x×/]\s*(\d+)/)?.[1]
                 ssvv.pa = `${values.pa}${diastolica ? `x${diastolica}` : ""}`
             } else {
                 ssvv.pa = values.pa
@@ -195,12 +203,12 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
         }
         if (values.peso !== undefined) ssvv.peso = values.peso
         if (values.altura !== undefined) ssvv.altura = values.altura
-        if (ssvv.pa === base.ssvv.pa && ssvv.peso === base.ssvv.peso && ssvv.altura === base.ssvv.altura) return
+        if (ssvv.pa === campos.ssvv.pa && ssvv.peso === campos.ssvv.peso && ssvv.altura === campos.ssvv.altura) return
         const imc = calcularIMC(ssvv.peso, ssvv.altura)
         if (imc) ssvv.imc = imc
         sincronizandoRef.current = true
-        aplicar({ ...base, ssvv })
-    }), [value, aplicar])
+        aplicar({ ...campos, ssvv })
+    }), [campos, aplicar])
 
     const camposSsvvMeta: { chave: keyof SinaisVitais; rotulo: string }[] = [
         { chave: "pa", rotulo: "PA" },
@@ -217,7 +225,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
-            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={false} resumo={(
+            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={temSsvv} forcarAbertura={expandirNaoVazios} resumo={(
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                     {camposResumo.map(item => (
                         <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
@@ -262,10 +270,10 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                 </Bloco>
             ) : null}
 
-            <Bloco rotulo="Exame físico" cor={COR_EXAME_FISICO} colapsavel abertoInicial={false}>
+            <Bloco rotulo="Exame físico" cor={COR_EXAME_FISICO} colapsavel abertoInicial={temExameFisico} forcarAbertura={expandirNaoVazios}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {mostrarPrenatal ? (
-                        <Bloco rotulo="Pré-natal" cor={COR_EXAME_FISICO} colapsavel abertoInicial={false}>
+                        <Bloco rotulo="Pré-natal" cor={COR_EXAME_FISICO} colapsavel abertoInicial={temPrenatal} forcarAbertura={expandirNaoVazios}>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                                 {([ ["au", "AU"], ["bcf", "BCF"], ["mf", "MF"], ["apresentacao", "Apresentação"] ] as const).map(([key, label]) => (
                                     <div key={key} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
@@ -318,7 +326,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                 </div>
             </Bloco>
 
-            <Bloco rotulo="Exames complementares" cor={COR_COMPLEMENTAR} colapsavel abertoInicial={false}>
+            <Bloco rotulo="Exames complementares" cor={COR_COMPLEMENTAR} colapsavel abertoInicial={temComplementar} forcarAbertura={expandirNaoVazios}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <CampoRotulado rotulo="Laboratório">
                         <CaixaParagrafos
