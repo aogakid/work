@@ -2,6 +2,7 @@ import * as React from "react"
 import { forwardRef, useImperativeHandle, useRef, useState, useCallback, useMemo, useEffect } from "react"
 import type { CompanionActions } from "../companions/registry"
 import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
+import { extrairExamesDePdf } from "../../lib/pdf-exames"
 
 const EXAMES_PREFIX = "exames"
 
@@ -137,6 +138,10 @@ const injectStyles = `
   .${EXAMES_PREFIX}-copy-icon:hover {
     color: var(--${EXAMES_PREFIX}-text);
     background: var(--${EXAMES_PREFIX}-border);
+  }
+
+  @keyframes ${EXAMES_PREFIX}-spin {
+    to { transform: rotate(360deg); }
   }
 `
 
@@ -390,6 +395,24 @@ function IconeLixeira() {
   )
 }
 
+function IconeImportar() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function IconeSpinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  )
+}
+
 type PeriodoAmpa = "dia" | "noite"
 
 interface AmpaParsed {
@@ -568,6 +591,9 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   })
   const [outros, setOutros] = useState("")
   const [copied, setCopied] = useState(false)
+  const [importando, setImportando] = useState(false)
+  const [importStatus, setImportStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null)
+  const fileRef = useRef<HTMLInputElement | null>(null)
   const syncRef = useRef(false)
   const touchedRef = useRef(false)
   const [escuro, setEscuro] = useState(false)
@@ -714,6 +740,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       })
       setOutros("")
       setCopied(false)
+      setImportStatus(null)
       setAmpaStart(hoje)
       setAmpaCopied(false)
       setAmpaSlotCount(1)
@@ -748,6 +775,39 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
 
   const handleChange = useCallback((id: string, val: string) => {
     setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
+  }, [])
+
+  const handlePdf = useCallback(async (file: File) => {
+    setImportando(true)
+    setImportStatus(null)
+    try {
+      const res = await extrairExamesDePdf(await file.arrayBuffer())
+      const encontrados = Object.keys(res.campos).length
+      if (encontrados === 0 && !res.idade && !res.sexo) {
+        setImportStatus({ tipo: "erro", msg: "Nenhum exame reconhecido no PDF." })
+        return
+      }
+      touchedRef.current = true
+      if (res.data) setDate(res.data)
+      setValues((prev) => {
+        const next = { ...prev }
+        for (const [k, v] of Object.entries(res.campos)) next[k] = v
+        if (res.idade) next["idade"] = res.idade
+        if (res.sexo) next["sexo"] = res.sexo
+        return next
+      })
+      if (res.outros) setOutros((prev) => (prev.trim() ? prev.trim() + " // " + res.outros : res.outros as string))
+      const detalhes = [res.idade ? `${res.idade} anos` : "", res.sexo ? `sexo ${res.sexo}` : ""].filter(Boolean).join(", ")
+      setImportStatus({
+        tipo: "ok",
+        msg: `PDF importado: ${encontrados} exame${encontrados === 1 ? "" : "s"}${detalhes ? ` • ${detalhes}` : ""}`,
+      })
+    } catch {
+      setImportStatus({ tipo: "erro", msg: "Não foi possível ler o PDF." })
+    } finally {
+      setImportando(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
   }, [])
 
   const handleAmpaChange = useCallback((key: string, val: string) => {
@@ -953,6 +1013,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     }
     setValues(init)
     setOutros("")
+    setImportStatus(null)
 setAmpaMeasures(() => {
         const init: Record<string, string> = {}
         for (const day of AMPA_DAY_INDEXES) {
@@ -997,6 +1058,58 @@ setGlicemiaMeasures(() => {
             <div style={s.title}>Exames</div>
             <div style={s.subtitle}>converta facilmente em texto</div>
           </div>
+          <div style={{ display: "flex", gap: "8px", flexShrink: 0 }}>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="application/pdf,.pdf"
+              style={{ display: "none" }}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) handlePdf(f)
+              }}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={importando}
+              title="Importar exames de um PDF do laboratório"
+              style={{
+                background: "var(--exames-input-bg)",
+                border: "1px solid var(--exames-border)",
+                borderRadius: "8px",
+                padding: "8px 12px",
+                cursor: importando ? "default" : "pointer",
+                color: "var(--exames-text-muted)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                flexShrink: 0,
+                opacity: importando ? 0.7 : 1,
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (importando) return
+                e.currentTarget.style.color = "#00b849"
+                e.currentTarget.style.borderColor = "rgba(0,184,73,0.35)"
+                e.currentTarget.style.background = "rgba(0,184,73,0.06)"
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--exames-text-muted)"
+                e.currentTarget.style.borderColor = "var(--exames-border)"
+                e.currentTarget.style.background = "var(--exames-input-bg)"
+              }}
+            >
+              {importando ? (
+                <span style={{ display: "inline-flex", animation: `${EXAMES_PREFIX}-spin 0.8s linear infinite` }}>
+                  <IconeSpinner />
+                </span>
+              ) : (
+                <IconeImportar />
+              )}
+              {importando ? "Lendo..." : "Importar PDF"}
+            </button>
           <button
             onClick={handleClearAll}
             title="Limpar tudo"
@@ -1029,7 +1142,26 @@ setGlicemiaMeasures(() => {
             <IconeLixeira />
             Limpar
           </button>
+          </div>
         </div>
+
+        {importStatus && (
+          <div
+            style={{
+              gridColumn: "1 / -1",
+              marginBottom: "12px",
+              fontSize: "12px",
+              fontWeight: 600,
+              padding: "8px 12px",
+              borderRadius: "8px",
+              border: `1px solid ${importStatus.tipo === "ok" ? "var(--exames-ok-border)" : "var(--exames-danger-border)"}`,
+              background: importStatus.tipo === "ok" ? "var(--exames-ok-bg)" : "var(--exames-danger-bg)",
+              color: importStatus.tipo === "ok" ? "var(--exames-ok)" : "var(--exames-danger)",
+            }}
+          >
+            {importStatus.msg}
+          </div>
+        )}
 
         <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
           {EXAMES_TABS.map((tab) => (

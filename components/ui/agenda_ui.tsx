@@ -16,7 +16,16 @@ interface DataAtual {
 
 const dataHoje = (): DataAtual => {
     const a = new Date()
-    return { dia: a.getDate(), mes: a.getMonth() + 1, ano: a.getFullYear() }
+    const parts = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+    }).formatToParts(a)
+    const dia = Number(parts.find(p => p.type === "day")?.value || a.getDate())
+    const mes = Number(parts.find(p => p.type === "month")?.value || a.getMonth() + 1)
+    const ano = Number(parts.find(p => p.type === "year")?.value || a.getFullYear())
+    return { dia, mes, ano }
 }
 
 const comDoisDigitos = (n: number): string => String(n).padStart(2, "0")
@@ -30,8 +39,33 @@ const MESES_ABREVIADOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago"
 
 const nomeAbaMes = (): string => {
     const a = new Date()
-    const mes = MESES_ABREVIADOS[a.getMonth()]
-    const ano = String(a.getFullYear() % 100).padStart(2, "0")
+    const parts = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "long",
+    }).formatToParts(a)
+    const mesLong = parts.find(p => p.type === "month")?.value || ""
+    const mesMap: Record<string, string> = {
+        janeiro: "Jan",
+        fevereiro: "Fev",
+        "março": "Mar", marco: "Mar",
+        abril: "Abr",
+        maio: "Mai",
+        junho: "Jun",
+        julho: "Jul",
+        agosto: "Ago",
+        setembro: "Set",
+        outubro: "Out",
+        novembro: "Nov",
+        dezembro: "Dez",
+    }
+    const mes = mesMap[mesLong.toLowerCase()] || MESES_ABREVIADOS[a.getMonth()]
+    const partsAno = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+    }).formatToParts(a)
+    const anoNum = Number(partsAno.find(p => p.type === "year")?.value || a.getFullYear())
+    const ano = String(anoNum % 100).padStart(2, "0")
     return mes + "/" + ano
 }
 
@@ -240,7 +274,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
 
         const colunaF = itens
             .map((item) => item.trim())
-            .filter((item) => item !== "")
+            .filter((item) => item !== "" && item !== "-")
 
         try {
             const resposta = await fetch(GAS_WEB_APP_URL, {
@@ -330,6 +364,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                 position: "relative",
                 width: "100%",
                 height: "100%",
+                minHeight: 0,
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
@@ -356,21 +391,21 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                 .framer-gas-colunas { display: flex; flex-direction: column; gap: 12px; width: 100%; min-width: 0; }
                 .framer-gas-bloco { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
                 @media (min-width: 601px) {
-                    .framer-gas-colunas { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: stretch; }
+                    .framer-gas-colunas { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; align-items: stretch; flex: 1 1 auto; min-height: 0; }
                     .framer-gas-bloco { height: 100%; }
-                    .framer-gas-textarea { height: auto !important; flex: 1 1 auto !important; min-height: 220px !important; }
+                    .framer-gas-textarea { height: 100% !important; flex: 1 1 auto !important; min-height: 0 !important; }
                 }
-                .framer-gas-acolhimento { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-                .framer-gas-escala-label {
-                    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;
-                    color: var(--gas-placeholder); font-family: sans-serif;
-                }
+                .framer-gas-acolhimento { display: flex; flex-direction: column; gap: 12px; min-width: 0; align-items: stretch; min-height: 0; }
+                    .framer-gas-acolhimento > div { display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+                    .framer-gas-acolhimento > div:first-child { flex: 1 1 auto; }
+                    .framer-gas-acolhimento > div:last-child { flex: 0 0 auto; }
                 .framer-gas-campo-hoje {
-                    flex: 1; min-width: 0; min-height: 84px; padding: 10px 12px; box-sizing: border-box;
+                    flex: 1 1 auto; min-width: 0; min-height: 200px; max-height: 200px; padding: 10px 12px; box-sizing: border-box;
                     background: var(--gas-bg) !important; border: 1px dashed var(--gas-border) !important;
                     border-radius: 10px !important; font-size: 13px !important; line-height: 1.5 !important;
-                    color: var(--gas-text) !important; outline: none !important; resize: none !important;
+                    color: var(--gas-text) !important; outline: none !important; resize: vertical !important;
                     overflow-y: auto !important; font-family: sans-serif !important;
+                    height: auto !important;
                 }
                 .framer-gas-lista-f {
                     display: flex; flex-direction: column; width: 100%; overflow: hidden;
@@ -412,7 +447,7 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                 }
             `}</style>
 
-            <div className="framer-gas-colunas">
+            <div className="framer-gas-colunas" style={{ flex: "1 1 auto", minHeight: 0 }}>
                 <div className="framer-gas-bloco">
                 <label className="framer-gas-escala-label">Agendados</label>
                 <textarea
@@ -425,12 +460,28 @@ Hora	Usuário	Tipo Agendamento	Observação
 09:00	NOME DO PACIENTE 3	Eletiva Pré-Agendada	
 [...]`}
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
+                    onChange={(e) => {
+                        const raw = e.target.value
+                        const linhas = raw.split(/\r?\n/)
+                        if (linhas.length <= 1) {
+                            setInput(raw)
+                            return
+                        }
+                        const cabecalho = linhas[0]
+                        const resto = linhas.slice(1).filter(l => {
+                            const s = l.replace(/\r$/, "")
+                            if (!s.trim()) return false
+                            const partes = s.split(/\t| {2,}/)
+                            if (partes.length >= 2 && !partes[1].trim()) return false
+                            return true
+                        })
+                        setInput([cabecalho, ...resto].join("\n"))
+                    }}
                 />
                 </div>
 
                 <div className="framer-gas-acolhimento">
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", minHeight: 0 }}>
                         <label className="framer-gas-escala-label">Agendinha</label>
                         <textarea
                             className="framer-gas-campo-hoje"
@@ -440,9 +491,9 @@ Hora	Usuário	Tipo Agendamento	Observação
                             ref={registrarEscala}
                         />
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", minHeight: 0 }}>
                         <label className="framer-gas-escala-label">Acolhimento/DESP</label>
-                        <div className="framer-gas-lista-f">
+                        <div className="framer-gas-lista-f" style={{ overflow: "visible" }}>
                         {itens.map((valor, i) => (
                             <div className="framer-gas-linha-f" key={i}>
                                 <input

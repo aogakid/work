@@ -95,9 +95,10 @@ function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = fals
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
     React.useEffect(() => {
-        setAberto(abertoInicial)
+        if (forcarAbertura === undefined) return
+        setAberto(true)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [forcarAbertura, abertoInicial])
+    }, [forcarAbertura])
 
     const cabecalho = (
         <>
