@@ -158,6 +158,41 @@ const montarTextoHoje = (linhas: string[][]): string => {
     return itens.join("\n")
 }
 
+const removerAcentos = (texto: string): string =>
+    texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+
+const ehPreAgendada = (tipo: string): boolean =>
+    /pre[\s-]?agendada/i.test(removerAcentos(tipo))
+
+interface ProcessamentoAgenda {
+    manter: string[]
+    acolhimento: string[]
+}
+
+const processarAgenda = (texto: string): ProcessamentoAgenda => {
+    const linhas = texto.split(/\r?\n/)
+    const manter: string[] = []
+    const acolhimento: string[] = []
+    for (const linha of linhas.slice(1)) {
+        if (!linha.trim()) continue
+        const partes = linha.split(/\t| {2,}/).map(p => p.trim())
+        if (partes.length < 2 || !partes[1]) continue
+        const tipo = partes[2] || ""
+        if (tipo && !ehPreAgendada(tipo)) acolhimento.push(partes[1])
+        else manter.push(linha)
+    }
+    return { manter, acolhimento }
+}
+
+function IconeLixeira() {
+    return (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        </svg>
+    )
+}
+
 export interface GoogleSheetsInputActions {
     enviarParaPlanilha(): void
 }
@@ -190,6 +225,13 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
         if (!podeAdicionar) return
         setItens([...itens, ""])
         setTimeout(() => inputRef.current?.focus(), 0)
+    }
+
+    const removerItem = (indice: number) => {
+        setItens((atual) => {
+            const restantes = atual.filter((_, j) => j !== indice)
+            return restantes.length > 0 ? restantes : [""]
+        })
     }
 
     const prosseguirNoEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -373,11 +415,11 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
         >
             <style>{`
                 :root {
-                    --gas-bg: #ffffff; --gas-border: #e2ddd6; --gas-text: #1e1c19; --gas-focus: #c96a2a; --gas-placeholder: #a89e90;
+                    --gas-bg: #ffffff; --gas-border: #e2ddd6; --gas-text: #1e1c19; --gas-focus: #c96a2a; --gas-placeholder: #a89e90; --gas-danger: #c0392b;
                 }
                 @media (prefers-color-scheme: dark) {
                     :root {
-                        --gas-bg: #1c1917; --gas-border: #2e2a24; --gas-text: #f5f5f4; --gas-focus: #e07a3b; --gas-placeholder: #57534e;
+                        --gas-bg: #1c1917; --gas-border: #2e2a24; --gas-text: #f5f5f4; --gas-focus: #e07a3b; --gas-placeholder: #57534e; --gas-danger: #e06c5a;
                     }
                     .framer-gas-overlay { background: rgba(28, 25, 23, 0.85); }
                 }
@@ -421,6 +463,16 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                     outline: none !important; box-sizing: border-box !important; font-family: sans-serif !important;
                 }
                 .framer-gas-input-f:focus { box-shadow: inset 0 0 0 2px var(--gas-focus) !important; }
+                .framer-gas-remove-f {
+                    width: 40px; height: 44px; flex-shrink: 0; padding: 0;
+                    display: flex; align-items: center; justify-content: center;
+                    background: transparent !important; color: var(--gas-placeholder) !important;
+                    border: none !important; border-radius: 0 !important;
+                    cursor: pointer; opacity: 0; transition: opacity 0.15s ease, color 0.15s ease;
+                }
+                .framer-gas-linha-f:hover .framer-gas-remove-f,
+                .framer-gas-remove-f:focus-visible { opacity: 1; }
+                .framer-gas-remove-f:hover { color: var(--gas-danger) !important; }
                 .framer-gas-add-f {
                     width: 46px; height: 44px; flex-shrink: 0; padding: 0;
                     display: flex; align-items: center; justify-content: center;
@@ -467,15 +519,17 @@ Hora	Usuário	Tipo Agendamento	Observação
                             setInput(raw)
                             return
                         }
-                        const cabecalho = linhas[0]
-                        const resto = linhas.slice(1).filter(l => {
-                            const s = l.replace(/\r$/, "")
-                            if (!s.trim()) return false
-                            const partes = s.split(/\t| {2,}/)
-                            if (partes.length >= 2 && !partes[1].trim()) return false
-                            return true
-                        })
-                        setInput([cabecalho, ...resto].join("\n"))
+                        const { manter } = processarAgenda(raw)
+                        setInput([linhas[0], ...manter].join("\n"))
+                    }}
+                    onPaste={(e) => {
+                        const colado = e.clipboardData.getData("text")
+                        const el = e.currentTarget
+                        const ini = el.selectionStart ?? input.length
+                        const fim = el.selectionEnd ?? input.length
+                        const completo = input.slice(0, ini) + colado + input.slice(fim)
+                        const { acolhimento } = processarAgenda(completo)
+                        setItens(acolhimento.length > 0 ? acolhimento : [""])
                     }}
                 />
                 </div>
@@ -505,6 +559,15 @@ Hora	Usuário	Tipo Agendamento	Observação
                                     onChange={(e) => atualizarItem(i, e.target.value)}
                                     onKeyDown={prosseguirNoEnter}
                                 />
+                                <button
+                                    type="button"
+                                    className="framer-gas-remove-f"
+                                    aria-label="Remover item"
+                                    title="Remover"
+                                    onClick={() => removerItem(i)}
+                                >
+                                    <IconeLixeira />
+                                </button>
                                 {i === itens.length - 1 && podeAdicionar && (
                                     <button
                                         type="button"

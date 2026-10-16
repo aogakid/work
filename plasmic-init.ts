@@ -234,6 +234,23 @@ PLASMIC.registerComponent(EncaminhaUI, {
   props: {},
 });
 
+import OrientacoesUI from "./components/ui/orientacoes_ui";
+PLASMIC.registerComponent(OrientacoesUI, {
+  name: "OrientacoesUI",
+  props: {},
+});
+
+import ImpressosUI from "./components/ui/impressos_ui";
+PLASMIC.registerComponent(ImpressosUI, {
+  name: "ImpressosUI",
+  props: {},
+});
+
+
+
+
+
+
 
 
 // ---------------------------------------------------------------------------

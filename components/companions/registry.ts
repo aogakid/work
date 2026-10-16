@@ -34,6 +34,8 @@ import GeriatriaUI from "../ui/geriatria_ui"
 import PsiquiatriaUI from "../ui/psiquiatria_ui"
 import EncaminhaUI from "../ui/encaminha_ui"
 import EncaminharBlocoUI from "../ui/encaminhar_bloco_ui"
+import OrientacoesUI from "../ui/orientacoes_ui"
+import ImpressosUI from "../ui/impressos_ui"
 import { CONTEXTO_VAZIO, type ContextoPaciente } from "../../lib/contexto-paciente"
 
 /* ── Visibility rules driven by the Identificação form ────────────── */
@@ -154,6 +156,21 @@ export const COMPANIONS: CompanionConfig[] = [
         component: EncaminharBlocoUI,
         /* Sem outputGroup de propósito: o encaminhamento gerado é copiado,
            nunca inserido no bloco. */
+        outputGroups: [],
+        placement: "after-plano",
+    },
+    {
+        id: "orientacoes",
+        label: "Orientações",
+        component: OrientacoesUI,
+        /* Só impressão (PDF) e cópia (md) — nada vai para o bloco. */
+        outputGroups: [],
+        placement: "after-plano",
+    },
+    {
+        id: "impressos",
+        label: "Impressos",
+        component: ImpressosUI,
         outputGroups: [],
         placement: "after-plano",
     },

@@ -7,8 +7,19 @@ interface ItemLinha {
   w: number
 }
 
+interface PdfViewport {
+  width: number
+  height: number
+}
+
 interface PdfPage {
   getTextContent: () => Promise<{ items: unknown[] }>
+  getViewport: (opts: { scale: number }) => PdfViewport
+  render: (opts: {
+    canvasContext: CanvasRenderingContext2D
+    viewport: PdfViewport
+    transform?: number[]
+  }) => { promise: Promise<void> }
   cleanup: () => void
 }
 
@@ -20,7 +31,7 @@ interface PdfDocument {
 
 interface PdfJs {
   version?: string
-  getDocument: (src: { data: Uint8Array }) => { promise: Promise<PdfDocument> }
+  getDocument: (src: { data: Uint8Array } | { url: string }) => { promise: Promise<PdfDocument> }
   GlobalWorkerOptions: { workerSrc: string }
 }
 
@@ -89,6 +100,35 @@ export async function extrairTextoPdf(data: ArrayBuffer | Uint8Array): Promise<s
   }
   await doc.destroy()
   return paginas.join("\n")
+}
+
+/* Renderiza a primeira página de um PDF num canvas pequeno, usado como
+   miniatura nos cards de orientações. `largura` é a largura em px de layout;
+   a renderização é feita com devicePixelRatio para não ficar borrada. */
+export async function renderizarPrimeiraPagina(
+  url: string,
+  canvas: HTMLCanvasElement,
+  largura: number,
+): Promise<void> {
+  const pdfjs = await carregarPdfjs()
+  const doc = await pdfjs.getDocument({ url }).promise
+  try {
+    const page = await doc.getPage(1)
+    const base = page.getViewport({ scale: 1 })
+    const viewport = page.getViewport({ scale: largura / base.width })
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+    const larguraPx = Math.round(viewport.width)
+    const alturaPx = Math.round(viewport.height)
+    canvas.width = Math.round(larguraPx * dpr)
+    canvas.height = Math.round(alturaPx * dpr)
+    const ctx = canvas.getContext("2d")
+    if (!ctx) throw new Error("canvas 2d indisponível")
+    const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined
+    await page.render({ canvasContext: ctx, viewport, transform }).promise
+    page.cleanup()
+  } finally {
+    await doc.destroy()
+  }
 }
 
 export async function extrairExamesDePdf(
