@@ -30,18 +30,8 @@ export const ORIENTACOES: Orientacao[] = [
     {
         id: "hipertensao-arterial",
         titulo: "Hipertensão arterial",
-        tipo: "md",
-        texto: `Evite
-- Sal em excesso e embutidos (linguiça, salsicha, salame, presunto, mortadela e carne de sol muito salgada).
-- Conservas, comida enlatada, excesso de queijo coalho e temperos prontos (Sazon, Knorr e colorau com sal).
-- Macarrão instantâneo, salgadinhos de pacote, cachaça e outras bebidas alcoólicas.
-- Café em excesso.
-
-Prefira
-- Frutas em geral, como banana, laranja, melão, goiaba, manga e caju.
-- Feijão, lentilha, macaxeira, batata-doce, cenoura, beterraba, espinafre e couve.
-- Frango sem pele e peixe.
-- Temperos naturais, como coentro, cebolinha, alho, cebola, limão, açafrão ou cúrcuma e cominho.`,
+        tipo: "pdf",
+        arquivo: "/contents/orientacoes/Hipertensão.pdf",
     },
     {
         id: "anemia-ferropriva",
@@ -58,16 +48,8 @@ Prefira
     {
         id: "constipacao",
         titulo: "Constipação",
-        tipo: "md",
-        texto: `Evite
-- Pão branco, farinha de trigo, biscoitos, salgadinhos de pacote, queijo, carne vermelha e alimentos de pacote em geral.
-- Banana-maçã, goiaba e caju verde.
-
-Prefira
-- Chia, linhaça e psyllium, sempre com bastante água.
-- Kiwi, mamão, laranja com bagaço, acerola, cajá, manga com casca e ameixa.
-- Feijão, lentilha, farelo de aveia, farinha de linhaça e pão integral.
-- Batata-doce, macaxeira, maxixe, jiló, quiabo, couve e iogurte natural.`,
+        tipo: "pdf",
+        arquivo: "/contents/orientacoes/Constipação.pdf",
     },
     {
         id: "dislipidemia",
@@ -87,19 +69,8 @@ Prefira
     {
         id: "diabetes-mellitus",
         titulo: "Diabetes mellitus",
-        tipo: "md",
-        texto: `Evite
-- Açúcar, refrigerantes, sucos de caixinha, sucos de fruta, mel e rapadura.
-- Pão branco, tapioca pura, farinha de mandioca, macarrão, bolos, doces, sorvete e biscoito recheado.
-- Bebidas alcoólicas.
-
-Prefira
-- Feijão, lentilha, grão-de-bico, aveia, macaxeira e batata-doce.
-- Arroz com feijão, frango, peixe e ovo.
-- Verduras e legumes, como maxixe, chuchu, jiló, berinjela, abobrinha, cenoura, couve, repolho, brócolis, espinafre e rúcula.
-- Frutas com casca, como goiaba, laranja, acerola e caju.
-
-Coma devagar e em horários regulares.`,
+        tipo: "pdf",
+        arquivo: "/contents/orientacoes/Diabetes.pdf",
     },
     {
         id: "neuroestimulo",

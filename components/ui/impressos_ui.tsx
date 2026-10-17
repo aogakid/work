@@ -12,7 +12,7 @@ function resolverUrlPdf(caminho: string): string {
 }
 
 const ESTILOS = `
-.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font-family: "Google Sans Flex", sans-serif; }
+.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
 
 .${PREFIXO}-linha { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .${PREFIXO}-input { flex: 1 1 220px; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; outline: none; }
@@ -21,17 +21,19 @@ const ESTILOS = `
 
 .${PREFIXO}-grade { display: flex; flex-wrap: wrap; align-items: stretch; gap: 12px; padding-top: 2px; }
 
-.${PREFIXO}-navegacao { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--meta-text, GrayText); font: 12px "Google Sans Flex", sans-serif; }
-.${PREFIXO}-trilha { padding: 3px 2px; border: 0; background: transparent; color: #8b5cf6; font: 600 12px "Google Sans Flex", sans-serif; cursor: pointer; }
+.${PREFIXO}-navegacao { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--meta-text, GrayText); font: 14px "Google Sans Flex", sans-serif; }
+.${PREFIXO}-trilha { padding: 3px 2px; border: 0; background: transparent; color: #8b5cf6; font: 600 14px "Google Sans Flex", sans-serif; cursor: pointer; }
 .${PREFIXO}-card-pasta { position: relative; }
 .${PREFIXO}-pasta-thumb { position: relative; width: max-content; max-width: 100%; }
 .${PREFIXO}-pasta-icone { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(139,92,246,0.58); color: #fff; pointer-events: none; }
 .${PREFIXO}-pasta-icone svg { width: 42px; height: 42px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); }
 
-.${PREFIXO}-card { display: flex; flex: 0 0 auto; flex-direction: column; align-items: stretch; gap: 8px; box-sizing: border-box; width: 150px; max-width: 100%; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font-family: "Google Sans Flex", sans-serif; font-size: 12px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+.${PREFIXO}-card { display: flex; flex: 0 0 auto; flex-direction: column; align-items: stretch; gap: 8px; box-sizing: border-box; width: 150px; max-width: 100%; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
 .${PREFIXO}-card:has(.${PREFIXO}-thumb-horizontal) { width: 204px; }
+@media (prefers-color-scheme: dark) { .${PREFIXO}-card { background: rgba(25,20,35,0.64); } }
 .${PREFIXO}-card:focus { outline: none; border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 1px rgba(139,92,246,0.6); }
-.${PREFIXO}-card:hover { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.45); }
+.${PREFIXO}-card:hover { background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
+@media (prefers-color-scheme: dark) { .${PREFIXO}-card:hover { background: rgba(43,32,58,0.82); } }
 
 .${PREFIXO}-thumb { position: relative; box-sizing: border-box; width: 132px; aspect-ratio: auto; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .${PREFIXO}-thumb-horizontal { width: 186px; }
@@ -46,9 +48,9 @@ const ESTILOS = `
 
 .${PREFIXO}-md-linha { font-family: "Google Sans Flex", sans-serif; font-size: 7px; line-height: 1.45; color: var(--editor-text, CanvasText); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.${PREFIXO}-titulo { display: block; flex: 0 0 auto; width: 100%; min-width: 0; box-sizing: border-box; margin-top: auto; font-size: 11px; line-height: 1.4; color: var(--editor-text, CanvasText); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.${PREFIXO}-titulo { display: block; flex: 0 0 auto; width: 100%; min-width: 0; box-sizing: border-box; margin-top: auto; font-size: 14px; line-height: 1.4; color: var(--editor-text, CanvasText); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.${PREFIXO}-erro { font-family: "Google Sans Flex", sans-serif; font-size: 12px; font-weight: 600; color: #ef4444; }
+.${PREFIXO}-erro { font-family: "Google Sans Flex", sans-serif; font-size: 14px; font-weight: 600; color: #ef4444; }
 
 .${PREFIXO}-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(2,6,23,0.55); backdrop-filter: blur(2px); padding: 20px; }
 

@@ -20,7 +20,7 @@ function resolverUrlPublica(caminho: string): string {
 }
 
 const ESTILOS = `
-.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font-family: "Google Sans Flex", sans-serif; }
+.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
 
 .${PREFIXO}-linha { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .${PREFIXO}-input { flex: 1 1 220px; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; outline: none; }
@@ -29,9 +29,11 @@ const ESTILOS = `
 
 .${PREFIXO}-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; padding-top: 2px; }
 
-.${PREFIXO}-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font-family: "Google Sans Flex", sans-serif; font-size: 12px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+.${PREFIXO}-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+@media (prefers-color-scheme: dark) { .${PREFIXO}-card { background: rgba(25,20,35,0.64); } }
 .${PREFIXO}-card:focus { outline: none; border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 1px rgba(139,92,246,0.6); }
-.${PREFIXO}-card:hover { background: rgba(139,92,246,0.06); border-color: rgba(139,92,246,0.45); }
+.${PREFIXO}-card:hover { background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
+@media (prefers-color-scheme: dark) { .${PREFIXO}-card:hover { background: rgba(43,32,58,0.82); } }
 
 .${PREFIXO}-thumb { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 
@@ -44,9 +46,9 @@ const ESTILOS = `
 
 .${PREFIXO}-md-linha { font-family: "Google Sans Flex", sans-serif; font-size: 7px; line-height: 1.45; color: var(--editor-text, CanvasText); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.${PREFIXO}-titulo { margin-top: auto; font-size: 11px; line-height: 1.4; color: var(--editor-text, CanvasText); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.${PREFIXO}-titulo { margin-top: auto; font-size: 14px; line-height: 1.4; color: var(--editor-text, CanvasText); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.${PREFIXO}-erro { font-family: "Google Sans Flex", sans-serif; font-size: 12px; font-weight: 600; color: #ef4444; }
+.${PREFIXO}-erro { font-family: "Google Sans Flex", sans-serif; font-size: 14px; font-weight: 600; color: #ef4444; }
 
 .${PREFIXO}-overlay { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(2,6,23,0.55); backdrop-filter: blur(2px); padding: 20px; }
 

@@ -201,6 +201,8 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
     const sheets = useGoogleSheets()
     const [input, setInput] = React.useState("")
     const [itens, setItens] = React.useState<string[]>([""])
+    const [indiceArrastado, setIndiceArrastado] = React.useState<number | null>(null)
+    const [indiceAlvoArraste, setIndiceAlvoArraste] = React.useState<number | null>(null)
     const [enviando, setEnviando] = React.useState(false)
     const podeAdicionar = itens.length < 10
     const inputRef = React.useRef<HTMLInputElement | null>(null)
@@ -232,6 +234,32 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
             const restantes = atual.filter((_, j) => j !== indice)
             return restantes.length > 0 ? restantes : [""]
         })
+    }
+
+    const moverItem = (indice: number, direcao: -1 | 1) => {
+        setItens((atual) => {
+            const destino = indice + direcao
+            if (destino < 0 || destino >= atual.length) return atual
+            const proximos = [...atual]
+            const [item] = proximos.splice(indice, 1)
+            proximos.splice(destino, 0, item)
+            return proximos
+        })
+    }
+
+    const soltarItem = (e: React.DragEvent<HTMLDivElement>, destino: number) => {
+        e.preventDefault()
+        const origem = Number(e.dataTransfer.getData("text/plain"))
+        if (Number.isInteger(origem) && origem >= 0 && origem < itens.length && origem !== destino) {
+            setItens((atual) => {
+                const proximos = [...atual]
+                const [item] = proximos.splice(origem, 1)
+                proximos.splice(destino, 0, item)
+                return proximos
+            })
+        }
+        setIndiceArrastado(null)
+        setIndiceAlvoArraste(null)
     }
 
     const prosseguirNoEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -463,6 +491,17 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
                     outline: none !important; box-sizing: border-box !important; font-family: sans-serif !important;
                 }
                 .framer-gas-input-f:focus { box-shadow: inset 0 0 0 2px var(--gas-focus) !important; }
+                .framer-gas-linha-f.framer-gas-drop-f { box-shadow: inset 0 2px 0 var(--gas-focus); }
+                .framer-gas-drag-f {
+                    display: flex; align-items: center; justify-content: center;
+                    width: 32px; height: 44px; flex-shrink: 0; padding: 0;
+                    color: var(--gas-placeholder) !important; background: transparent !important;
+                    border: none !important; border-radius: 0 !important; cursor: grab;
+                    opacity: 0; pointer-events: none; transition: opacity 0.15s ease, color 0.15s ease;
+                }
+                .framer-gas-linha-f:hover .framer-gas-drag-f,
+                .framer-gas-drag-f:focus-visible { color: var(--gas-focus) !important; opacity: 1; pointer-events: auto; }
+                .framer-gas-drag-f:active { cursor: grabbing; }
                 .framer-gas-remove-f {
                     width: 40px; height: 44px; flex-shrink: 0; padding: 0;
                     display: flex; align-items: center; justify-content: center;
@@ -549,7 +588,14 @@ Hora	Usuário	Tipo Agendamento	Observação
                         <label className="framer-gas-escala-label">Acolhimento/DESP</label>
                         <div className="framer-gas-lista-f" style={{ overflow: "visible" }}>
                         {itens.map((valor, i) => (
-                            <div className="framer-gas-linha-f" key={i}>
+                            <div
+                                className={`framer-gas-linha-f${indiceAlvoArraste === i ? " framer-gas-drop-f" : ""}`}
+                                key={i}
+                                onDragOver={(e) => { e.preventDefault(); setIndiceAlvoArraste(i) }}
+                                onDrop={(e) => soltarItem(e, i)}
+                                onDragEnd={() => { setIndiceArrastado(null); setIndiceAlvoArraste(null) }}
+                                style={{ opacity: indiceArrastado === i ? 0.45 : 1 }}
+                            >
                                 <input
                                     className="framer-gas-input-f"
                                     type="text"
@@ -567,6 +613,24 @@ Hora	Usuário	Tipo Agendamento	Observação
                                     onClick={() => removerItem(i)}
                                 >
                                     <IconeLixeira />
+                                </button>
+                                <button
+                                    type="button"
+                                    className="framer-gas-drag-f"
+                                    draggable
+                                    aria-label={`Reordenar item ${i + 1}. Use as setas para mover.`}
+                                    title="Arraste para reordenar"
+                                    onDragStart={(e) => {
+                                        setIndiceArrastado(i)
+                                        e.dataTransfer.effectAllowed = "move"
+                                        e.dataTransfer.setData("text/plain", String(i))
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "ArrowUp") { e.preventDefault(); moverItem(i, -1) }
+                                        if (e.key === "ArrowDown") { e.preventDefault(); moverItem(i, 1) }
+                                    }}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" /></svg>
                                 </button>
                                 {i === itens.length - 1 && podeAdicionar && (
                                     <button
