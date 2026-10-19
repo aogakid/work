@@ -19,8 +19,20 @@ function resolverUrlPublica(caminho: string): string {
     return new URL(caminho, SITE_ORIGEM).href
 }
 
+function definirOrigemCrescimento(elemento: HTMLButtonElement) {
+    const preview = elemento.querySelector<HTMLElement>(`.${PREFIXO}-thumb`)
+    if (!preview) return
+    const rect = preview.getBoundingClientRect()
+    const centroX = rect.left + rect.width / 2
+    const centroY = rect.top + rect.height / 2
+    const escalaX = preview.offsetWidth / rect.width
+    const escalaY = preview.offsetHeight / rect.height
+    preview.style.setProperty("--origem-crescimento-x", `${(2 * centroX - window.innerWidth / 2 - rect.left) * escalaX}px`)
+    preview.style.setProperty("--origem-crescimento-y", `${(2 * centroY - window.innerHeight / 2 - rect.top) * escalaY}px`)
+}
+
 const ESTILOS = `
-.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
+.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; width: 100%; min-width: 0; box-sizing: border-box; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
 
 .${PREFIXO}-linha { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .${PREFIXO}-input { flex: 1 1 220px; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; outline: none; }
@@ -29,15 +41,17 @@ const ESTILOS = `
 
 .${PREFIXO}-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 12px; padding-top: 2px; }
 
-.${PREFIXO}-card { display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+.${PREFIXO}-card { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 8px; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transform: scale(1); transform-origin: center center; transition: transform 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
 @media (prefers-color-scheme: dark) { .${PREFIXO}-card { background: rgba(25,20,35,0.64); } }
 .${PREFIXO}-card:focus { outline: none; border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 1px rgba(139,92,246,0.6); }
-.${PREFIXO}-card:hover { background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
+.${PREFIXO}-card:hover { z-index: 2; transform: scale(1.08); background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
 @media (prefers-color-scheme: dark) { .${PREFIXO}-card:hover { background: rgba(43,32,58,0.82); } }
+.${PREFIXO}-card .${PREFIXO}-thumb { transform: scale(1); transform-origin: var(--origem-crescimento-x, center) var(--origem-crescimento-y, top); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.${PREFIXO}-card:hover .${PREFIXO}-thumb { position: relative; z-index: 3; transform: scale(1.64); box-shadow: 0 8px 24px rgba(2,6,23,0.25); transition-delay: 2s; }
 
-.${PREFIXO}-thumb { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.${PREFIXO}-thumb { position: relative; width: 100%; aspect-ratio: 210 / 148.5; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 
-.${PREFIXO}-thumb-canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
+.${PREFIXO}-thumb-canvas { position: absolute; top: 0; left: 0; width: 100%; height: auto; display: block; object-fit: contain; }
 @media (prefers-color-scheme: dark) { .${PREFIXO}-thumb-canvas { filter: invert(1) hue-rotate(180deg); } }
 
 .${PREFIXO}-thumb-fallback { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--meta-text, GrayText); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; font-size: 10px; text-align: center; padding: 0 6px; }
@@ -75,29 +89,18 @@ function MiniaturaPdf({ url }: { url: string }) {
         const canvas = canvasRef.current
         if (!canvas) return
         let ativo = true
-        let observador: IntersectionObserver | null = null
-
         const desenhar = () => {
             renderizarPrimeiraPagina(resolverUrlPdf(url), canvas, 132).catch(() => {
                 if (ativo) setFalhou(true)
             })
         }
 
-        if (typeof IntersectionObserver === "undefined") {
-            desenhar()
-        } else {
-            observador = new IntersectionObserver((entradas) => {
-                if (entradas.some((e) => e.isIntersecting)) {
-                    if (observador) observador.disconnect()
-                    desenhar()
-                }
-            }, { rootMargin: "140px" })
-            observador.observe(canvas)
-        }
+        // Start rendering as soon as the card list mounts so thumbnails are
+        // ready when the user reaches them.
+        desenhar()
 
         return () => {
             ativo = false
-            if (observador) observador.disconnect()
         }
     }, [url])
 
@@ -264,6 +267,7 @@ const OrientacoesUI = forwardRef<CompanionActions, Props>(function OrientacoesUI
                             key={o.id}
                             type="button"
                             className={`${PREFIXO}-card`}
+                            onPointerEnter={(event) => definirOrigemCrescimento(event.currentTarget)}
                             onClick={() => aoClicarCard(o)}
                             onKeyDown={aoTeclarCard(o)}
                             title={o.titulo}

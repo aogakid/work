@@ -79,6 +79,12 @@ Exame físico
 Complementar
 - Laboratório
   - (10/03/2026): Hb 12 // Glicose 95
+- Imagem
+  -
+- Escores
+  -
+- Rastreios
+  -
 
 ## Avaliação
 - HAS controlada, sem sinais de alarme
@@ -113,7 +119,7 @@ Regras obrigatórias:
 - Hábitos: um item "- <rótulo>: <valor>" por campo
 - Lista de Problemas/Condições: um problema por linha, começando com "- "
 - Subjetivo: o acompanhante (se houver) na primeira linha "- Acompanhante: <nome e parentesco>"; cada motivo é um título entre aspas na linha seguinte e o relato no segundo nível, um item "- " por parágrafo, com uma linha em branco entre um motivo e outro
-- Objetivo: sinais vitais na linha "- SSVV:" separados por " | " (PA, Peso, Alt, IMC, Glic, FC, FR, SPO2, Tax); exame físico em "- Ect:", "- AC:", "- AR:", "- Ext:"; exames complementares em "Laboratório", "Imagem" e "Escores"
+- Objetivo: sinais vitais na linha "- SSVV:" separados por " | " (PA, Peso, Alt, IMC, Glic, FC, FR, SPO2, Tax); exame físico em "- Ect:", "- AC:", "- AR:", "- Ext:"; exames complementares em "Laboratório", "Imagem", "Escores" e "Rastreios"
 - Exames laboratoriais, quando presentes, no formato (DD/MM/AAAA): Hb 99 // Ht 99 // etc.
 - Avaliação, Plano e Lista de Problemas/Condições: um item "- " por linha, sem linhas em branco entre os itens (o espaçamento entre parágrafos é visual)
 - Campo sem informação: omitir a linha inteira, nunca escrever placeholder, "$" ou campo em branco — o bloco detecta os vazios sozinho

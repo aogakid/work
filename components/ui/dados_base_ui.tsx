@@ -26,6 +26,7 @@ import {
 } from "../../lib/contexto-paciente"
 import { broadcastFieldSync, getFieldSyncSnapshot, listenFieldSync } from "../companions/field-sync"
 import { CaixaParagrafos, dadosCampo } from "./caixa_paragrafos"
+import { INSERCOES_NEGA_DADOS_BASE, NEGA } from "../../lib/negas"
 
 /* ── Identificação fields (owned by Dados base, stored as the "- Id:" line) ── */
 
@@ -418,11 +419,16 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                         <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: campo.largo ? "1 1 180px" : "0 1 118px", minWidth: "104px" }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
                                 <span style={estiloRotuloCampo}>{campo.rotulo}</span>
-                                {campo.chave === "residencia" ? (
-                                    <button type="button" onClick={() => alterarIdCampo("residencia", idCampos.naturalidade)} title="Usar a naturalidade como residência" aria-label="Usar a naturalidade como residência" style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", cursor: "pointer", padding: 0 }}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 8h14M5 16h14"/></svg>
-                                    </button>
-                                ) : null}
+                                <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                                    {campo.chave === "residencia" ? (
+                                        <button type="button" onClick={() => alterarIdCampo("residencia", idCampos.naturalidade)} title="Usar a naturalidade como residência" aria-label="Usar a naturalidade como residência" style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M5 8h14M5 16h14"/></svg>
+                                        </button>
+                                    ) : null}
+                                    {campo.chave === "composicao" || campo.chave === "ocupacao" ? (
+                                        <BotaoNega onClick={() => alterarIdCampo(campo.chave, INSERCOES_NEGA_DADOS_BASE[campo.chave])} />
+                                    ) : null}
+                                </div>
                             </div>
                             {campo.chave === "estadoCivil" ? (
                                 <select
@@ -496,7 +502,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                             )
                         }
                         return (
-                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={campo.chave === "hospitalar" ? () => alterarAntecedente(campo.chave, NEGA) : undefined}>
                                 <CaixaParagrafos
                                     dados={dadosCampo(campo.chave)}
                                     value={antecedentesCampos[campo.chave]}
@@ -517,7 +523,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                         </>
                     )}
                 </SubGrupo>
-                <CampoRotulado rotulo="Familiares">
+                <CampoRotulado rotulo="Familiares" onNega={() => alterarAntecedente("familiares", NEGA)}>
                     <CaixaParagrafos
                         dados={{ "data-campo": "familiares" }}
                         value={antecedentesCampos.familiares}
@@ -530,7 +536,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                 {MEDICAMENTOS_CAMPOS.map(campo => {
                     if (!campo.multilinha) {
                         return (
-                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, "Nega")}>
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, NEGA)}>
                                 <input
                                     data-campo={campo.chave}
                                     value={medicamentosCampos[campo.chave]}
@@ -541,7 +547,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                         )
                     }
                     return (
-                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, "Nega")}>
+                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarMedicamento(campo.chave, NEGA)}>
                             <CaixaParagrafos
                                 dados={dadosCampo(campo.chave)}
                                 value={medicamentosCampos[campo.chave]}
@@ -561,7 +567,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {HABITOS_CAMPOS.filter(c => c.sempreVisivel && (idade === null || idade >= 15 || !["etilismo", "tabagismo"].includes(c.chave))).map(campo => (
-                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarHabito(campo.chave, "Nega")}>
+                            <CampoRotulado key={campo.chave} rotulo={campo.rotulo} onNega={() => alterarHabito(campo.chave, NEGA)}>
                                 <input
                                     data-campo={campo.chave}
                                     value={habitosCampos[campo.chave]}
@@ -575,7 +581,11 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
             >
                 <SubGrupo rotulo="Outros hábitos">
                     {HABITOS_CAMPOS.filter(c => !c.sempreVisivel).map(campo => (
-                        <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                        <CampoRotulado
+                            key={campo.chave}
+                            rotulo={campo.rotulo}
+                            onNega={campo.chave in INSERCOES_NEGA_DADOS_BASE ? () => alterarHabito(campo.chave, INSERCOES_NEGA_DADOS_BASE[campo.chave as keyof typeof INSERCOES_NEGA_DADOS_BASE]) : undefined}
+                        >
                             <input
                                 data-campo={campo.chave}
                                 value={habitosCampos[campo.chave]}
@@ -620,7 +630,7 @@ export function ListaProblemasForm({ value, onChange, onSendToAssessment }: List
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: "20px" }}>
                 <span style={estiloRotuloCampo}>Problemas/Condições</span>
-                <BotaoNega onClick={() => alterar("Nega")} />
+                <BotaoNega onClick={() => alterar(NEGA)} />
             </div>
             <CaixaParagrafos
                 dados={{ "data-categoria": "texto" }}

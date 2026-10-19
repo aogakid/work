@@ -23,6 +23,7 @@ export interface Complementar {
     laboratorio: string
     imagem: string
     escores: string
+    rastreios: string
 }
 
 export interface Objetivo {
@@ -57,6 +58,7 @@ export const COMPLEMENTAR_VAZIO: Complementar = {
     laboratorio: "",
     imagem: "",
     escores: "",
+    rastreios: "",
 }
 
 export const OBJETIVO_VAZIO: Objetivo = {
@@ -253,9 +255,10 @@ export function parseObjetivo(texto: string): Objetivo {
         return itensLista(linhasCategoria)
     }
     const complementar: Complementar = {
-        laboratorio: formatoPlano ? valoresCategoria("Laboratório", ["imagem", "escores"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Laborat[óo]rio\s*:?\s*$/i)),
-        imagem: formatoPlano ? valoresCategoria("Imagem", ["laboratório", "escores"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Imagem\s*:?\s*$/i)),
-        escores: formatoPlano ? valoresCategoria("Escores", ["laboratório", "imagem"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Escores\s*:?\s*$/i)),
+        laboratorio: formatoPlano ? valoresCategoria("Laboratório", ["imagem", "escores", "rastreios"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Laborat[óo]rio\s*:?\s*$/i)),
+        imagem: formatoPlano ? valoresCategoria("Imagem", ["laboratório", "escores", "rastreios"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Imagem\s*:?\s*$/i)),
+        escores: formatoPlano ? valoresCategoria("Escores", ["laboratório", "imagem", "rastreios"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Escores\s*:?\s*$/i)),
+        rastreios: formatoPlano ? valoresCategoria("Rastreios", ["laboratório", "imagem", "escores"]) : itensLista(blocoRotulo(blocoCompTarget, /^\s*-\s*Rastreios\s*:?\s*$/i)),
     }
 
     return { ssvv, crescimentoDesenvolvimento, exameFisico, complementar }
@@ -312,6 +315,10 @@ export function compositarObjetivo(o: Objetivo): string {
         if (o.complementar.escores.trim()) {
             partes.push("- Escores")
             o.complementar.escores.split("\n").forEach(i => partes.push(`  - ${i.replace(/^\s*-\s*/, "")}`))
+        }
+        if (o.complementar.rastreios.trim()) {
+            partes.push("- Rastreios")
+            o.complementar.rastreios.split("\n").forEach(i => partes.push(`  - ${i.replace(/^\s*-\s*/, "")}`))
         }
     }
 

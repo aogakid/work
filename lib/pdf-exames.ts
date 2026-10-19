@@ -37,6 +37,7 @@ interface PdfJs {
 
 const WORKER_LOCAL = "/pdf.worker.min.mjs"
 const PDFJS_CDN = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4"
+const cacheMiniaturasPdf = new Map<string, Promise<HTMLCanvasElement>>()
 
 // Import nativo (não passa pelo bundler/Babel) — usado como fallback quando o
 // pacote npm "pdfjs-dist" não está resolvível (ex.: preview.html carregando o
@@ -105,30 +106,52 @@ export async function extrairTextoPdf(data: ArrayBuffer | Uint8Array): Promise<s
 /* Renderiza a primeira página de um PDF num canvas pequeno, usado como
    miniatura nos cards de orientações. `largura` é a largura em px de layout;
    a renderização é feita com devicePixelRatio para não ficar borrada. */
-export async function renderizarPrimeiraPagina(
+export function renderizarPrimeiraPagina(
   url: string,
   canvas: HTMLCanvasElement,
   largura: number,
 ): Promise<void> {
-  const pdfjs = await carregarPdfjs()
-  const doc = await pdfjs.getDocument({ url }).promise
-  try {
-    const page = await doc.getPage(1)
-    const base = page.getViewport({ scale: 1 })
-    const viewport = page.getViewport({ scale: largura / base.width })
-    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
-    const larguraPx = Math.round(viewport.width)
-    const alturaPx = Math.round(viewport.height)
-    canvas.width = Math.round(larguraPx * dpr)
-    canvas.height = Math.round(alturaPx * dpr)
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1
+  const chave = `${url}|${largura}|${dpr}`
+  const desenharCache = (miniatura: HTMLCanvasElement) => {
+    if (miniatura === canvas) return
+    canvas.width = miniatura.width
+    canvas.height = miniatura.height
     const ctx = canvas.getContext("2d")
     if (!ctx) throw new Error("canvas 2d indisponível")
-    const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined
-    await page.render({ canvasContext: ctx, viewport, transform }).promise
-    page.cleanup()
-  } finally {
-    await doc.destroy()
+    ctx.drawImage(miniatura, 0, 0)
   }
+
+  const existente = cacheMiniaturasPdf.get(chave)
+  if (existente) {
+    return existente.then(desenharCache)
+  }
+
+  const renderizacao = (async () => {
+    const pdfjs = await carregarPdfjs()
+    const doc = await pdfjs.getDocument({ url }).promise
+    try {
+      const page = await doc.getPage(1)
+      const base = page.getViewport({ scale: 1 })
+      const viewport = page.getViewport({ scale: largura / base.width })
+      const larguraPx = Math.round(viewport.width)
+      const alturaPx = Math.round(viewport.height)
+      canvas.width = Math.round(larguraPx * dpr)
+      canvas.height = Math.round(alturaPx * dpr)
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("canvas 2d indisponível")
+      const transform = dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : undefined
+      await page.render({ canvasContext: ctx, viewport, transform }).promise
+      page.cleanup()
+      return canvas
+    } finally {
+      await doc.destroy()
+    }
+  })()
+
+  cacheMiniaturasPdf.set(chave, renderizacao)
+  renderizacao.catch(() => cacheMiniaturasPdf.delete(chave))
+  return renderizacao.then(() => undefined)
 }
 
 export async function extrairExamesDePdf(

@@ -12,6 +12,7 @@ import {
 } from "../../lib/objetivo"
 import { broadcastFieldSync, listenFieldSync } from "../companions/field-sync"
 import { CaixaParagrafos } from "./caixa_paragrafos"
+import { INSERCOES_NEGA_OBJETIVO } from "../../lib/negas"
 
 const estiloRotuloCampo: React.CSSProperties = {
     fontSize: "10px",
@@ -102,10 +103,30 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
     )
 }
 
-function CampoRotulado({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
+function BotaoNega({ onClick }: { onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            title="Inserir texto predefinido"
+            aria-label="Inserir texto predefinido"
+            style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", opacity: 0.75, cursor: "pointer", flexShrink: 0 }}
+        >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m5.6 5.6 12.8 12.8" />
+            </svg>
+        </button>
+    )
+}
+
+function CampoRotulado({ rotulo, children, onNega }: { rotulo: string; children: React.ReactNode; onNega?: () => void }) {
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <span style={estiloRotuloCampo}>{rotulo}</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: onNega ? "20px" : undefined }}>
+                <span style={estiloRotuloCampo}>{rotulo}</span>
+                {onNega ? <BotaoNega onClick={onNega} /> : null}
+            </div>
             {children}
         </div>
     )
@@ -285,7 +306,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                             </div>
                         </Bloco>
                     ) : null}
-                    <CampoRotulado rotulo="Ectoscopia (Ect)">
+                    <CampoRotulado rotulo="Ectoscopia (Ect)" onNega={() => alterarExameFisico("ect", INSERCOES_NEGA_OBJETIVO.ect)}>
                         <input
                             data-campo="ect"
                             value={exameFisicoCampos.ect}
@@ -293,7 +314,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                             style={estiloCampo}
                         />
                     </CampoRotulado>
-                    <CampoRotulado rotulo="Aparelho Cardiovascular (AC)">
+                    <CampoRotulado rotulo="Aparelho Cardiovascular (AC)" onNega={() => alterarExameFisico("ac", INSERCOES_NEGA_OBJETIVO.ac)}>
                         <input
                             data-campo="ac"
                             value={exameFisicoCampos.ac}
@@ -301,7 +322,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                             style={estiloCampo}
                         />
                     </CampoRotulado>
-                    <CampoRotulado rotulo="Aparelho Respiratório (AR)">
+                    <CampoRotulado rotulo="Aparelho Respiratório (AR)" onNega={() => alterarExameFisico("ar", INSERCOES_NEGA_OBJETIVO.ar)}>
                         <input
                             data-campo="ar"
                             value={exameFisicoCampos.ar}
@@ -309,7 +330,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                             style={estiloCampo}
                         />
                     </CampoRotulado>
-                    <CampoRotulado rotulo="Extremidades (Ext)">
+                    <CampoRotulado rotulo="Extremidades (Ext)" onNega={() => alterarExameFisico("ext", INSERCOES_NEGA_OBJETIVO.ext)}>
                         <input
                             data-campo="ext"
                             value={exameFisicoCampos.ext}
@@ -348,6 +369,13 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                             dados={{ "data-campo": "escores" }}
                             value={complementarCampos.escores}
                             onChange={valor => alterarComplementar("escores", valor)}
+                        />
+                    </CampoRotulado>
+                    <CampoRotulado rotulo="Rastreios">
+                        <CaixaParagrafos
+                            dados={{ "data-campo": "rastreios" }}
+                            value={complementarCampos.rastreios}
+                            onChange={valor => alterarComplementar("rastreios", valor)}
                         />
                     </CampoRotulado>
                 </div>

@@ -108,6 +108,8 @@ Complementar
   - 
 - Escores
   - 
+- Rastreios
+  - $
 
 ## Avaliação
 - 

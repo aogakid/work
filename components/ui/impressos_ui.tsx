@@ -11,8 +11,20 @@ function resolverUrlPdf(caminho: string): string {
     return new URL(caminho, SITE_ORIGEM).href
 }
 
+function definirOrigemCrescimento(elemento: HTMLButtonElement) {
+    const preview = elemento.querySelector<HTMLElement>(`.${PREFIXO}-pasta-thumb, .${PREFIXO}-thumb`)
+    if (!preview) return
+    const rect = preview.getBoundingClientRect()
+    const centroX = rect.left + rect.width / 2
+    const centroY = rect.top + rect.height / 2
+    const escalaX = preview.offsetWidth / rect.width
+    const escalaY = preview.offsetHeight / rect.height
+    preview.style.setProperty("--origem-crescimento-x", `${(2 * centroX - window.innerWidth / 2 - rect.left) * escalaX}px`)
+    preview.style.setProperty("--origem-crescimento-y", `${(2 * centroY - window.innerHeight / 2 - rect.top) * escalaY}px`)
+}
+
 const ESTILOS = `
-.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
+.${PREFIXO}-root { color-scheme: light dark; display: flex; flex-direction: column; width: 100%; min-width: 0; box-sizing: border-box; gap: 10px; padding: 12px 0 4px 0; color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; }
 
 .${PREFIXO}-linha { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .${PREFIXO}-input { flex: 1 1 220px; min-width: 0; height: 36px; box-sizing: border-box; padding: 0 10px; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); color: var(--editor-text, CanvasText); font: 14px "Google Sans Flex", sans-serif; outline: none; }
@@ -28,12 +40,16 @@ const ESTILOS = `
 .${PREFIXO}-pasta-icone { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(139,92,246,0.58); color: #fff; pointer-events: none; }
 .${PREFIXO}-pasta-icone svg { width: 42px; height: 42px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.35)); }
 
-.${PREFIXO}-card { display: flex; flex: 0 0 auto; flex-direction: column; align-items: stretch; gap: 8px; box-sizing: border-box; width: 150px; max-width: 100%; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
+.${PREFIXO}-card { position: relative; display: flex; flex: 0 0 auto; flex-direction: column; align-items: stretch; gap: 8px; box-sizing: border-box; width: 150px; max-width: 100%; padding: 8px; border-radius: 10px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: rgba(255,255,255,0.62); color: var(--editor-text, CanvasText); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-family: "Google Sans Flex", sans-serif; font-size: 14px; text-align: left; cursor: pointer; transform: scale(1); transform-origin: center center; transition: transform 0.2s ease, border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease; }
 .${PREFIXO}-card:has(.${PREFIXO}-thumb-horizontal) { width: 204px; }
 @media (prefers-color-scheme: dark) { .${PREFIXO}-card { background: rgba(25,20,35,0.64); } }
 .${PREFIXO}-card:focus { outline: none; border-color: rgba(139,92,246,0.6); box-shadow: 0 0 0 1px rgba(139,92,246,0.6); }
-.${PREFIXO}-card:hover { background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
+.${PREFIXO}-card:hover { z-index: 2; transform: scale(1.08); background: rgba(255,255,255,0.78); border-color: rgba(139,92,246,0.45); }
 @media (prefers-color-scheme: dark) { .${PREFIXO}-card:hover { background: rgba(43,32,58,0.82); } }
+.${PREFIXO}-card:not(.${PREFIXO}-card-pasta) .${PREFIXO}-thumb { transform: scale(1); transform-origin: var(--origem-crescimento-x, center) var(--origem-crescimento-y, top); transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.${PREFIXO}-card:hover:not(.${PREFIXO}-card-pasta) .${PREFIXO}-thumb { position: relative; z-index: 3; transform: scale(1.64); box-shadow: 0 8px 24px rgba(2,6,23,0.25); transition-delay: 2s; }
+.${PREFIXO}-pasta-thumb { transform: scale(1); transform-origin: var(--origem-crescimento-x, center) var(--origem-crescimento-y, top); transition: transform 0.25s ease; }
+.${PREFIXO}-card:hover > .${PREFIXO}-pasta-thumb { z-index: 3; transform: scale(1.64); transition-delay: 2s; }
 
 .${PREFIXO}-thumb { position: relative; box-sizing: border-box; width: 132px; aspect-ratio: auto; border-radius: 8px; border: 1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas)); background: var(--editor-bg, Canvas); overflow: hidden; display: flex; align-items: center; justify-content: center; }
 .${PREFIXO}-thumb-horizontal { width: 186px; }
@@ -79,8 +95,6 @@ function MiniaturaPdf({ url }: { url: string }) {
         const canvas = canvasRef.current
         if (!canvas) return
         let ativo = true
-        let observador: IntersectionObserver | null = null
-
         const desenhar = () => {
             renderizarPrimeiraPagina(resolverUrlPdf(url), canvas, 186).then(() => {
                 if (ativo && canvas.width > 0 && canvas.height > 0) {
@@ -92,21 +106,12 @@ function MiniaturaPdf({ url }: { url: string }) {
             })
         }
 
-        if (typeof IntersectionObserver === "undefined") {
-            desenhar()
-        } else {
-            observador = new IntersectionObserver((entradas) => {
-                if (entradas.some((e) => e.isIntersecting)) {
-                    if (observador) observador.disconnect()
-                    desenhar()
-                }
-            }, { rootMargin: "140px" })
-            observador.observe(canvas)
-        }
+        // Render immediately so document thumbnails are already warm when
+        // users open a folder or scroll to its cards.
+        desenhar()
 
         return () => {
             ativo = false
-            if (observador) observador.disconnect()
         }
     }, [url])
 
@@ -234,7 +239,7 @@ const ImpressosUI = forwardRef<CompanionActions, Props>(function ImpressosUI({ s
 
             <div className={`${PREFIXO}-grade`}>
                 {pastasVisiveis.map((pasta) => (
-                    <button key={pasta.nome} type="button" className={`${PREFIXO}-card ${PREFIXO}-card-pasta`} onClick={() => abrirPasta(pasta.nome)} aria-label={`Abrir pasta ${pasta.nome}`}>
+                    <button key={pasta.nome} type="button" className={`${PREFIXO}-card ${PREFIXO}-card-pasta`} onPointerEnter={(event) => definirOrigemCrescimento(event.currentTarget)} onClick={() => abrirPasta(pasta.nome)} aria-label={`Abrir pasta ${pasta.nome}`}>
                         <div className={`${PREFIXO}-pasta-thumb`}>
                             <MiniaturaArquivo url={pasta.primeiro.arquivo} />
                             <span className={`${PREFIXO}-pasta-icone`} aria-hidden="true">
@@ -249,6 +254,7 @@ const ImpressosUI = forwardRef<CompanionActions, Props>(function ImpressosUI({ s
                         key={impresso.id}
                         type="button"
                         className={`${PREFIXO}-card`}
+                        onPointerEnter={(event) => definirOrigemCrescimento(event.currentTarget)}
                         onClick={() => abrirImpresso(impresso)}
                         title={`Abrir ${impresso.titulo}`}
                         aria-label={`Abrir arquivo: ${impresso.titulo}`}
