@@ -169,6 +169,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
     /* ── Title ── */
     const [title, setTitle] = React.useState("")
+    const [recolherGruposTrigger, setRecolherGruposTrigger] = React.useState(0)
+    const selecionarDemandaEspontanea = () => {
+        setTitle("Demanda Espontânea")
+        setRecolherGruposTrigger(prev => prev + 1)
+    }
 
     /* ── Sections ── */
     const [sections, setSections] = React.useState<Section[]>(createDefaultSections)
@@ -1028,7 +1033,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* ── Section Body (white card inside color-coded card) ── */}
                 {s.enabled && !s.collapsed && (
-                    <div style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
+                    <div className={sectionProgress > 0 ? "gas-section-timer-active" : undefined} style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : sectionProgress > 0 ? "transparent" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
                         {cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
                             <div className="gas-section-progress" style={progressoVertical
                                 ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
@@ -1037,13 +1042,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
                                 {meta.formulario === "dados_base" ? (
-                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} expandirNaoVazios={contentVersionRef.current[s.id] || 0} />
+                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
                                 ) : meta.formulario === "lista_problemas" ? (
                                     <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
                                 ) : meta.formulario === "subjetivo" ? (
                                     <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} onMotivoBlur={sugerirTimerAoSairDoMotivo} />
                                 ) : (
-                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} expandirNaoVazios={contentVersionRef.current[s.id] || 0} />
+                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
                                 )}
                             </div>
                         ) : (
@@ -1145,6 +1150,12 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-responsive-footer-bar { position: absolute; bottom: 0px; left: 0px; right: 0px; padding: 16px; display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; pointer-events: none; z-index: 10; }
                 .gas-order-chars { margin-left: auto; }
                 .gas-section-progress { mix-blend-mode: multiply; }
+                .gas-section-timer-active .caixa-paragrafos,
+                .gas-section-timer-active input:not([type="checkbox"]):not([type="radio"]),
+                .gas-section-timer-active textarea,
+                .gas-section-timer-active select {
+                    background: color-mix(in srgb, var(--editor-bg) 72%, transparent) !important;
+                }
                 @media (prefers-color-scheme: dark) {
                     .gas-section-progress { mix-blend-mode: screen; }
                 }
@@ -1267,8 +1278,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             {/* ── TIMER SUGGESTION POPUP ── */}
             {mostrarPopupSugestao && (
                 <>
-                    <div className="gas-popup-scrim" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 19, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", pointerEvents: "auto" }} onClick={() => { setMostrarPopupSugestao(false); setPopupDispensado(true) }} />
-                    <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", bottom: "16px", left: "16px", background: "rgba(239,68,68,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "14px 6px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+                    <div className="gas-popup-scrim" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 19, background: "rgba(0,0,0,0.38)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", pointerEvents: "auto" }} onClick={() => { setMostrarPopupSugestao(false); setPopupDispensado(true) }} />
+                    <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", bottom: "16px", left: "16px", background: "var(--editor-bg)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.42)", borderRadius: "12px", padding: "14px 12px", zIndex: 20, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 12px 36px rgba(0,0,0,0.22)", boxSizing: "border-box" }}>
                         <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", lineHeight: "1.4", marginBottom: "12px", textAlign: "center" }}>deseja iniciar o cronômetro para este atendimento?</div>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                             <button className="gas-scale-hover" onClick={() => { setMostrarPopupSugestao(false); timer.ativarCronometro() }} style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Sim</button>
@@ -1301,8 +1312,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
             {confirmAction && (
                 <>
-                    <div className="gas-popup-scrim" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 101, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }} onClick={() => setConfirmAction(null)} />
-                    <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", top: "16px", right: "16px", background: "rgba(239,68,68,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "12px", padding: "14px 6px", zIndex: 102, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 10px 30px rgba(0,0,0,0.08)", boxSizing: "border-box" }}>
+                    <div className="gas-popup-scrim" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, zIndex: 101, background: "rgba(0,0,0,0.38)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)" }} onClick={() => setConfirmAction(null)} />
+                    <div className="framer-timer-entrance gas-ui-blockout" style={{ position: "absolute", top: "16px", right: "16px", background: "var(--editor-bg)", backdropFilter: "blur(12px)", border: "1px solid rgba(239,68,68,0.42)", borderRadius: "12px", padding: "14px 12px", zIndex: 102, fontFamily: '"Google Sans Flex", sans-serif', display: "flex", flexDirection: "column", boxShadow: "0 12px 36px rgba(0,0,0,0.22)", boxSizing: "border-box" }}>
                         <div style={{ fontSize: "11px", fontWeight: 600, color: "#ef4444", lineHeight: "1.4", marginBottom: "12px", textAlign: "center", padding: "0 12px" }}>{confirmAction.message}</div>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                             <button className="gas-scale-hover" onClick={() => { confirmAction.onConfirm(); setConfirmAction(null) }} style={{ background: "#ef4444", color: "#ffffff", border: "none", borderRadius: "6px", padding: "6px 16px", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: '"Google Sans Flex", sans-serif' }}>Sim</button>
@@ -1325,7 +1336,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <button type="button" onClick={() => setTitle("Consulta Agendada")} title="Consulta Agendada" aria-label="Consulta Agendada" style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "50%", background: title === "Consulta Agendada" ? "rgba(59,130,246,0.14)" : "transparent", color: title === "Consulta Agendada" ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", padding: 0 }}>
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
                             </button>
-                            <button type="button" onClick={() => setTitle("Demanda Espontânea")} title="Demanda Espontânea" aria-label="Demanda Espontânea" style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "50%", background: title === "Demanda Espontânea" ? "rgba(59,130,246,0.14)" : "transparent", color: title === "Demanda Espontânea" ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", padding: 0 }}>
+                            <button type="button" onClick={selecionarDemandaEspontanea} title="Demanda Espontânea" aria-label="Demanda Espontânea" style={{ width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center", border: "none", borderRadius: "50%", background: title === "Demanda Espontânea" ? "rgba(59,130,246,0.14)" : "transparent", color: title === "Demanda Espontânea" ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", padding: 0 }}>
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
                             </button>
                         </div>

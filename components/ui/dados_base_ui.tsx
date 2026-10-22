@@ -87,12 +87,13 @@ interface BlocoProps {
     colapsavel?: boolean
     abertoInicial?: boolean
     forcarAbertura?: number
+    forcarFechamento?: number
     semBordaSuperior?: boolean
 }
 
 /* Sections the user never touched start folded away, so the left column opens
    straight onto Identificação instead of a wall of empty inputs. */
-function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = false, abertoInicial = true, forcarAbertura, semBordaSuperior = false }: BlocoProps) {
+function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = false, abertoInicial = true, forcarAbertura, forcarFechamento, semBordaSuperior = false }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
     React.useEffect(() => {
@@ -100,6 +101,11 @@ function Bloco({ rotulo, cor, children, sempreVisivelChildren, colapsavel = fals
         setAberto(true)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [forcarAbertura])
+    React.useEffect(() => {
+        if (forcarFechamento === undefined) return
+        setAberto(false)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [forcarFechamento])
 
     const cabecalho = (
         <>
@@ -187,6 +193,7 @@ export interface DadosBaseFormProps {
     idade?: number | null
     onSexoChange?: (sexo: "M" | "F" | "") => void
     expandirNaoVazios?: number
+    recolherCampos?: number
 }
 
 /* The whole "## Dados base" block lives in `value` as template-shaped text.
@@ -194,7 +201,7 @@ export interface DadosBaseFormProps {
    text always mirrors the current consulta agendada template.
    Sexo is the one exception: it is never serialised, so it lives in state and is
    only published to the companion bus. */
-export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, expandirNaoVazios }: DadosBaseFormProps) {
+export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, expandirNaoVazios, recolherCampos }: DadosBaseFormProps) {
     const [campos, setCampos] = React.useState<DadosBase>(DADOS_BASE_VAZIO)
     const [idCampos, setIdCampos] = React.useState<IdentificacaoCampos>(parseIdentificacao(""))
     const emitidoRef = React.useRef<string | null>(null)
@@ -366,6 +373,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                 colapsavel
                 abertoInicial={temIdentificacao}
                 forcarAbertura={expandirNaoVazios}
+                forcarFechamento={recolherCampos}
                 semBordaSuperior
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
@@ -426,7 +434,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                                         </button>
                                     ) : null}
                                     {campo.chave === "composicao" || campo.chave === "ocupacao" ? (
-                                        <BotaoNega onClick={() => alterarIdCampo(campo.chave, INSERCOES_NEGA_DADOS_BASE[campo.chave])} />
+                                        <BotaoNega onClick={() => alterarIdCampo(campo.chave, campo.chave === "composicao" ? INSERCOES_NEGA_DADOS_BASE.composicao : INSERCOES_NEGA_DADOS_BASE.ocupacao)} />
                                     ) : null}
                                 </div>
                             </div>
@@ -475,6 +483,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                 colapsavel
                 abertoInicial={temAntecedentesValue}
                 forcarAbertura={expandirNaoVazios}
+                forcarFechamento={recolherCampos}
                 sempreVisivelChildren={idCampos.sexo === "F" && (idade === null || idade >= 15) ? (
                     <CampoRotulado rotulo="DUM">
                         <input
@@ -564,6 +573,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                 colapsavel
                 abertoInicial={temHabitos}
                 forcarAbertura={expandirNaoVazios}
+                forcarFechamento={recolherCampos}
                 sempreVisivelChildren={
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                         {HABITOS_CAMPOS.filter(c => c.sempreVisivel && (idade === null || idade >= 15 || !["etilismo", "tabagismo"].includes(c.chave))).map(campo => (

@@ -56,11 +56,12 @@ interface BlocoProps {
     colapsavel?: boolean
     abertoInicial?: boolean
     forcarAbertura?: number
+    forcarFechamento?: number
     semBordaSuperior?: boolean
     resumo?: React.ReactNode
 }
 
-function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, forcarAbertura, semBordaSuperior = false, resumo }: BlocoProps) {
+function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true, forcarAbertura, forcarFechamento, semBordaSuperior = false, resumo }: BlocoProps) {
     const [aberto, setAberto] = React.useState(abertoInicial)
     const alternar = () => setAberto(prev => !prev)
     React.useEffect(() => {
@@ -68,6 +69,11 @@ function Bloco({ rotulo, cor, children, colapsavel = false, abertoInicial = true
         setAberto(true)
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [forcarAbertura])
+    React.useEffect(() => {
+        if (forcarFechamento === undefined) return
+        setAberto(false)
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [forcarFechamento])
 
     const cabecalho = (
         <>
@@ -139,9 +145,10 @@ export interface ObjetivoFormProps {
     mostrarPrenatal?: boolean
     mostrarPuericultura?: boolean
     expandirNaoVazios?: number
+    recolherCampos?: number
 }
 
-export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = false, mostrarPuericultura = false, expandirNaoVazios }: ObjetivoFormProps) {
+export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = false, mostrarPuericultura = false, expandirNaoVazios, recolherCampos }: ObjetivoFormProps) {
     const [campos, setCampos] = React.useState<Objetivo>(OBJETIVO_VAZIO)
     const emitidoRef = React.useRef<string | null>(null)
     const sincronizandoRef = React.useRef(false)
@@ -247,7 +254,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "4px", padding: "8px 0 12px 0" }}>
-            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={temSsvv} forcarAbertura={expandirNaoVazios} resumo={(
+            <Bloco rotulo="Sinais Vitais" cor={COR_SSVV} semBordaSuperior colapsavel abertoInicial={temSsvv} forcarAbertura={expandirNaoVazios} forcarFechamento={recolherCampos} resumo={(
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 8px" }}>
                     {camposResumo.map(item => (
                         <div key={item.chave} style={{ display: "flex", flexDirection: "column", gap: "3px", flex: "0 1 112px", minWidth: "100px" }}>
@@ -283,7 +290,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
             </Bloco>
 
             {mostrarPuericultura ? (
-                <Bloco rotulo="Crescimento e desenvolvimento" cor={COR_EXAME_FISICO}>
+                <Bloco rotulo="Crescimento e desenvolvimento" cor={COR_EXAME_FISICO} colapsavel abertoInicial={true} forcarFechamento={recolherCampos}>
                     <CaixaParagrafos
                         dados={{ "data-campo": "crescimento-desenvolvimento" }}
                         value={crescimentoDesenvolvimento}
@@ -292,7 +299,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                 </Bloco>
             ) : null}
 
-            <Bloco rotulo="Exame físico" cor={COR_EXAME_FISICO} colapsavel abertoInicial={temExameFisico} forcarAbertura={expandirNaoVazios}>
+            <Bloco rotulo="Exame físico" cor={COR_EXAME_FISICO} colapsavel abertoInicial={temExameFisico} forcarAbertura={expandirNaoVazios} forcarFechamento={recolherCampos}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {mostrarPrenatal ? (
                         <Bloco rotulo="Pré-natal" cor={COR_EXAME_FISICO} colapsavel abertoInicial={temPrenatal} forcarAbertura={expandirNaoVazios}>
@@ -348,7 +355,7 @@ export function ObjetivoForm({ value, onChange, idade = null, mostrarPrenatal = 
                 </div>
             </Bloco>
 
-            <Bloco rotulo="Exames complementares" cor={COR_COMPLEMENTAR} colapsavel abertoInicial={temComplementar} forcarAbertura={expandirNaoVazios}>
+            <Bloco rotulo="Exames complementares" cor={COR_COMPLEMENTAR} colapsavel abertoInicial={temComplementar} forcarAbertura={expandirNaoVazios} forcarFechamento={recolherCampos}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     <CampoRotulado rotulo="Laboratório">
                         <CaixaParagrafos
