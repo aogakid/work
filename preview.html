@@ -33,10 +33,6 @@
       margin-right: 8px;
       width: 200px;
     }
-    #preview-supabase { position: relative; }
-    #preview-supabase summary { cursor: pointer; font-size: 12px; white-space: nowrap; }
-    #preview-supabase-fields { position: absolute; top: 24px; right: 0; display: grid; gap: 6px; width: 260px; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
-    #preview-supabase-fields input { box-sizing: border-box; width: 100%; margin: 0; }
     #controls button {
       padding: 6px 12px;
       background: #007bff;
@@ -59,13 +55,6 @@
   <div id="controls" class="expanded">
     <div id="controls-expanded">
       <input type="text" id="filename" placeholder="arquivo.tsx" value="components/ui/calendar_ui.tsx" />
-      <details id="preview-supabase">
-        <summary>Supabase</summary>
-        <div id="preview-supabase-fields">
-          <input type="url" id="supabase-url" value="https://ncbheiqtybxptfdtikut.supabase.co" placeholder="https://seu-projeto.supabase.co" autocomplete="off" />
-          <input type="password" id="supabase-key" value="sb_publishable_zWllddt4rUrbZNQqj2U9aQ_TmOEJu87" placeholder="Chave publishable (sb_publishable_…)" autocomplete="off" />
-        </div>
-      </details>
       <button onclick="loadComponent()">Carregar</button>
     </div>
     <div id="controls-minimized" style="display:none;">
@@ -151,21 +140,10 @@
 
   async function loadComponent() {
     const filename = document.getElementById('filename').value;
-    const supabaseUrl = document.getElementById('supabase-url').value.trim();
-    const supabaseKey = document.getElementById('supabase-key').value.trim();
     const errorDiv = document.getElementById('error');
     const rootDiv = document.getElementById('root');
 
     try {
-      window.process = window.process || {};
-      window.process.env = Object.assign({}, window.process.env, {
-        NEXT_PUBLIC_CALENDAR_SUPABASE_URL: supabaseUrl,
-        NEXT_PUBLIC_CALENDAR_SUPABASE_KEY: supabaseKey
-      });
-      try {
-        localStorage.setItem('preview-supabase-url', supabaseUrl);
-        localStorage.setItem('preview-supabase-key', supabaseKey);
-      } catch(e) { console.info('Configuração do Supabase não será salva neste preview.'); }
       const response = await fetch(filename + '?' + CACHE_BUST);
       if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
 
@@ -220,10 +198,6 @@
   }
 
   window.addEventListener('DOMContentLoaded', loadComponent);
-  try {
-    document.getElementById('supabase-url').value = localStorage.getItem('preview-supabase-url') || document.getElementById('supabase-url').value;
-    document.getElementById('supabase-key').value = localStorage.getItem('preview-supabase-key') || document.getElementById('supabase-key').value;
-  } catch(e) { console.info('Usando as configurações iniciais do Supabase para este preview.'); }
   document.getElementById('filename').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') loadComponent();
   });

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { createClient } from "@supabase/supabase-js"
+import supabase from "../../lib/calendar-supabase"
 import { PDFDocument, PDFHexString, PDFName } from "pdf-lib"
 
 interface CalendarRecord {
@@ -113,10 +113,6 @@ const horarioPadrao = (): CalendarScheduleDay[] => DIAS_SEMANA.map(day => ({
     afternoonEnd: "17:00",
 }))
 
-const supabaseUrl = process.env.NEXT_PUBLIC_CALENDAR_SUPABASE_URL || ""
-const supabaseKey = process.env.NEXT_PUBLIC_CALENDAR_SUPABASE_KEY || ""
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
-
 const hojeIso = (): string => {
     const agora = new Date()
     const local = new Date(agora.getTime() - agora.getTimezoneOffset() * 60000)
@@ -225,14 +221,12 @@ const chaveDoCampo = (rotulo: string): string => {
 }
 
 const carregarCalendarios = async (): Promise<CalendarRecord[]> => {
-    if (!supabase) return []
     const { data, error } = await supabase.from("calendars").select("*").eq("is_active", true).order("created_at")
     if (error) throw error
     return (data || []) as unknown as CalendarRecord[]
 }
 
 const carregarMetadadosCalendario = async (calendarId: string) => {
-    if (!supabase) throw new Error("Configure as variáveis do Supabase para o calendário.")
     const [fieldsResult, staffResult, hoursResult] = await Promise.all([
         supabase.from("calendar_fields").select("*").eq("calendar_id", calendarId).order("display_order"),
         supabase.from("staff").select("*").eq("calendar_id", calendarId).order("name"),
@@ -248,7 +242,6 @@ const carregarMetadadosCalendario = async (calendarId: string) => {
 }
 
 const carregarDetalhesDoDia = async (calendarId: string, data: string) => {
-    if (!supabase) throw new Error("Configure as variáveis do Supabase para o calendário.")
     const limite = limitesDoDia(data)
     const [appointmentsResult, blocksResult] = await Promise.all([
         supabase.from("appointments").select("*").eq("calendar_id", calendarId).eq("appointment_date", data).eq("status", "scheduled").order("start_time").order("created_at"),
@@ -271,7 +264,6 @@ const carregarDetalhes = async (calendarId: string, data: string, cachedMetadata
 }
 
 const carregarMaximoHistoricoDeConsultas = async (calendarId: string): Promise<number> => {
-    if (!supabase) return 0
     const pageSize = 1000
     const counts: Record<string, number> = {}
     let offset = 0
@@ -397,7 +389,7 @@ export default function CalendarUI() {
     const refreshCalendarDetails = async () => {
         const requestSequence = detailsRequestSequence.current + 1
         detailsRequestSequence.current = requestSequence
-        if (!selectedCalendarId || !supabase) {
+        if (!selectedCalendarId) {
             setFields([])
             setStaff([])
             setAppointments([])
@@ -456,7 +448,7 @@ export default function CalendarUI() {
     }
 
     const refreshAppointmentCounts = async () => {
-        if (!selectedCalendarId || !supabase) {
+        if (!selectedCalendarId) {
             setAppointmentCounts({})
             setAppointmentNamesByDate({})
             return
@@ -574,10 +566,6 @@ export default function CalendarUI() {
         event.preventDefault()
         setError("")
         setNotice("")
-        if (!supabase) {
-            setError("Supabase não está configurado neste ambiente.")
-            return
-        }
         if (!calendarName.trim()) {
             setError("Informe um nome para o calendário.")
             return
@@ -638,7 +626,7 @@ export default function CalendarUI() {
 
     const saveCalendarHours = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!supabase || !activeCalendar || !staffAccess) return
+        if (!activeCalendar || !staffAccess) return
         setError("")
         setNotice("")
         const invalidSchedule = calendarSchedule.find(day => day.enabled && (
@@ -739,7 +727,7 @@ export default function CalendarUI() {
 
     const saveAppointment = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!supabase || !activeCalendar || !patientName.trim()) return
+        if (!activeCalendar || !patientName.trim()) return
         if (scheduleConfigured && !selectedDayIsOpen) {
             setError("Este calendário não atende no dia selecionado.")
             return
@@ -818,7 +806,7 @@ export default function CalendarUI() {
     }
 
     const unlockStaffAccess = async () => {
-        if (!supabase || !activeCalendar || !staffPassword || staffUnlocking) return
+        if (!activeCalendar || !staffPassword || staffUnlocking) return
         setStaffUnlocking(true)
         setError("")
         try {
@@ -880,7 +868,7 @@ export default function CalendarUI() {
     }
 
     const deleteAppointment = async (appointmentId: string) => {
-        if (!supabase || !activeCalendar || !staffAccess || !window.confirm("Marcar este agendamento como excluído?")) return
+        if (!activeCalendar || !staffAccess || !window.confirm("Marcar este agendamento como excluído?")) return
         setError("")
         const { data, error: deleteError } = await supabase.functions.invoke("calendar-staff", {
             body: { action: "delete_appointment", calendarId: activeCalendar.id, password: staffPassword, appointmentId },
@@ -898,7 +886,7 @@ export default function CalendarUI() {
 
     const saveField = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!supabase || !activeCalendar || !fieldLabel.trim()) return
+        if (!activeCalendar || !fieldLabel.trim()) return
         const keyBase = chaveDoCampo(fieldLabel)
         const count = fields.filter(field => field.field_key === keyBase || field.field_key.startsWith(keyBase + "_")).length
         const key = count ? keyBase + "_" + (count + 1) : keyBase
@@ -943,7 +931,7 @@ export default function CalendarUI() {
     }
 
     const updateCalendarField = async (field: CalendarField, updates: { is_active?: boolean; is_required?: boolean }) => {
-        if (!supabase || !activeCalendar || !staffAccess || saving) return
+        if (!activeCalendar || !staffAccess || saving) return
         setSaving(true)
         setError("")
         const { data, error: updateError } = await supabase.functions.invoke("calendar-staff", {
@@ -962,7 +950,7 @@ export default function CalendarUI() {
 
     const saveStaff = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!supabase || !activeCalendar || !staffName.trim()) return
+        if (!activeCalendar || !staffName.trim()) return
         setSaving(true)
         setError("")
         const { data, error: saveError } = await supabase.functions.invoke("calendar-staff", {
@@ -993,7 +981,7 @@ export default function CalendarUI() {
     }
 
     const removeStaff = async (person: StaffRecord) => {
-        if (!supabase || !activeCalendar || !staffAccess || removingStaffId) return
+        if (!activeCalendar || !staffAccess || removingStaffId) return
         setRemovingStaffId(person.id)
         setError("")
         try {
@@ -1015,7 +1003,7 @@ export default function CalendarUI() {
 
     const saveBlock = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
-        if (!supabase || !activeCalendar || !blockLabel.trim() || !blockStart || !blockEnd) return
+        if (!activeCalendar || !blockLabel.trim() || !blockStart || !blockEnd) return
         setSaving(true)
         setError("")
         const { data, error: saveError } = await supabase.functions.invoke("calendar-staff", {
@@ -1078,13 +1066,6 @@ export default function CalendarUI() {
 
     if (!hasMounted || loading && (!selectedCalendarId || !calendarMetadataReady) || selectedCalendarId && !calendarMetadataReady) {
         return <main aria-busy="true" style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#78716c" : "#6b6760", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontSize: 13 }}>Carregando agenda…</main>
-    }
-
-    if (!supabase) {
-        return <div style={{ maxWidth: 760, margin: "32px auto", padding: 24, border: `1px solid ${darkMode ? "rgba(255,255,255,0.15)" : "rgba(120,120,120,0.15)"}`, borderRadius: 16, color: darkMode ? "#f5f5f4" : "#1a1916", background: darkMode ? "#1c1917" : "#ffffff", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-            <h2 style={{ marginTop: 0 }}>Configuração do calendário pendente</h2>
-            <p>Defina NEXT_PUBLIC_CALENDAR_SUPABASE_URL e NEXT_PUBLIC_CALENDAR_SUPABASE_KEY no ambiente da aplicação.</p>
-        </div>
     }
 
     return <main className="calendar-root" style={{ minHeight: "100vh", width: "100%", boxSizing: "border-box", borderRadius: 16, background: darkMode ? "#1c1917" : "#ffffff", padding: 24, color: darkMode ? "#f5f5f4" : "#1a1916", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", colorScheme: darkMode ? "dark" : "light" }}>
