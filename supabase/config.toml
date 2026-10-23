@@ -1,0 +1,2 @@
+[functions.calendar-staff]
+verify_jwt = false

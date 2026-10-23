@@ -19,6 +19,7 @@ import ExamesUI from "./components/ui/exames_ui";
 import PsiquiatriaUI from "./components/ui/psiquiatria_ui";
 import EcgUI from "./components/ui/ecg_ui";
 import EncaminhaUI from "./components/ui/encaminha_ui";
+import CalendarUI from "./components/ui/calendar_ui";
 
 // Action HOCs (code overrides)
 import {
@@ -231,6 +232,11 @@ PLASMIC.registerComponent(EcgUI, {
 
 PLASMIC.registerComponent(EncaminhaUI, {
   name: "EncaminhaUI",
+  props: {},
+});
+
+PLASMIC.registerComponent(CalendarUI, {
+  name: "CalendarUI",
   props: {},
 });
 

@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f0; }
@@ -23,7 +24,7 @@
       transition: padding 0.2s;
     }
     #controls.minimized { padding: 6px; display: flex; gap: 4px; align-items: center; }
-    #controls-expanded { display: flex; align-items: center; gap: 0; }
+    #controls-expanded { display: flex; align-items: center; gap: 6px; }
     #controls-minimized { display: none; gap: 4px; }
     #controls input { 
       padding: 6px; 
@@ -32,6 +33,10 @@
       margin-right: 8px;
       width: 200px;
     }
+    #preview-supabase { position: relative; }
+    #preview-supabase summary { cursor: pointer; font-size: 12px; white-space: nowrap; }
+    #preview-supabase-fields { position: absolute; top: 24px; right: 0; display: grid; gap: 6px; width: 260px; padding: 10px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    #preview-supabase-fields input { box-sizing: border-box; width: 100%; margin: 0; }
     #controls button {
       padding: 6px 12px;
       background: #007bff;
@@ -53,7 +58,14 @@
 <body>
   <div id="controls" class="expanded">
     <div id="controls-expanded">
-      <input type="text" id="filename" placeholder="arquivo.tsx" value="components/ui/bloco_ui.tsx" />
+      <input type="text" id="filename" placeholder="arquivo.tsx" value="components/ui/calendar_ui.tsx" />
+      <details id="preview-supabase">
+        <summary>Supabase</summary>
+        <div id="preview-supabase-fields">
+          <input type="url" id="supabase-url" value="https://ncbheiqtybxptfdtikut.supabase.co" placeholder="https://seu-projeto.supabase.co" autocomplete="off" />
+          <input type="password" id="supabase-key" value="sb_publishable_zWllddt4rUrbZNQqj2U9aQ_TmOEJu87" placeholder="Chave publishable (sb_publishable_…)" autocomplete="off" />
+        </div>
+      </details>
       <button onclick="loadComponent()">Carregar</button>
     </div>
     <div id="controls-minimized" style="display:none;">
@@ -90,6 +102,7 @@
       if (moduleName === 'react') return React;
       if (moduleName === 'react-dom') return ReactDOM;
       if (moduleName === '@supabase/supabase-js') return window.supabase;
+      if (moduleName === 'pdf-lib') return window.PDFLib;
 
       if (moduleName.startsWith('.')) {
         const resolvedPath = resolveRelativePath(baseDir, moduleName);
@@ -138,10 +151,21 @@
 
   async function loadComponent() {
     const filename = document.getElementById('filename').value;
+    const supabaseUrl = document.getElementById('supabase-url').value.trim();
+    const supabaseKey = document.getElementById('supabase-key').value.trim();
     const errorDiv = document.getElementById('error');
     const rootDiv = document.getElementById('root');
 
     try {
+      window.process = window.process || {};
+      window.process.env = Object.assign({}, window.process.env, {
+        NEXT_PUBLIC_CALENDAR_SUPABASE_URL: supabaseUrl,
+        NEXT_PUBLIC_CALENDAR_SUPABASE_KEY: supabaseKey
+      });
+      try {
+        localStorage.setItem('preview-supabase-url', supabaseUrl);
+        localStorage.setItem('preview-supabase-key', supabaseKey);
+      } catch(e) { console.info('Configuração do Supabase não será salva neste preview.'); }
       const response = await fetch(filename + '?' + CACHE_BUST);
       if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
 
@@ -196,6 +220,10 @@
   }
 
   window.addEventListener('DOMContentLoaded', loadComponent);
+  try {
+    document.getElementById('supabase-url').value = localStorage.getItem('preview-supabase-url') || document.getElementById('supabase-url').value;
+    document.getElementById('supabase-key').value = localStorage.getItem('preview-supabase-key') || document.getElementById('supabase-key').value;
+  } catch(e) { console.info('Usando as configurações iniciais do Supabase para este preview.'); }
   document.getElementById('filename').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') loadComponent();
   });

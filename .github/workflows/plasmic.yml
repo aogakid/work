@@ -64,6 +64,9 @@ jobs:
         name: Building Plasmic app...
         if: ${{ github.event.client_payload.data.publish }}
         uses: plasmicapp/plasmic-action@master
+        env:
+          NEXT_PUBLIC_CALENDAR_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_CALENDAR_SUPABASE_URL }}
+          NEXT_PUBLIC_CALENDAR_SUPABASE_KEY: ${{ vars.NEXT_PUBLIC_CALENDAR_SUPABASE_KEY }}
         with:
           run: build
           branch: ${{ github.event.client_payload.data.branch }}
