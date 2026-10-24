@@ -219,7 +219,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         if (isOpen) companionEverOpened.current[c.id] = true
         const shouldMount = isOpen || !!companionEverOpened.current[c.id]
         return (
-            <div key={c.id} role="tabpanel" aria-label={c.label} style={{ marginTop: "10px", marginBottom: "12px", borderRadius: "10px", background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.25)", display: isOpen ? "block" : "none" }}>
+            <div key={c.id} role="tabpanel" aria-label={c.label} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginTop: "10px", marginBottom: "12px", borderRadius: "10px", background: "rgba(139,92,246,0.06)", border: "1px dashed rgba(139,92,246,0.25)", display: isOpen ? "block" : "none" }}>
                 <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
                 <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 1, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
                     <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "2px", gap: "8px", padding: "10px 12px", userSelect: "none", background: "rgba(139,92,246,0.08)", borderRadius: "10px 10px 0 0" }}>
@@ -233,7 +233,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </div>
                     </div>
                 </div>
-                <div style={{ padding: "0 12px 12px 12px", overflow: "visible" }}>
+                <div style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: "0 12px 12px 12px", overflow: "visible" }}>
                     {shouldMount && (
                         <CompanionErrorBoundary name={c.label}>
                             {c.id === "geriatria" ? (

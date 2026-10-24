@@ -240,6 +240,14 @@ interface FieldDef {
   calc?: (values: Record<string, string>) => string | null
 }
 
+interface ImportedPdfExam {
+  id: string
+  label: string
+  value: string
+  fieldKey: string | null
+  selected: boolean
+}
+
 type Field = FieldDef | string
 
 function makeField(label: string, calc?: (values: Record<string, string>) => string | null): FieldDef {
@@ -593,6 +601,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   const [copied, setCopied] = useState(false)
   const [importando, setImportando] = useState(false)
   const [importStatus, setImportStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null)
+  const [pdfExamChecklist, setPdfExamChecklist] = useState<ImportedPdfExam[]>([])
   const fileRef = useRef<HTMLInputElement | null>(null)
   const syncRef = useRef(false)
   const touchedRef = useRef(false)
@@ -717,7 +726,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
     const labPart = parts.length === 0 ? null : `(${dateBr}): ${parts.join(" // ")}`
-    const outrosPart = outros.trim() ? outros.trim() : null
+    const examesExtras = pdfExamChecklist.filter((exam) => exam.selected && !exam.fieldKey).map((exam) => `${exam.label} ${exam.value}`)
+    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" // ") || null
     const ampaPart = ampaOutput || null
     const glicemiaPart = glicemiaOutput || null
     const all = [labPart, outrosPart, ampaPart, glicemiaPart].filter(Boolean).join("\n") || null
@@ -741,6 +751,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       setOutros("")
       setCopied(false)
       setImportStatus(null)
+      setPdfExamChecklist([])
       setAmpaStart(hoje)
       setAmpaCopied(false)
       setAmpaSlotCount(1)
@@ -777,26 +788,49 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
   }, [])
 
+  const togglePdfExam = (examId: string) => {
+    const exam = pdfExamChecklist.find((item) => item.id === examId)
+    if (!exam) return
+    const selected = !exam.selected
+    setPdfExamChecklist((current) => current.map((item) => item.id === examId ? { ...item, selected } : item))
+    const fieldKey = exam.fieldKey
+    if (fieldKey) setValues((current) => ({ ...current, [fieldKey]: selected ? exam.value : "" }))
+  }
+
   const handlePdf = useCallback(async (file: File) => {
     setImportando(true)
     setImportStatus(null)
+    setPdfExamChecklist([])
     try {
       const res = await extrairExamesDePdf(await file.arrayBuffer())
-      const encontrados = Object.keys(res.campos).length
+      const examesReconhecidos = Object.entries(res.campos)
+        .filter(([key]) => !META_FIELDS.includes(key))
+        .map(([key, value]) => {
+          const field = FIELDS.find((item) => isField(item) && fieldId(item.label) === key)
+          return { id: key, label: field && isField(field) ? field.label : key.toUpperCase(), value, fieldKey: key, selected: true }
+        })
+      const extrasReconhecidos = (res.outros || "").split(" // ").filter(Boolean).map((item, index) => {
+        const separator = item.lastIndexOf(" ")
+        return { id: `extra-${index}`, label: item.slice(0, separator), value: item.slice(separator + 1), fieldKey: null, selected: true }
+      })
+      const examesDetectados = [...examesReconhecidos, ...extrasReconhecidos]
+      const encontrados = examesDetectados.length
       if (encontrados === 0 && !res.idade && !res.sexo) {
         setImportStatus({ tipo: "erro", msg: "Nenhum exame reconhecido no PDF." })
         return
       }
       touchedRef.current = true
+      setPdfExamChecklist(examesDetectados)
       if (res.data) setDate(res.data)
       setValues((prev) => {
         const next = { ...prev }
-        for (const [k, v] of Object.entries(res.campos)) next[k] = v
+        for (const exam of examesReconhecidos) {
+          next[exam.fieldKey] = exam.value
+        }
         if (res.idade) next["idade"] = res.idade
         if (res.sexo) next["sexo"] = res.sexo
         return next
       })
-      if (res.outros) setOutros((prev) => (prev.trim() ? prev.trim() + " // " + res.outros : res.outros as string))
       const detalhes = [res.idade ? `${res.idade} anos` : "", res.sexo ? `sexo ${res.sexo}` : ""].filter(Boolean).join(", ")
       setImportStatus({
         tipo: "ok",
@@ -970,11 +1004,12 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (!v || v.trim() === "") return null
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
-    if (parts.length === 0 && !outros.trim()) return ""
-    const outrosPart = outros.trim() ? outros.trim() : ""
+    const examesExtras = pdfExamChecklist.filter((exam) => exam.selected && !exam.fieldKey).map((exam) => `${exam.label} ${exam.value}`)
+    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" // ")
+    if (parts.length === 0 && !outrosPart) return ""
     const allParts = outrosPart ? [...parts, outrosPart] : parts
     return `(${dateBr}): ${allParts.join(" // ")}`
-  }, [date, values, outros])
+  }, [date, values, outros, pdfExamChecklist])
 
   const handleCopy = useCallback(() => {
     if (!markdown) return
@@ -1014,6 +1049,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     setValues(init)
     setOutros("")
     setImportStatus(null)
+    setPdfExamChecklist([])
 setAmpaMeasures(() => {
         const init: Record<string, string> = {}
         for (const day of AMPA_DAY_INDEXES) {
@@ -1161,6 +1197,23 @@ setGlicemiaMeasures(() => {
           >
             {importStatus.msg}
           </div>
+        )}
+
+        {pdfExamChecklist.length > 0 && (
+          <section aria-label="Exames extraídos do PDF" style={{ gridColumn: "1 / -1", display: "grid", gap: "8px", marginBottom: "12px", padding: "12px", border: "1px solid var(--exames-border)", borderRadius: "10px", background: "var(--exames-input-bg)" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap" }}>
+              <strong style={{ color: "var(--exames-text)", fontSize: "13px" }}>Testes encontrados no PDF</strong>
+              <span style={{ color: "var(--exames-text-muted)", fontSize: "11px" }}>{pdfExamChecklist.filter((exam) => exam.selected).length} de {pdfExamChecklist.length} selecionados</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "6px" }}>
+              {pdfExamChecklist.map((exam) => (
+                <label key={exam.id} style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, padding: "7px 9px", border: "1px solid var(--exames-border)", borderRadius: "8px", background: "var(--exames-input-bg)", color: exam.selected ? "var(--exames-text)" : "var(--exames-text-muted)", fontSize: "12px", cursor: "pointer" }}>
+                  <input type="checkbox" checked={exam.selected} onChange={() => togglePdfExam(exam.id)} />
+                  <span style={{ display: "flex", justifyContent: "space-between", gap: "8px", width: "100%", minWidth: 0 }}><span style={{ overflowWrap: "anywhere" }}>{exam.label}</span><strong style={{ flexShrink: 0 }}>{exam.value}</strong></span>
+                </label>
+              ))}
+            </div>
+          </section>
         )}
 
         <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
