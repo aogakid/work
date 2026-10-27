@@ -73,6 +73,18 @@ Prefira
         arquivo: "/contents/orientacoes/Diabetes.pdf",
     },
     {
+        id: "insulinizacao",
+        titulo: "Insulinização",
+        tipo: "md",
+        texto: `Meta da glicemia de jejum: 80-130
+
+A cada 3 dias, observar a média das glicemias em jejum:
+Se abaixo de 70: reduzir 4 UI
+Se entre 80 e 130: manter a dose
+Se entre 130 e 150: aumentar 1 UI
+Se acima de 150: aumentar 2 UI`,
+    },
+    {
         id: "neuroestimulo",
         titulo: "Neuroestímulo",
         tipo: "md",

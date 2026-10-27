@@ -755,7 +755,9 @@ export default function CalendarUI() {
             .filter(hours => hours.weekday === weekday)
             .sort((left, right) => left.period - right.period || left.starts_at.localeCompare(right.starts_at))[0]?.starts_at.slice(0, 5) || ""
         const scheduledTime = appointment.start_time?.slice(0, 5) || firstAvailableTime
-        const appointmentDateLabel = `${day}/${month}/${year}`
+        const weekdayName = DIAS_SEMANA.find(item => item.weekday === weekday)?.name.toLowerCase() || ""
+        const shortYear = year.slice(-2)
+        const appointmentDateLabel = `${day}/${month}/${shortYear}${weekdayName ? ` (${weekdayName})` : ""}`
         const customFieldLines = fields.filter(field => field.is_active !== false)
             .filter(field => appointment.custom_values[field.field_key] !== undefined && appointment.custom_values[field.field_key] !== "" && appointment.custom_values[field.field_key] !== null)
             .map(field => `${field.label}: ${textoDoCampo(appointment.custom_values[field.field_key])}`)
@@ -765,7 +767,7 @@ export default function CalendarUI() {
             `HORÁRIO: ${scheduledTime}`,
             ...(customFieldLines.length ? ["", ...customFieldLines] : []),
         ]
-        form.getTextField("Text1").setText(appointment.patient_name)
+        form.getTextField("Text1").setText((appointment.patient_name || "").toUpperCase())
         form.getTextField("Text2").setText(textLines.join("\n"))
         form.getTextField("Text2").setFontSize(11)
         const issuedAt = new Date(appointment.created_at)

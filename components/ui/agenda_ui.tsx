@@ -1,12 +1,13 @@
 import * as React from "react"
 import { forwardRef, useImperativeHandle } from "react"
 import { useGoogleSheets } from "../contexts/AppContext"
+import calendarSupabase from "../../lib/calendar-supabase"
 
 const GAS_WEB_APP_URL =
     "https://script.google.com/macros/s/AKfycbx5e1DSXQ2tZqEtMHbCU9a9dvP8Ial8q7LsZ1A7LYHSLsnPvABURMhPmDP-yWBLStmcng/exec"
 
-const ESCALA_CSV_URL =
-    "https://docs.google.com/spreadsheets/d/1tkgJeZqOgGlJfK6Yi3ocqdA10VmeuaW8k0UOGYHJsFQ/gviz/tq?tqx=out:csv"
+const CALENDAR_ID_ENCAIXES = "36e63601-a34d-4efb-8ad5-b1c94f616693"
+const NOME_CALENDARIO_ENCAIXES = "Encaixes e retornos"
 
 interface DataAtual {
     dia: number
@@ -35,127 +36,96 @@ const formatarHoje = (): string => {
     return comDoisDigitos(h.dia) + "/" + comDoisDigitos(h.mes) + "/" + h.ano
 }
 
-const MESES_ABREVIADOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+const dataHojeIso = (): string => {
+    const h = dataHoje()
+    const ano = h.ano !== null ? h.ano : new Date().getFullYear()
+    return ano + "-" + comDoisDigitos(h.mes) + "-" + comDoisDigitos(h.dia)
+}
 
-const nomeAbaMes = (): string => {
-    const a = new Date()
-    const parts = new Intl.DateTimeFormat("pt-BR", {
-        timeZone: "America/Sao_Paulo",
-        year: "numeric",
-        month: "long",
-    }).formatToParts(a)
-    const mesLong = parts.find(p => p.type === "month")?.value || ""
-    const mesMap: Record<string, string> = {
-        janeiro: "Jan",
-        fevereiro: "Fev",
-        "março": "Mar", marco: "Mar",
-        abril: "Abr",
-        maio: "Mai",
-        junho: "Jun",
-        julho: "Jul",
-        agosto: "Ago",
-        setembro: "Set",
-        outubro: "Out",
-        novembro: "Nov",
-        dezembro: "Dez",
+interface AgendinhaAppointment {
+    patient_name: string
+    start_time: string | null
+    custom_values: Record<string, string | number | boolean | null> | null
+}
+
+const extrairObjetivo = (
+    custom: Record<string, string | number | boolean | null> | null
+): string => {
+    if (!custom) return ""
+    const direto = custom.objetivo_da_consulta
+    if (typeof direto === "string" && direto.trim()) {
+        return direto.trim()
     }
-    const mes = mesMap[mesLong.toLowerCase()] || MESES_ABREVIADOS[a.getMonth()]
-    const partsAno = new Intl.DateTimeFormat("pt-BR", {
-        timeZone: "America/Sao_Paulo",
-        year: "numeric",
-    }).formatToParts(a)
-    const anoNum = Number(partsAno.find(p => p.type === "year")?.value || a.getFullYear())
-    const ano = String(anoNum % 100).padStart(2, "0")
-    return mes + "/" + ano
-}
-
-const urlEscalaMes = (): string => {
-    return ESCALA_CSV_URL + "&sheet=" + encodeURIComponent(nomeAbaMes())
-}
-
-const parseCsv = (texto: string): string[][] => {
-    const linhas: string[][] = []
-    let atual: string[] = []
-    let campo = ""
-    let emAspas = false
-    for (let i = 0; i < texto.length; i++) {
-        const c = texto[i]
-        if (emAspas) {
-            if (c === "\"") {
-                if (texto[i + 1] === "\"") {
-                    campo += "\""
-                    i++
-                } else {
-                    emAspas = false
-                }
-            } else {
-                campo += c
-            }
-        } else if (c === "\"") {
-            emAspas = true
-        } else if (c === ",") {
-            atual.push(campo)
-            campo = ""
-        } else if (c === "\n") {
-            atual.push(campo)
-            linhas.push(atual)
-            atual = []
-            campo = ""
-        } else if (c !== "\r") {
-            campo += c
+    const valores = Object.values(custom)
+    for (let i = 0; i < valores.length; i++) {
+        const v = valores[i]
+        if (typeof v === "string" && v.trim()) {
+            return v.trim()
         }
     }
-    if (campo !== "" || atual.length > 0) {
-        atual.push(campo)
-        linhas.push(atual)
-    }
-    return linhas
+    return ""
 }
 
-const extrairDataCelula = (celula: string): DataAtual | null => {
-    const m = celula.trim().match(/^0?(\d{1,2})\/0?(\d{1,2})(?:\/(\d{2,4}))?$/)
-    if (!m) return null
-    const ano = m[3] ? Number(m[3]) : null
-    return { dia: Number(m[1]), mes: Number(m[2]), ano }
+const formatarLinhaAgendinha = (
+    nome: string,
+    objetivo: string,
+    hora: string | null
+): string => {
+    const sufixoObjetivo = objetivo ? " (" + objetivo + ")" : ""
+    if (hora) {
+        const partes = hora.split(":")
+        if (partes.length >= 2) {
+            return partes[0] + ":" + partes[1] + " - " + nome + sufixoObjetivo
+        }
+    }
+    return nome + sufixoObjetivo
 }
 
-const montarTextoHoje = (linhas: string[][]): string => {
-    const hoje = dataHoje()
-    const cabecalho = linhas[0] || []
-    let coluna = -1
-    cabecalho.forEach((celula, i) => {
-        const d = extrairDataCelula(celula)
-        if (d && d.dia === hoje.dia && d.mes === hoje.mes) coluna = i
-    })
-    if (coluna < 0) {
-        return (
-            "(a data de hoje não está na aba " +
-            nomeAbaMes() +
-            " do link — confira se a tabela está atualizada)"
-        )
-    }
+const montarTextoAgendinha = (appointments: AgendinhaAppointment[]): string => {
     const itens: string[] = []
-    for (let r = 2; r < linhas.length; r++) {
-        const rotulo = ((linhas[r] || [])[0] || "").trim()
-        const slot = rotulo.match(/^(Encaixe|Vaga) (\d+)$/i)
-        if (!slot) continue
-        const numero = slot[2]
-        const valor = ((linhas[r] || [])[coluna] || "").trim()
-        if (!valor) continue
-        let valorObjetivo = ""
-        for (let r2 = 2; r2 < linhas.length; r2++) {
-            const outro = ((linhas[r2] || [])[0] || "").trim()
-            const outroMatch = outro.match(/^Objetivo (\d+)$/i)
-            if (!outroMatch) continue
-            if (outroMatch[1] !== numero) continue
-            const conteudo = ((linhas[r2] || [])[coluna] || "").trim()
-            if (conteudo) valorObjetivo = conteudo
-            break
-        }
-        if (valorObjetivo) itens.push(valor + " (" + valorObjetivo + ")")
+    for (let i = 0; i < appointments.length; i++) {
+        const appt = appointments[i]
+        const nome = (appt.patient_name || "").trim()
+        if (!nome) continue
+        const objetivo = extrairObjetivo(appt.custom_values)
+        itens.push(formatarLinhaAgendinha(nome, objetivo, appt.start_time))
     }
-    if (itens.length === 0) return "(sem agendinha marcada para hoje)"
+    if (itens.length === 0) {
+        return "(sem agendinha marcada para hoje)"
+    }
     return itens.join("\n")
+}
+
+const obterIdCalendarioEncaixes = async (): Promise<string> => {
+    try {
+        const { data } = await calendarSupabase
+            .from("calendars")
+            .select("id")
+            .eq("name", NOME_CALENDARIO_ENCAIXES)
+            .limit(1)
+        if (data && data[0]?.id) {
+            return String(data[0].id)
+        }
+    } catch {
+        // Fallback para ID conhecido caso a busca falhe
+    }
+    return CALENDAR_ID_ENCAIXES
+}
+
+const buscarAgendinhaHoje = async (): Promise<string> => {
+    const calendarId = await obterIdCalendarioEncaixes()
+    const { data, error } = await calendarSupabase
+        .from("appointments")
+        .select("patient_name, custom_values, start_time")
+        .eq("calendar_id", calendarId)
+        .eq("appointment_date", dataHojeIso())
+        .eq("status", "scheduled")
+        .order("start_time", { ascending: true })
+        .order("created_at", { ascending: true })
+
+    if (error) throw error
+    const appointments = (data || []) as unknown as AgendinhaAppointment[]
+    return montarTextoAgendinha(appointments)
 }
 
 const removerAcentos = (texto: string): string =>
@@ -268,28 +238,26 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
         adicionarItem()
     }
 
-    const carregarEscala = React.useCallback(async () => {
-        try {
-            const resposta = await fetch(urlEscalaMes(), { mode: "cors" })
-            if (!resposta.ok) throw new Error("HTTP " + resposta.status)
-            const texto = await resposta.text()
-            if (!texto.trim().startsWith('"')) {
-                throw new Error("resposta não é CSV")
+    React.useEffect(() => {
+        let cancelado = false
+        const carregar = async () => {
+            try {
+                const texto = await buscarAgendinhaHoje()
+                if (!cancelado) setEscalaHoje(texto)
+            } catch {
+                if (!cancelado) {
+                    setEscalaHoje(
+                        formatarHoje() +
+                            "\n(não foi possível ler a agendinha)"
+                    )
+                }
             }
-            setEscalaHoje(montarTextoHoje(parseCsv(texto)))
-        } catch {
-            setEscalaHoje(
-                formatarHoje() +
-                    "\n(não foi possível ler a aba " +
-                    nomeAbaMes() +
-                    " do link)"
-            )
+        }
+        void carregar()
+        return () => {
+            cancelado = true
         }
     }, [])
-
-    React.useEffect(() => {
-        carregarEscala()
-    }, [carregarEscala])
 
     React.useEffect(() => {
         const el = escalaRef.current

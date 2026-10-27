@@ -514,10 +514,10 @@ const GLICEMIA_GRUPOS: Array<{ id: GrupoGlicemia; label: string }> = [
 type PontosGlicemia = 1 | 2 | 4 | 8
 
 const GLICEMIA_PONTOS_OPTIONS: Array<{ id: PontosGlicemia; label: string }> = [
-  { id: 1, label: "1 ponto" },
-  { id: 2, label: "2 pontos" },
-  { id: 4, label: "4 pontos" },
-  { id: 8, label: "8 pontos" },
+  { id: 1, label: "1 medida" },
+  { id: 2, label: "2 medidas" },
+  { id: 4, label: "4 medidas" },
+  { id: 8, label: "8 medidas" },
 ]
 
 const GLICEMIA_PONTOS_PERIODOS: Record<PontosGlicemia, PeriodoGlicemia[]> = {
@@ -554,6 +554,64 @@ function parseGlicemiaValue(val: string): number | null {
 
 function isGlicemiaAlerta(v: number): boolean {
   return v > 140 || v < 80
+}
+
+interface GlicemiaPeriodStats {
+  min: number
+  max: number
+  median: number
+  count: number
+  hasLowOutlier: boolean
+}
+
+function calculateMedian(numbers: number[]): number | null {
+  if (numbers.length === 0) return null
+  const sorted = [...numbers].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 !== 0) {
+    return sorted[mid]
+  }
+  return Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+}
+
+function hasLowOutlier(values: number[]): boolean {
+  if (!values || values.length < 2) return false
+  const sorted = [...values].sort((a, b) => a - b)
+  const n = sorted.length
+  const min = sorted[0]
+  const max = sorted[n - 1]
+
+  if (min === max) return false
+
+  const mid = Math.floor(n / 2)
+  const median = n % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2
+
+  const gap1 = sorted[1] - min
+  const restRange = max - sorted[1]
+  if (gap1 >= 20 && (restRange === 0 || gap1 > 1.5 * restRange)) {
+    return true
+  }
+
+  const lowSpread = median - min
+  const highSpread = max - median
+  if (lowSpread >= 30 && lowSpread > 2 * Math.max(highSpread, 10)) {
+    return true
+  }
+
+  if (min < 70 && lowSpread >= 25) {
+    return true
+  }
+
+  if (n >= 4) {
+    const q1 = sorted[Math.floor(n / 4)]
+    const q3 = sorted[Math.floor((3 * n) / 4)]
+    const iqr = q3 - q1
+    if (iqr > 0 && min < q1 - 1.5 * iqr) {
+      return true
+    }
+  }
+
+  return false
 }
 
 const ampaTh: React.CSSProperties = {
@@ -602,6 +660,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   const [importando, setImportando] = useState(false)
   const [importStatus, setImportStatus] = useState<{ tipo: "ok" | "erro"; msg: string } | null>(null)
   const [pdfExamChecklist, setPdfExamChecklist] = useState<ImportedPdfExam[]>([])
+  const [pdfPendingImport, setPdfPendingImport] = useState<ImportedPdfExam[] | null>(null)
+  const [pdfPendingMeta, setPdfPendingMeta] = useState<{ data?: string; idade?: string; sexo?: string } | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
   const syncRef = useRef(false)
   const touchedRef = useRef(false)
@@ -788,30 +848,74 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     setValues((prev) => ({ ...prev, [id]: val.replace(/,/g, ".") }))
   }, [])
 
-  const togglePdfExam = (examId: string) => {
-    const exam = pdfExamChecklist.find((item) => item.id === examId)
-    if (!exam) return
-    const selected = !exam.selected
-    setPdfExamChecklist((current) => current.map((item) => item.id === examId ? { ...item, selected } : item))
-    const fieldKey = exam.fieldKey
-    if (fieldKey) setValues((current) => ({ ...current, [fieldKey]: selected ? exam.value : "" }))
+  const togglePdfPending = (examId: string) => {
+    setPdfPendingImport((current) => {
+      if (!current) return current
+      return current.map((item) => item.id === examId ? { ...item, selected: !item.selected } : item)
+    })
+  }
+
+  const applyPdfImport = () => {
+    if (!pdfPendingImport) return
+    const confirmed = pdfPendingImport.filter((item) => item.selected)
+    const recognized = confirmed.filter((item) => item.fieldKey !== null)
+    const extras = confirmed.filter((item) => item.fieldKey === null)
+    touchedRef.current = true
+    if (pdfPendingMeta?.data) setDate(pdfPendingMeta.data)
+    setValues((prev) => {
+      const next = { ...prev }
+      for (const exam of recognized) {
+        next[exam.fieldKey as string] = exam.value
+      }
+      if (pdfPendingMeta?.idade) next["idade"] = pdfPendingMeta.idade
+      if (pdfPendingMeta?.sexo) next["sexo"] = pdfPendingMeta.sexo
+      return next
+    })
+    if (extras.length > 0) {
+      setOutros((prev) => {
+        const parts = prev ? prev.split(" // ").filter(Boolean) : []
+        for (const ex of extras) {
+          parts.push(`${ex.label} ${ex.value}`)
+        }
+        return parts.join(" // ")
+      })
+    }
+    setPdfExamChecklist(confirmed)
+    const encontrados = confirmed.length
+    const detalhes = [pdfPendingMeta?.idade ? `${pdfPendingMeta.idade} anos` : "", pdfPendingMeta?.sexo ? `sexo ${pdfPendingMeta.sexo}` : ""].filter(Boolean).join(", ")
+    setImportStatus({
+      tipo: "ok",
+      msg: `PDF importado: ${encontrados} exame${encontrados === 1 ? "" : "s"}${detalhes ? ` • ${detalhes}` : ""}`,
+    })
+    setPdfPendingImport(null)
+    setPdfPendingMeta(null)
+  }
+
+  const cancelPdfImport = () => {
+    setPdfPendingImport(null)
+    setPdfPendingMeta(null)
+    setImportStatus(null)
   }
 
   const handlePdf = useCallback(async (file: File) => {
     setImportando(true)
     setImportStatus(null)
     setPdfExamChecklist([])
+    setPdfPendingImport(null)
+    setPdfPendingMeta(null)
     try {
       const res = await extrairExamesDePdf(await file.arrayBuffer())
+      const isLikelyEmpty = (v: string) => !v || v.trim() === "" || v === "0" || parseFloat(v) === 0
       const examesReconhecidos = Object.entries(res.campos)
         .filter(([key]) => !META_FIELDS.includes(key))
         .map(([key, value]) => {
           const field = FIELDS.find((item) => isField(item) && fieldId(item.label) === key)
-          return { id: key, label: field && isField(field) ? field.label : key.toUpperCase(), value, fieldKey: key, selected: true }
+          return { id: key, label: field && isField(field) ? field.label : key.toUpperCase(), value, fieldKey: key, selected: !isLikelyEmpty(value) }
         })
       const extrasReconhecidos = (res.outros || "").split(" // ").filter(Boolean).map((item, index) => {
         const separator = item.lastIndexOf(" ")
-        return { id: `extra-${index}`, label: item.slice(0, separator), value: item.slice(separator + 1), fieldKey: null, selected: true }
+        const val = item.slice(separator + 1)
+        return { id: `extra-${index}`, label: item.slice(0, separator), value: val, fieldKey: null, selected: !isLikelyEmpty(val) }
       })
       const examesDetectados = [...examesReconhecidos, ...extrasReconhecidos]
       const encontrados = examesDetectados.length
@@ -819,23 +923,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         setImportStatus({ tipo: "erro", msg: "Nenhum exame reconhecido no PDF." })
         return
       }
-      touchedRef.current = true
-      setPdfExamChecklist(examesDetectados)
-      if (res.data) setDate(res.data)
-      setValues((prev) => {
-        const next = { ...prev }
-        for (const exam of examesReconhecidos) {
-          next[exam.fieldKey] = exam.value
-        }
-        if (res.idade) next["idade"] = res.idade
-        if (res.sexo) next["sexo"] = res.sexo
-        return next
-      })
-      const detalhes = [res.idade ? `${res.idade} anos` : "", res.sexo ? `sexo ${res.sexo}` : ""].filter(Boolean).join(", ")
-      setImportStatus({
-        tipo: "ok",
-        msg: `PDF importado: ${encontrados} exame${encontrados === 1 ? "" : "s"}${detalhes ? ` • ${detalhes}` : ""}`,
-      })
+      setPdfPendingImport(examesDetectados)
+      setPdfPendingMeta({ data: res.data || undefined, idade: res.idade || undefined, sexo: res.sexo || undefined })
     } catch {
       setImportStatus({ tipo: "erro", msg: "Não foi possível ler o PDF." })
     } finally {
@@ -843,6 +932,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       if (fileRef.current) fileRef.current.value = ""
     }
   }, [])
+
 
   const handleAmpaChange = useCallback((key: string, val: string) => {
     setAmpaMeasures((prev) => ({ ...prev, [key]: maskAmpa(val) }))
@@ -875,7 +965,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     return m.sbp >= 130 || m.dbp >= 80
   }, [])
 
-  const glicemiaStats = useCallback((periodo: PeriodoGlicemia): { min: number; max: number; count: number } | null => {
+  const glicemiaStats = useCallback((periodo: PeriodoGlicemia): GlicemiaPeriodStats | null => {
     const valid: number[] = []
     const cabos: PeriodoGlicemia[] = periodo === "ao_deitar" ? ["ao_deitar", "madrugada"] : [periodo]
     for (const day of glicemiaRows) {
@@ -888,7 +978,19 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     if (valid.length === 0) return null
     const min = Math.min(...valid)
     const max = Math.max(...valid)
-    return { min, max, count: valid.length }
+    const median = calculateMedian(valid) ?? min
+    const lowOutlier = hasLowOutlier(valid)
+    return { min, max, median, count: valid.length, hasLowOutlier: lowOutlier }
+  }, [glicemiaMeasures, glicemiaRows])
+
+  const glicemiaColumnMedian = useCallback((periodoId: PeriodoGlicemia): number | null => {
+    const values: number[] = []
+    for (const day of glicemiaRows) {
+      const v = glicemiaMeasures[glicemiaKey(day, periodoId)] || ""
+      const parsed = parseGlicemiaValue(v)
+      if (parsed) values.push(parsed)
+    }
+    return calculateMedian(values)
   }, [glicemiaMeasures, glicemiaRows])
 
   const glicemiaActivePeriods = useMemo(() => {
@@ -956,7 +1058,9 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     for (const periodo of glicemiaOutputPeriods) {
       const stats = glicemiaStats(periodo.id)
       if (stats) {
-        const faixa = stats.count === 1 ? `${stats.min}` : `${stats.min}-${stats.max}`
+        const faixa = stats.count > 1 && stats.hasLowOutlier
+          ? `${stats.min}-${stats.max}`
+          : `${stats.median}`
         partes.push(`${periodo.label} ${faixa}`)
       }
     }
@@ -1050,6 +1154,8 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     setOutros("")
     setImportStatus(null)
     setPdfExamChecklist([])
+    setPdfPendingImport(null)
+    setPdfPendingMeta(null)
 setAmpaMeasures(() => {
         const init: Record<string, string> = {}
         for (const day of AMPA_DAY_INDEXES) {
@@ -1084,6 +1190,114 @@ setGlicemiaMeasures(() => {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: injectStyles }} />
+      {pdfPendingImport && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "var(--exames-bg, #fff)",
+              border: "1px solid var(--exames-border)",
+              borderRadius: "14px",
+              padding: "24px",
+              width: "100%",
+              maxWidth: "560px",
+              maxHeight: "80vh",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.25)",
+              ...tema,
+            } as React.CSSProperties}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+              <div>
+                <div style={{ fontSize: "15px", fontWeight: 700, color: "var(--exames-text)" }}>Confirmar importação</div>
+                <div style={{ fontSize: "12px", color: "var(--exames-text-muted)", marginTop: "2px" }}>
+                  {pdfPendingImport.filter((e) => e.selected).length} de {pdfPendingImport.length} selecionados
+                </div>
+              </div>
+              <button
+                onClick={cancelPdfImport}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "var(--exames-text-muted)", fontSize: "18px", lineHeight: 1, padding: "4px" }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "6px" }}>
+              {pdfPendingImport.map((exam) => (
+                <label
+                  key={exam.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    minWidth: 0,
+                    padding: "8px 10px",
+                    border: `1px solid ${exam.selected ? "var(--exames-ok-border, rgba(0,184,73,0.3))" : "var(--exames-border)"}`,
+                    borderRadius: "8px",
+                    background: exam.selected ? "var(--exames-ok-bg, rgba(0,184,73,0.06))" : "var(--exames-input-bg)",
+                    color: exam.selected ? "var(--exames-text)" : "var(--exames-text-muted)",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    opacity: exam.selected ? 1 : 0.6,
+                    transition: "all 0.12s ease",
+                  }}
+                >
+                  <input type="checkbox" checked={exam.selected} onChange={() => togglePdfPending(exam.id)} style={{ flexShrink: 0 }} />
+                  <span style={{ display: "flex", justifyContent: "space-between", gap: "8px", width: "100%", minWidth: 0 }}>
+                    <span style={{ overflowWrap: "anywhere" }}>{exam.label}</span>
+                    <strong style={{ flexShrink: 0, color: exam.value && exam.value !== "0" ? "inherit" : "var(--exames-text-muted)" }}>
+                      {exam.value ? exam.value : "—"}
+                    </strong>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+              <button
+                onClick={cancelPdfImport}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--exames-border)",
+                  background: "var(--exames-input-bg)",
+                  color: "var(--exames-text-muted)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={applyPdfImport}
+                style={{
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(0,184,73,0.4)",
+                  background: "rgba(0,184,73,0.1)",
+                  color: "var(--exames-ok, #007a30)",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Confirmar importação
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div
         className={`${EXAMES_PREFIX}-root`}
         style={{ ...s.container, ...tema, ...style }}
@@ -1197,23 +1411,6 @@ setGlicemiaMeasures(() => {
           >
             {importStatus.msg}
           </div>
-        )}
-
-        {pdfExamChecklist.length > 0 && (
-          <section aria-label="Exames extraídos do PDF" style={{ gridColumn: "1 / -1", display: "grid", gap: "8px", marginBottom: "12px", padding: "12px", border: "1px solid var(--exames-border)", borderRadius: "10px", background: "var(--exames-input-bg)" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap" }}>
-              <strong style={{ color: "var(--exames-text)", fontSize: "13px" }}>Testes encontrados no PDF</strong>
-              <span style={{ color: "var(--exames-text-muted)", fontSize: "11px" }}>{pdfExamChecklist.filter((exam) => exam.selected).length} de {pdfExamChecklist.length} selecionados</span>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "6px" }}>
-              {pdfExamChecklist.map((exam) => (
-                <label key={exam.id} style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, padding: "7px 9px", border: "1px solid var(--exames-border)", borderRadius: "8px", background: "var(--exames-input-bg)", color: exam.selected ? "var(--exames-text)" : "var(--exames-text-muted)", fontSize: "12px", cursor: "pointer" }}>
-                  <input type="checkbox" checked={exam.selected} onChange={() => togglePdfExam(exam.id)} />
-                  <span style={{ display: "flex", justifyContent: "space-between", gap: "8px", width: "100%", minWidth: 0 }}><span style={{ overflowWrap: "anywhere" }}>{exam.label}</span><strong style={{ flexShrink: 0 }}>{exam.value}</strong></span>
-                </label>
-              ))}
-            </div>
-          </section>
         )}
 
         <div style={{ gridColumn: "1 / -1", display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "16px" }}>
@@ -1500,7 +1697,7 @@ setGlicemiaMeasures(() => {
               </select>
             </div>
             <div style={{ ...s.inputGroup, flex: "0 0 auto" }}>
-              <span style={s.label}>Pontos</span>
+              <span style={s.label}>Medidas</span>
               <select
                 value={pontosGlicemia}
                 onChange={(e) => setPontosGlicemia(parseInt(e.target.value, 10) as PontosGlicemia)}
@@ -1591,6 +1788,54 @@ setGlicemiaMeasures(() => {
                   )
                 })}
               </tbody>
+              <tfoot>
+                <tr>
+                  <td
+                    style={{
+                      ...ampaTdDia,
+                      borderTop: "2px solid var(--exames-border)",
+                      borderBottom: "none",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "var(--exames-text)",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    Mediana
+                  </td>
+                  {glicemiaActivePeriods.map((periodo, idx) => {
+                    const med = glicemiaColumnMedian(periodo.id)
+                    const alerta = med != null && isGlicemiaAlerta(med)
+                    return (
+                      <td
+                        key={`median-${periodo.id}`}
+                        style={{
+                          ...ampaTd,
+                          borderTop: "2px solid var(--exames-border)",
+                          borderBottom: "none",
+                          verticalAlign: "middle",
+                          ...(idx > 0 ? { paddingLeft: "28px" } : {}),
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "44px",
+                            height: "36px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            color: alerta ? "var(--exames-danger)" : "var(--exames-text)",
+                          }}
+                        >
+                          {med != null ? med : "-"}
+                        </div>
+                      </td>
+                    )
+                  })}
+                </tr>
+              </tfoot>
             </table>
             <div style={{ marginTop: "8px" }}>
               <button
