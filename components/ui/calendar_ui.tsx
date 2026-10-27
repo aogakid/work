@@ -1153,7 +1153,7 @@ export default function CalendarUI() {
     }
 
     if (!hasMounted || loading && (!selectedCalendarId || !calendarMetadataReady) || selectedCalendarId && !calendarMetadataReady) {
-        return <main aria-busy="true" style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#78716c" : "#6b6760", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif' }}>
+        return <main aria-busy="true" style={{ minHeight: "100vh", width: "100%", display: "grid", placeItems: "center", background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#78716c" : "#6b6760", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif' }}>
             <style>{"@keyframes calendar-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .calendar-loader-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(201,106,42,.25); border-top-color: #c96a2a; animation: calendar-loader-spin .8s linear infinite; }"}</style>
             <div role="status" aria-label="Carregando agenda" className="calendar-loader-spinner" />
         </main>
