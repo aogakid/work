@@ -16,7 +16,10 @@ function resolverUrlPdf(caminho: string): string {
 }
 
 function resolverUrlPublica(caminho: string): string {
-    return new URL(caminho, SITE_ORIGEM).href
+    const origem = typeof window !== "undefined" && /^https?:$/.test(window.location.protocol)
+        ? window.location.origin
+        : SITE_ORIGEM
+    return new URL(caminho, origem).href
 }
 
 function definirOrigemCrescimento(elemento: HTMLButtonElement) {
