@@ -388,12 +388,32 @@ export default function CalendarUI() {
     const selectedTimeIsAllowed = !appointmentTime || !scheduleConfigured || selectedDayHours.some(hours => appointmentTime.slice(0, 5) >= hours.starts_at.slice(0, 5) && appointmentTime.slice(0, 5) < hours.ends_at.slice(0, 5))
     const periodDates = calendarView === "month" ? datasDeMesesEmSequencia(monthViewStart || selectedDate, 12) : datasVisiveis(selectedDate, calendarView)
     const scheduleWeekdays = scheduleConfigured ? DIAS_SEMANA.filter(day => calendarHours.some(hours => hours.weekday === day.weekday)) : DIAS_SEMANA
+    const hasWeekends = scheduleWeekdays.some(day => day.weekday === 0 || day.weekday === 6)
+    const weekdayOrder = hasWeekends ? scheduleWeekdays.map(day => day.weekday) : [1, 2, 3, 4, 5]
     const visibleDates = periodDates.filter(date => scheduleWeekdays.some(day => day.weekday === new Date(date + "T12:00:00").getDay()))
     const monthViewSections = Array.from({ length: 12 }, (_, monthIndex) => {
         const [year, month] = (monthViewStart || selectedDate).split("-").map(Number)
         const monthDate = new Date(year, month - 1 + monthIndex, 1, 12)
         const monthKey = isoLocal(monthDate).slice(0, 7)
-        const slots = datasVisiveis(isoLocal(monthDate), "month").map(date => date.slice(0, 7) === monthKey && scheduleWeekdays.some(day => day.weekday === new Date(date + "T12:00:00").getDay()) ? date : null)
+        const allDates = datasVisiveis(isoLocal(monthDate), "month")
+        const slots: (string | null)[] = []
+        const weekGroups: Record<number, string[]> = {}
+        allDates.forEach(date => {
+            if (!date || date.slice(0, 7) !== monthKey) return
+            const weekday = new Date(date + "T12:00:00").getDay()
+            if (!weekdayOrder.includes(weekday)) return
+            const weekNum = Math.floor((new Date(date + "T12:00:00").getDate() - 1) / 7)
+            if (!weekGroups[weekNum]) weekGroups[weekNum] = []
+            weekGroups[weekNum].push(date)
+        })
+        Object.keys(weekGroups).sort((a, b) => Number(a) - Number(b)).forEach(weekNum => {
+            const weekDates = weekGroups[Number(weekNum)]
+            weekdayOrder.forEach(weekday => {
+                const isConfigured = scheduleWeekdays.some(wd => wd.weekday === weekday)
+                const date = isConfigured ? weekDates.find(d => new Date(d + "T12:00:00").getDay() === weekday) : null
+                slots.push(date || null)
+            })
+        })
         return { key: monthKey, label: rotuloMes(isoLocal(monthDate)), slots }
     })
     const visibleAppointmentCounts = visibleDates.map(date => appointmentCounts[date] || 0)
@@ -745,9 +765,9 @@ export default function CalendarUI() {
         const document = await PDFDocument.load(await response.arrayBuffer())
         const form = document.getForm()
         const documentTitle = form.getDropdown("Dropdown1")
-        documentTitle.setOptions(["CONSULTA MÉDICA AGENDADA"])
-        documentTitle.select("CONSULTA MÉDICA AGENDADA")
-        documentTitle.acroField.dict.set(PDFName.of("DV"), PDFHexString.fromText("CONSULTA MÉDICA AGENDADA"))
+        documentTitle.setOptions(["AO ACOLHIMENTO - CONSULTA MÉDICA"])
+        documentTitle.select("AO ACOLHIMENTO - CONSULTA MÉDICA")
+        documentTitle.acroField.dict.set(PDFName.of("DV"), PDFHexString.fromText("AO ACOLHIMENTO - CONSULTA MÉDICA"))
         documentTitle.enableReadOnly()
         const [year, month, day] = appointment.appointment_date.split("-")
         const weekday = new Date(Number(year), Number(month) - 1, Number(day), 12).getDay()
@@ -762,7 +782,6 @@ export default function CalendarUI() {
             .filter(field => appointment.custom_values[field.field_key] !== undefined && appointment.custom_values[field.field_key] !== "" && appointment.custom_values[field.field_key] !== null)
             .map(field => `${field.label}: ${textoDoCampo(appointment.custom_values[field.field_key])}`)
         const textLines = [
-            "AO ACOLHIMENTO",
             `DATA: ${appointmentDateLabel}`,
             `HORÁRIO: ${scheduledTime}`,
             ...(customFieldLines.length ? ["", ...customFieldLines] : []),
@@ -1139,7 +1158,7 @@ export default function CalendarUI() {
             : corDoDia(count, appointmentP50, maxAppointmentsInCalendar)
         const patientNames = appointmentNamesByDate[date] || []
         return <button type="button" aria-label={`${date}${holiday ? `, feriado nacional: ${holiday}` : ""}`} title={holiday || undefined} aria-pressed={isSelected} onClick={() => setSelectedDate(date)} style={{ position: "relative", display: "flex", width: "100%", minWidth: 0, minHeight: isMonth ? 72 : 200, boxSizing: "border-box", flexDirection: "column", alignItems: "flex-start", gap: 5, padding: "8px 7px", borderRadius: 8, border: isSelected ? "2px solid var(--editor-text, CanvasText)" : `1px solid ${isPastDate ? "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))" : holiday ? "color-mix(in srgb, #ef4444 55%, transparent)" : countColor.border}`, background: isPastDate ? "var(--editor-bg, Canvas)" : holiday ? "color-mix(in srgb, #ef4444 14%, var(--editor-bg, Canvas))" : countColor.background, color: "var(--editor-text, CanvasText)", textAlign: "left", cursor: "pointer" }}>
-            <span style={{ fontSize: 18, lineHeight: 1.1, fontWeight: isSelected ? 750 : 550 }}>{date.slice(8, 10) + "/" + date.slice(5, 7)}</span>
+            <span className="calendar-date-display" style={{ fontSize: 18, lineHeight: 1.1, fontWeight: isSelected ? 750 : 550 }}>{date.slice(8, 10)}<span style={{ fontSize: 14, fontWeight: 400, marginLeft: 2 }}>/</span><span style={{ fontSize: 14, fontWeight: 400, marginLeft: 1 }}>{date.slice(5, 7)}</span></span>
             {holiday ? <span aria-hidden="true" style={{ position: "absolute", left: 7, bottom: 6, color: "#a16207", fontSize: 10, fontWeight: 800 }}>F</span> : null}
             {isMonth ? <span aria-label={`${count} agendamentos`} style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", maxWidth: "100%", borderRadius: 999, padding: "3px 7px", background: "rgba(120, 113, 108, .12)", color: "var(--meta-text, GrayText)", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{count}</span> : <div style={{ display: "grid", gap: 3, width: "100%", maxHeight: 150, overflowY: "auto", fontSize: 14, lineHeight: 1.3 }}>{patientNames.map((name, index) => <span key={`${date}-${index}`} style={{ width: "100%", overflowWrap: "anywhere" }}>{name}</span>)}</div>}
         </button>
@@ -1160,7 +1179,7 @@ export default function CalendarUI() {
     }
 
     return <main className="calendar-root" style={{ minHeight: "100vh", width: "100%", minWidth: 0, boxSizing: "border-box", borderRadius: 16, background: darkMode ? "#1c1917" : "#ffffff", padding: 24, color: darkMode ? "#f5f5f4" : "#1a1916", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif', colorScheme: darkMode ? "dark" : "light" }}>
-        <style>{".calendar-root { --editor-bg: #ffffff; --editor-text: #1a1916; --meta-text: #6b6760; --editor-border: rgba(120,120,120,0.15); --meta-border: rgba(120,120,120,0.15); --meta-bg: rgba(120,120,120,0.06); --calendar-input-bg: rgba(120,120,120,0.08); --editor-shadow: none; } @media (prefers-color-scheme: dark) { .calendar-root { --editor-bg: #1c1917; --editor-text: #f5f5f4; --meta-text: #78716c; --editor-border: rgba(255,255,255,0.15); --meta-border: rgba(255,255,255,0.15); --meta-bg: rgba(255,255,255,0.06); --calendar-input-bg: #2e2b29; } } .calendar-root h1, .calendar-root h2, .calendar-root h3, .calendar-root strong { font-family: inherit !important; } @media (max-width: 760px) { .calendar-agenda-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-content-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-page-title { font-size: 20px !important; } } .calendar-surface { background: var(--editor-bg, #ffffff) !important; border-color: var(--editor-border, rgba(120,120,120,0.15)) !important; color: var(--editor-text, #1a1916); box-shadow: var(--editor-shadow, none); } .calendar-muted { color: var(--meta-text, #6b6760) !important; } .calendar-page-title { font-family: inherit !important; font-size: 20px !important; } .calendar-agenda-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 16px; align-items: start; } .calendar-view-dates { padding: 10px; } .calendar-action { transition: transform .15s ease, opacity .15s ease; } .calendar-action:hover { transform: translateY(-1px); } .calendar-create-modal { width: min(760px, 100%) !important; } .calendar-schedule-day { display: grid; grid-template-columns: minmax(135px, .65fr) minmax(210px, 1fr) minmax(230px, 1.1fr); align-items: center; gap: 12px; } .calendar-session-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } @media (max-width: 720px) { .calendar-schedule-day { grid-template-columns: minmax(0, 1fr); gap: 8px; } }"}</style>
+        <style>{".calendar-root { --editor-bg: #ffffff; --editor-text: #1a1916; --meta-text: #6b6760; --editor-border: rgba(120,120,120,0.15); --meta-border: rgba(120,120,120,0.15); --meta-bg: rgba(120,120,120,0.06); --calendar-input-bg: rgba(120,120,120,0.08); --editor-shadow: none; } @media (prefers-color-scheme: dark) { .calendar-root { --editor-bg: #1c1917; --editor-text: #f5f5f4; --meta-text: #78716c; --editor-border: rgba(255,255,255,0.15); --meta-border: rgba(255,255,255,0.15); --meta-bg: rgba(255,255,255,0.06); --calendar-input-bg: #2e2b29; } } .calendar-root h1, .calendar-root h2, .calendar-root h3, .calendar-root strong { font-family: inherit !important; } @media (max-width: 760px) { .calendar-agenda-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-content-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-page-title { font-size: 20px !important; } .calendar-date-display { font-size: 14px !important; } .calendar-date-display span { display: none !important; } } .calendar-surface { background: var(--editor-bg, #ffffff) !important; border-color: var(--editor-border, rgba(120,120,120,0.15)) !important; color: var(--editor-text, #1a1916); box-shadow: var(--editor-shadow, none); } .calendar-muted { color: var(--meta-text, #6b6760) !important; } .calendar-page-title { font-family: inherit !important; font-size: 20px !important; } .calendar-agenda-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 16px; align-items: start; } .calendar-view-dates { padding: 10px; } .calendar-action { transition: transform .15s ease, opacity .15s ease; } .calendar-action:hover { transform: translateY(-1px); } .calendar-create-modal { width: min(760px, 100%) !important; } .calendar-schedule-day { display: grid; grid-template-columns: minmax(135px, .65fr) minmax(210px, 1fr) minmax(230px, 1.1fr); align-items: center; gap: 12px; } .calendar-session-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } @media (max-width: 720px) { .calendar-schedule-day { grid-template-columns: minmax(0, 1fr); gap: 8px; } }"}</style>
         <div style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
             <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
                 <h1 className="calendar-page-title" style={{ margin: 0, fontSize: 20, letterSpacing: "normal", fontWeight: 700 }}>Agenda</h1>
@@ -1239,10 +1258,13 @@ export default function CalendarUI() {
                     {calendarView === "month" ? <div className="calendar-muted" style={{ marginBottom: 8, fontSize: 11 }}><span aria-hidden="true" style={{ color: "#a16207", fontWeight: 800 }}>F</span> Feriado nacional</div> : null}
                     {calendarView === "month" ? monthViewSections.map(section => <section key={section.key} style={{ marginBottom: 18 }}>
                         <h3 className="calendar-muted" style={{ position: "sticky", top: 0, zIndex: 1, margin: "8px 0", padding: "8px 6px", background: "var(--editor-bg, Canvas)", fontSize: 15, fontWeight: 700, textTransform: "capitalize" }}>{section.label}</h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 5, marginBottom: 5 }}>
-                            {DIAS_SEMANA.map(day => <div key={day.weekday} className="calendar-muted" style={{ padding: "5px 7px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em", opacity: scheduleWeekdays.some(openDay => openDay.weekday === day.weekday) ? 1 : 0.35 }}>{rotuloDiaComHorario(day.weekday, day.name, calendarHours)}</div>)}
+                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${weekdayOrder.length}, minmax(0, 1fr))`, gap: 5, marginBottom: 5 }}>
+                            {weekdayOrder.map(weekday => {
+                                const day = DIAS_SEMANA.find(d => d.weekday === weekday)
+                                return <div key={weekday} className="calendar-muted" style={{ padding: "5px 7px", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>{rotuloDiaComHorario(weekday, day?.name || "", calendarHours)}</div>
+                            })}
                         </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: 5 }}>
+                        <div style={{ display: "grid", gridTemplateColumns: `repeat(${weekdayOrder.length}, minmax(0, 1fr))`, gap: 5 }}>
                             {section.slots.map((date, slotIndex) => date ? <React.Fragment key={date}>{renderCalendarDate(date, true)}</React.Fragment> : <div key={`${section.key}-empty-${slotIndex}`} aria-hidden="true" style={{ minHeight: 72 }} />)}
                         </div>
                     </section>) : <>
