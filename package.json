@@ -11,7 +11,7 @@
   "dependencies": {
     "@babel/standalone": "^8.0.3",
     "@firecrawl/pdf-inspector": "^1.11.2",
-    "@plasmicapp/loader-nextjs": "^2.0.8",
+    "@plasmicapp/loader-nextjs": "^2.0.30",
     "@supabase/supabase-js": "^2.108.2",
     "next": "14.2.35",
     "pdf-lib": "^1.17.1",
