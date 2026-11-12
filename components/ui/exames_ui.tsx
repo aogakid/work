@@ -143,6 +143,43 @@ const injectStyles = `
   @keyframes ${EXAMES_PREFIX}-spin {
     to { transform: rotate(360deg); }
   }
+
+  .${EXAMES_PREFIX}-atalho-btn {
+    background: var(--${EXAMES_PREFIX}-input-bg);
+    border: 1.5px dashed var(--${EXAMES_PREFIX}-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: grab;
+    color: var(--${EXAMES_PREFIX}-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+    text-decoration: none;
+    user-select: none;
+    transition: all 0.15s ease;
+  }
+
+  .${EXAMES_PREFIX}-atalho-btn:hover {
+    color: #2563eb;
+    border-color: rgba(37, 99, 235, 0.5);
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .${EXAMES_PREFIX}-atalho-btn:active {
+    cursor: grabbing;
+    background: rgba(37, 99, 235, 0.14);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .${EXAMES_PREFIX}-atalho-btn:hover {
+      color: #93c5fd;
+      border-color: rgba(96, 165, 250, 0.55);
+      background: rgba(59, 130, 246, 0.15);
+    }
+  }
 `
 
 const FIELD_WIDTH = "96px"
@@ -420,6 +457,18 @@ function IconeSpinner() {
     </svg>
   )
 }
+
+function IconeBookmark() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+const FASTMEDIC_BOOKMARKLET_HREF =
+  "javascript:(function(){var U='https://raw.githubusercontent.com/aogakid/work/main/public/fastmedic-exames.js',K='fastmedic_exames:sessao',G='FastMedicExames';var j=window[G];if(j&&j.rodando){if(j.executar)j.executar();return;}function r(c){var s=document.createElement('script');s.textContent=c;document.documentElement.appendChild(s);s.parentNode.removeChild(s);}function g(c){try{sessionStorage.setItem(K,JSON.stringify({url:U,codigo:c,em:Date.now()}));}catch(e){}}var v=null;try{v=JSON.parse(sessionStorage.getItem(K)||'null');}catch(e){}fetch(U+'?t='+Date.now(),{credentials:'omit'}).then(function(x){if(!x.ok)throw new Error('HTTP '+x.status);return x.text();}).then(function(t){if(!t.trim())throw new Error('o arquivo veio vazio');g(t);r(t);}).catch(function(e){if(v&&v.codigo){g(v.codigo);r(v.codigo);}else{alert('FastMedic Exames: nao consegui carregar o script. '+e.message);}});})();"
+
 
 type PeriodoAmpa = "dia" | "noite"
 
@@ -1145,6 +1194,11 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     })
   }, [glicemiaOutput])
 
+  const handleAtalhoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    alert("Arraste este botão para a sua barra de favoritos do navegador.")
+  }
+
   const handleClearAll = useCallback(() => {
     const init: Record<string, string> = {}
     for (const f of FIELDS) {
@@ -1319,6 +1373,17 @@ setGlicemiaMeasures(() => {
                 if (f) handlePdf(f)
               }}
             />
+            <a
+              href={FASTMEDIC_BOOKMARKLET_HREF}
+              title="arraste este botao para a barra de favoritos"
+              aria-label="arraste este botao para a barra de favoritos"
+              draggable={true}
+              onClick={handleAtalhoClick}
+              className={`${EXAMES_PREFIX}-atalho-btn`}
+            >
+              <IconeBookmark />
+              Atalho do Fastmedic
+            </a>
             <button
               onClick={() => fileRef.current?.click()}
               disabled={importando}
@@ -1360,7 +1425,7 @@ setGlicemiaMeasures(() => {
               )}
               {importando ? "Lendo..." : "Importar PDF"}
             </button>
-          <button
+            <button
             onClick={handleClearAll}
             title="Limpar tudo"
             style={{

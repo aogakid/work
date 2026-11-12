@@ -179,7 +179,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     const [sections, setSections] = React.useState<Section[]>(createDefaultSections)
 
     /* ── Editor refs ── */
-    const [focusedSectionId, setFocusedSectionId] = React.useState<string | null>(null)
 
     /* ── Companions ── */
     const companionRefs = React.useRef<Record<string, CompanionRef>>({})
@@ -853,7 +852,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     let chipBg = "rgba(59,130,246,0.12)", chipBorder = "rgba(59,130,246,0.25)", chipTextColor = "#3b82f6"
     if (cronometroAtivo) {
         if (arquivadoManualmente) { chipBg = "rgba(120,113,108,0.1)"; chipBorder = "rgba(120,113,108,0.2)"; chipTextColor = "var(--meta-text)" }
-        else if (secaoExtrapolada) { chipBg = "#ef4444"; chipBorder = "#ef4444"; chipTextColor = "#ffffff" }
+        else if (secaoExtrapolada) { chipBg = "rgba(120,113,108,0.1)"; chipBorder = "rgba(120,113,108,0.2)"; chipTextColor = "var(--meta-text)" }
         else if (secaoAtual === "S") { chipBg = "rgba(59,130,246,0.12)"; chipBorder = "rgba(59,130,246,0.25)"; chipTextColor = "#3b82f6" }
         else if (secaoAtual === "O") { chipBg = "rgba(34,197,94,0.12)"; chipBorder = "rgba(34,197,94,0.25)"; chipTextColor = "#22c55e" }
         else if (secaoAtual === "A") { chipBg = "rgba(234,179,8,0.12)"; chipBorder = "rgba(234,197,94,0.25)"; chipTextColor = "#d9a707" }
@@ -998,12 +997,24 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             else if (s.id === "plano" && segundosDecorridos >= limiteSegundosA && segundosDecorridos < limiteSegundosP) sectionProgress = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100
         }
 
+        /* Each SOAP section keeps its own color once its time window is over:
+           the moving progress fill stops at 100% and stays as the section's
+           background. In overtime those finished fills slowly glow. */
+        const limiteFimSecao = s.id === "subjetivo" ? limiteSegundosS
+            : s.id === "objetivo" ? limiteSegundosO
+            : s.id === "avaliacao" ? limiteSegundosA
+            : s.id === "plano" ? limiteSegundosP
+            : null
+        const secaoConcluida = cronometroAtivo && !arquivadoManualmente && limiteFimSecao !== null && segundosDecorridos >= limiteFimSecao
+        const preenchimentoSecao = secaoConcluida ? 100 : sectionProgress
+        const classeSecao = secaoConcluida ? "gas-section-concluida" : sectionProgress > 0 ? "gas-section-timer-active" : undefined
+
         const cartao = (
-            <div key={s.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginBottom: "8px", borderRadius: "10px", background: meta.bg, border: `1px solid ${meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
+            <div key={s.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginBottom: "8px", borderRadius: "10px", background: secaoConcluida ? `color-mix(in srgb, ${meta.color} 16%, var(--editor-bg))` : meta.bg, border: `1px solid ${secaoConcluida ? `${meta.color}66` : meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
                 {/* ── Section Header (sticky) ── */}
                 <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
                 <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", minWidth: 0, boxSizing: "border-box", gap: "6px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
+                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", minWidth: 0, boxSizing: "border-box", gap: "6px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},${secaoConcluida ? 0.18 : 0.08})`, borderRadius: "10px 10px 0 0" }}>
                         <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", flexShrink: 0, textAlign: "center" }}>{meta.letter}</span>
                         <span className="bloco-section-title" style={{ flex: "1 1 0%", minWidth: 0, overflowWrap: "anywhere", fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{meta.label || s.title}</span>
 
@@ -1033,11 +1044,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* ── Section Body (white card inside color-coded card) ── */}
                 {s.enabled && !s.collapsed && (
-                    <div className={sectionProgress > 0 ? "gas-section-timer-active" : undefined} style={{ margin: "0 12px 10px 12px", background: secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : sectionProgress > 0 ? "transparent" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "#ef4444" : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
-                        {cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
+                    <div className={classeSecao} style={{ margin: "0 12px 10px 12px", background: preenchimentoSecao > 0 ? "transparent" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoConcluida ? `${meta.color}66` : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
+                        {preenchimentoSecao > 0 && cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
                             <div className="gas-section-progress" style={progressoVertical
-                                ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${sectionProgress}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
-                                : { position: "absolute", top: 0, left: 0, height: "100%", width: `${sectionProgress}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
+                                ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${preenchimentoSecao}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
+                                : { position: "absolute", top: 0, left: 0, height: "100%", width: `${preenchimentoSecao}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
+                        )}
+                        {/* Overtime: the finished fill keeps glowing in the section's own color. */}
+                        {secaoExtrapolada && !arquivadoManualmente && limiteFimSecao !== null && (
+                            <div className="gas-section-brilho" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: meta.color, pointerEvents: "none", zIndex: 0 }} />
                         )}
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
@@ -1057,13 +1072,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <CaixaParagrafos
                                 key={`${s.id}-${contentVersionRef.current[s.id] || 0}`}
                                 value={s.content}
-                                dados={{
-                                    "data-section-id": s.id,
-                                    "data-extrapolada": secaoExtrapolada && !arquivadoManualmente && focusedSectionId === s.id ? "true" : undefined,
-                                }}
+                                dados={{ "data-section-id": s.id }}
                                 onChange={valor => handleSectionChange(s.id, valor)}
-                                onFocus={() => setFocusedSectionId(s.id)}
-                                onBlur={() => setFocusedSectionId(null)}
                                 style={{ position: "relative", zIndex: 1 }}
                             />
                         )}
@@ -1122,6 +1132,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-play-pulse-btn { animation: gasPlayPulse 1.4s ease-in-out infinite; }
                 @keyframes gasSlowCriticalBlink { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
                 .gas-critical-svg-pulse { animation: gasSlowCriticalBlink 2.4s ease-in-out infinite; transform-origin: center center; display: inline-block; }
+                /* Overtime: each finished section slowly glows in its own color. */
+                @keyframes gasSecaoBrilho { 0%, 100% { opacity: 0.04; } 50% { opacity: 0.26; } }
+                .gas-section-brilho { animation: gasSecaoBrilho 3s ease-in-out infinite; }
                 .gas-soap-track { height: 2px; background: rgba(120,113,108,0.16); border-radius: 1px; align-self: center; position: relative; overflow: hidden; transition: width 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.4s ease; }
                 .gas-hover-btn { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; cursor: pointer; transition: background 0.2s, transform 0.1s; font-size: 8px; border: none; }
                 .gas-hover-btn:active { transform: scale(0.85); }
@@ -1156,6 +1169,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-section-timer-active select {
                     background: color-mix(in srgb, var(--editor-bg) 72%, transparent) !important;
                 }
+                /* Once the section's window is over the fill stays at 100%, so the
+                   fields become fully transparent to show the section color behind. */
+                .gas-section-concluida .caixa-paragrafos,
+                .gas-section-concluida input:not([type="checkbox"]):not([type="radio"]),
+                .gas-section-concluida textarea,
+                .gas-section-concluida select {
+                    background: transparent !important;
+                }
                 @media (prefers-color-scheme: dark) {
                     .gas-section-progress { mix-blend-mode: screen; }
                 }
@@ -1178,8 +1199,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 .bloco-plaintext-editor { font-family: "Google Sans Flex", "Google Sans", sans-serif; font-weight: 400; width: 100%; min-height: 200px; font-size: 15px; line-height: 1.5; color: var(--editor-text); outline: none; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; padding: 2px 0 16px 0; overflow-x: hidden; }
                 .bloco-plaintext-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
-                .bloco-plaintext-editor[data-extrapolada]:empty:before { color: rgba(255,255,255,0.6); }
-                .bloco-plaintext-editor[data-extrapolada] div { color: #ffffff !important; }
                 .bloco-plaintext-editor div { margin-bottom: 4px; color: var(--editor-text) !important; }
                 .bloco-plaintext-editor div:empty { height: 1em; }
 
@@ -1409,12 +1428,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* ═══ Plaintext editor ═══ */}
                 {plaintext && (
-                    <div style={{ marginBottom: "8px", borderRadius: "10px", background: secaoExtrapolada && !arquivadoManualmente ? "#ef4444" : "var(--editor-bg)", border: `1px solid ${secaoExtrapolada && !arquivadoManualmente ? "#ef4444" : "var(--editor-border)"}`, transition: "background 0.3s, border-color 0.3s" }}>
+                    <div style={{ marginBottom: "8px", borderRadius: "10px", background: "var(--editor-bg)", border: "1px solid var(--editor-border)" }}>
                         <div style={{ position: "relative", overflow: "hidden", borderRadius: "10px", padding: "4px 14px 0 14px" }}>
-                            {cronometroAtivo && !arquivadoManualmente && !secaoExtrapolada && (
+                            {cronometroAtivo && !arquivadoManualmente && (
                                 <div className="gas-section-progress" style={progressoVertical
-                                    ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${(segundosDecorridos / totalSegundosLimite) * 100}%`, background: `linear-gradient(180deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "height 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }
-                                    : { position: "absolute", top: 0, left: 0, height: "100%", width: `${(segundosDecorridos / totalSegundosLimite) * 100}%`, background: `linear-gradient(90deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "width 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }} />
+                                    ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${Math.min(100, (segundosDecorridos / totalSegundosLimite) * 100)}%`, background: `linear-gradient(180deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "height 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }
+                                    : { position: "absolute", top: 0, left: 0, height: "100%", width: `${Math.min(100, (segundosDecorridos / totalSegundosLimite) * 100)}%`, background: `linear-gradient(90deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "width 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }} />
+                            )}
+                            {secaoExtrapolada && !arquivadoManualmente && (
+                                <div className="gas-section-brilho" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: plaintextBarColor, pointerEvents: "none", zIndex: 0 }} />
                             )}
                             <div
                                 key={`plaintext-${plainTextVersionRef.current}`}
@@ -1431,11 +1453,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 contentEditable
                                 suppressContentEditableWarning
                                 data-placeholder="digite seu texto..."
-                                data-extrapolada={secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null ? "true" : undefined}
                                 onInput={handlePlainTextInput}
                                 onBlur={handlePlainTextBlur}
-                                onFocus={() => setFocusedSectionId(null)}
-                                style={{ position: "relative", zIndex: 1, ...(secaoExtrapolada && !arquivadoManualmente && focusedSectionId === null ? { color: "#ffffff" } : {}) }}
+                                style={{ position: "relative", zIndex: 1 }}
                             />
                         </div>
                     </div>
@@ -1465,13 +1485,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         {exibirControlesPainel && (
                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                 {secaoExtrapolada && !arquivadoManualmente ? (
-                                    <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); setArquivadoManualmente(true) }} style={{ background: "rgba(255,255,255,0.3)", color: "#ffffff", fontWeight: 700, fontSize: "10px" }}>✓</button>
+                                    <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); setArquivadoManualmente(true) }} style={{ background: "rgba(120,113,108,0.14)", color: "var(--editor-text)", fontWeight: 700, fontSize: "10px" }}>✓</button>
                                 ) : !arquivadoManualmente ? (
                                     <button className={`gas-hover-btn ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={e => { e.stopPropagation(); setIsPaused(!isPaused) }} style={{ background: "rgba(120,113,108,0.14)", color: chipTextColor }}>
                                         {isPaused ? "▶" : <span className="gas-btn-pause-bars">||</span>}
                                     </button>
                                 ) : null}
-                                <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); fecharCronometroCompleto() }} style={{ background: secaoExtrapolada && !arquivadoManualmente ? "rgba(255,255,255,0.25)" : "rgba(239,68,68,0.14)", color: secaoExtrapolada && !arquivadoManualmente ? "#ffffff" : "#ef4444" }}>✕</button>
+                                <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); fecharCronometroCompleto() }} style={{ background: "rgba(239,68,68,0.14)", color: "#ef4444" }}>✕</button>
                             </div>
                         )}
                     </div>
@@ -1479,7 +1499,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* SOAP progress chip */}
                 {cronometroAtivo && !arquivadoManualmente ? (
-                    <div key={`progress-shake-${shakeProgressCount}`} className={`framer-timer-entrance gas-ui-blockout gas-order-progress ${shakeProgressCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: secaoExtrapolada ? "rgba(120,113,108,0.08)" : chipBg, backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: secaoExtrapolada ? "1px solid rgba(120,113,108,0.18)" : `1px solid ${chipBorder}`, display: "flex", alignItems: "center", gap: "5px", pointerEvents: "auto" }}>
+                    <div key={`progress-shake-${shakeProgressCount}`} className={`framer-timer-entrance gas-ui-blockout gas-order-progress ${shakeProgressCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: chipBg, backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: `1px solid ${chipBorder}`, display: "flex", alignItems: "center", gap: "5px", pointerEvents: "auto" }}>
                         {/* S */}
                         <div onClick={() => document.querySelector('[data-section-id="subjetivo"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#3b82f6" }}>S</span>
@@ -1524,14 +1544,14 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </>}
                         {/* Overtime */}
                         {secaoExtrapolada && <>
-                            <div className="gas-critical-svg-pulse" style={{ width: "12px", height: "12px", marginLeft: "2px", display: "flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.6)", borderRadius: "2px", boxSizing: "border-box" }}>
+                            <div className="gas-critical-svg-pulse" style={{ width: "12px", height: "12px", marginLeft: "2px", display: "flex", alignItems: "center", border: "1px solid var(--meta-border)", borderRadius: "2px", boxSizing: "border-box" }}>
                                 <svg viewBox="0 0 24 24" fill="none" style={{ width: "100%", height: "100%" }}>
-                                    <path d="M12 3L2 22H22L12 3Z" fill="#ef4444" />
-                                    <path d="M12 9V15" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                                    <circle cx="12" cy="18" r="1" fill="#ffffff" />
+                                    <path d="M12 3L2 22H22L12 3Z" fill="var(--meta-text)" />
+                                    <path d="M12 9V15" stroke="var(--editor-bg)" strokeWidth="2" strokeLinecap="round" />
+                                    <circle cx="12" cy="18" r="1" fill="var(--editor-bg)" />
                                 </svg>
                             </div>
-                            <div style={{ height: "2px", background: "#ef4444", width: `${progressoExtrapolado}px`, borderRadius: "1px", marginLeft: "1px", border: "1px solid rgba(255,255,255,0.5)", transition: isPaused ? "none" : "width 0.3s ease-out" }} />
+                            <div style={{ height: "2px", background: "var(--meta-text)", width: `${progressoExtrapolado}px`, borderRadius: "1px", marginLeft: "1px", border: "1px solid var(--meta-border)", transition: isPaused ? "none" : "width 0.3s ease-out" }} />
                         </>}
                     </div>
                 ) : <div style={{ width: "1px", display: "none" }} />}

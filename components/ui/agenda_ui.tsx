@@ -15,10 +15,12 @@ interface DataAtual {
     ano: number | null
 }
 
+const FUSO_HORARIO = "America/Sao_Paulo"
+
 const dataHoje = (): DataAtual => {
     const a = new Date()
     const parts = new Intl.DateTimeFormat("pt-BR", {
-        timeZone: "America/Sao_Paulo",
+        timeZone: FUSO_HORARIO,
         year: "numeric",
         month: "numeric",
         day: "numeric",
@@ -40,6 +42,27 @@ const dataHojeIso = (): string => {
     const h = dataHoje()
     const ano = h.ano !== null ? h.ano : new Date().getFullYear()
     return ano + "-" + comDoisDigitos(h.mes) + "-" + comDoisDigitos(h.dia)
+}
+
+interface DataServidor {
+    date: string
+    today: string
+}
+
+/* Data atual segundo o servidor da aplicação: a rota /api/server-date devolve
+   o dia de hoje já no fuso de São Paulo. Se a rota não estiver disponível
+   (ex.: preview estático), devolve null para o chamador cair no relógio local. */
+const obterDataDoServidor = async (): Promise<DataServidor | null> => {
+    try {
+        const resposta = await fetch("/api/server-date", { cache: "no-store" })
+        if (!resposta.ok) return null
+        const dados = (await resposta.json()) as DataServidor
+        if (!dados || typeof dados.date !== "string" || !dados.date) return null
+        if (typeof dados.today !== "string" || !dados.today) return null
+        return dados
+    } catch {
+        return null
+    }
 }
 
 interface AgendinhaAppointment {
@@ -112,13 +135,13 @@ const obterIdCalendarioEncaixes = async (): Promise<string> => {
     return CALENDAR_ID_ENCAIXES
 }
 
-const buscarAgendinhaHoje = async (): Promise<string> => {
+const buscarAgendinhaHoje = async (dataServidor: DataServidor | null): Promise<string> => {
     const calendarId = await obterIdCalendarioEncaixes()
     const { data, error } = await calendarSupabase
         .from("appointments")
         .select("patient_name, custom_values, start_time")
         .eq("calendar_id", calendarId)
-        .eq("appointment_date", dataHojeIso())
+        .eq("appointment_date", dataServidor?.date ?? dataHojeIso())
         .eq("status", "scheduled")
         .order("start_time", { ascending: true })
         .order("created_at", { ascending: true })
@@ -241,13 +264,14 @@ const GoogleSheetsInput = forwardRef<GoogleSheetsInputActions>(function GoogleSh
     React.useEffect(() => {
         let cancelado = false
         const carregar = async () => {
+            const dataServidor = await obterDataDoServidor()
             try {
-                const texto = await buscarAgendinhaHoje()
+                const texto = await buscarAgendinhaHoje(dataServidor)
                 if (!cancelado) setEscalaHoje(texto)
             } catch {
                 if (!cancelado) {
                     setEscalaHoje(
-                        formatarHoje() +
+                        (dataServidor?.today ?? formatarHoje()) +
                             "\n(não foi possível ler a agendinha)"
                     )
                 }

@@ -235,26 +235,29 @@ const capitalizarSeTudoMaiusculo = (valor: string): string => {
     return valor.toLocaleLowerCase("pt-BR").replace(/(^|[\s-])(\p{L})/gu, (_, separador: string, letra: string) => separador + letra.toLocaleUpperCase("pt-BR"))
 }
 
-const corMisturada = (inicio: string, fim: string, proporcao: number, alpha: number): string => {
-    const start = [1, 3, 5].map(offset => parseInt(inicio.slice(offset, offset + 2), 16))
-    const end = [1, 3, 5].map(offset => parseInt(fim.slice(offset, offset + 2), 16))
-    const color = start.map((channel, index) => Math.round(channel + (end[index] - channel) * proporcao))
-    return `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${alpha})`
+/* Escala fixa de 5 degraus, sem interpolação: 0 = verde vivo, máximo = vermelho vivo.
+   Cada degrau tem uma cor própria para diferenciar as faixas com clareza.
+   O badge da contagem usa uma cor sólida do mesmo degrau, com texto de contraste. */
+interface CorDoDia {
+    background: string
+    border: string
+    badge: string
+    badgeText: string
 }
 
-const corDoDia = (count: number, p50: number, max: number): { background: string; border: string } => {
-    const green = "#22c55e"
-    const yellow = "#eab308"
-    const red = "#ef4444"
-    if (count === 0 || max === 0) return { background: corMisturada(green, green, 0, 0.14), border: corMisturada(green, green, 0, 0.28) }
-    if (count >= max) return { background: corMisturada(red, red, 0, 0.16), border: corMisturada(red, red, 0, 0.32) }
-    if (count === p50) return { background: corMisturada(yellow, yellow, 0, 0.17), border: corMisturada(yellow, yellow, 0, 0.34) }
-    if (count < p50) {
-        const ratio = p50 > 0 ? count / p50 : 0
-        return { background: corMisturada(green, yellow, ratio, 0.15), border: corMisturada(green, yellow, ratio, 0.3) }
-    }
-    const ratio = max > p50 ? (count - p50) / (max - p50) : 1
-    return { background: corMisturada(yellow, red, ratio, 0.16), border: corMisturada(yellow, red, ratio, 0.32) }
+const ESCALA_DIAS: CorDoDia[] = [
+    { background: "rgba(22, 163, 74, 0.42)", border: "rgba(22, 163, 74, 0.8)", badge: "#15803d", badgeText: "#ffffff" },
+    { background: "rgba(101, 163, 13, 0.46)", border: "rgba(101, 163, 13, 0.82)", badge: "#65a30d", badgeText: "#1a1916" },
+    { background: "rgba(234, 179, 8, 0.5)", border: "rgba(234, 179, 8, 0.85)", badge: "#eab308", badgeText: "#1a1916" },
+    { background: "rgba(249, 115, 22, 0.52)", border: "rgba(249, 115, 22, 0.88)", badge: "#f97316", badgeText: "#1a1916" },
+    { background: "rgba(220, 38, 38, 0.55)", border: "rgba(220, 38, 38, 0.9)", badge: "#dc2626", badgeText: "#ffffff" },
+]
+
+const corDoDia = (count: number, max: number): CorDoDia => {
+    if (count <= 0) return ESCALA_DIAS[0]
+    const ratio = max > 0 ? count / max : 1
+    const passo = Math.min(4, Math.max(1, Math.ceil(ratio * 4)))
+    return ESCALA_DIAS[passo]
 }
 
 const chaveDoCampo = (rotulo: string): string => {
@@ -416,14 +419,6 @@ export default function CalendarUI() {
         })
         return { key: monthKey, label: rotuloMes(isoLocal(monthDate)), slots }
     })
-    const visibleAppointmentCounts = visibleDates.map(date => appointmentCounts[date] || 0)
-    const nonzeroAppointmentCounts = visibleAppointmentCounts.filter(count => count > 0).sort((left, right) => left - right)
-    const allCountsSorted = [...visibleAppointmentCounts].sort((left, right) => left - right)
-    const middleIndex = Math.floor(allCountsSorted.length / 2)
-    const medianAppointmentCount = allCountsSorted.length ? allCountsSorted.length % 2 ? allCountsSorted[middleIndex] : (allCountsSorted[middleIndex - 1] + allCountsSorted[middleIndex]) / 2 : 0
-    const positiveMiddleIndex = Math.floor(nonzeroAppointmentCounts.length / 2)
-    const positiveMedian = nonzeroAppointmentCounts.length ? nonzeroAppointmentCounts.length % 2 ? nonzeroAppointmentCounts[positiveMiddleIndex] : (nonzeroAppointmentCounts[positiveMiddleIndex - 1] + nonzeroAppointmentCounts[positiveMiddleIndex]) / 2 : 0
-    const appointmentP50 = medianAppointmentCount > 0 ? medianAppointmentCount : positiveMedian
     const maxAppointmentsInCalendar = allTimeMaxAppointments[selectedCalendarId] || 0
     const navigatePeriod = (direction: number) => {
         const nextDate = moverDataVisao(selectedDate, calendarView, direction)
@@ -764,10 +759,11 @@ export default function CalendarUI() {
         if (!response.ok) throw new Error("Não foi possível carregar o modelo da confirmação.")
         const document = await PDFDocument.load(await response.arrayBuffer())
         const form = document.getForm()
+        const cabecalhoConfirmacao = "AO ACOLHIMENTO (CONSULTA MÉDICA DE ENCAIXE)"
         const documentTitle = form.getDropdown("Dropdown1")
-        documentTitle.setOptions(["AO ACOLHIMENTO - CONSULTA MÉDICA"])
-        documentTitle.select("AO ACOLHIMENTO - CONSULTA MÉDICA")
-        documentTitle.acroField.dict.set(PDFName.of("DV"), PDFHexString.fromText("AO ACOLHIMENTO - CONSULTA MÉDICA"))
+        documentTitle.setOptions([cabecalhoConfirmacao])
+        documentTitle.select(cabecalhoConfirmacao)
+        documentTitle.acroField.dict.set(PDFName.of("DV"), PDFHexString.fromText(cabecalhoConfirmacao))
         documentTitle.enableReadOnly()
         const [year, month, day] = appointment.appointment_date.split("-")
         const weekday = new Date(Number(year), Number(month) - 1, Number(day), 12).getDay()
@@ -778,12 +774,16 @@ export default function CalendarUI() {
         const weekdayName = DIAS_SEMANA.find(item => item.weekday === weekday)?.name.toLowerCase() || ""
         const shortYear = year.slice(-2)
         const appointmentDateLabel = `${day}/${month}/${shortYear}${weekdayName ? ` (${weekdayName})` : ""}`
+        const horaChegada = scheduledTime ? scheduledTime.split(":")[0] : ""
+        const horarioLabel = horaChegada
+            ? `comparecer às ${horaChegada}h - por ordem de chegada`
+            : "comparecer por ordem de chegada"
         const customFieldLines = fields.filter(field => field.is_active !== false)
             .filter(field => appointment.custom_values[field.field_key] !== undefined && appointment.custom_values[field.field_key] !== "" && appointment.custom_values[field.field_key] !== null)
             .map(field => `${field.label}: ${textoDoCampo(appointment.custom_values[field.field_key])}`)
         const textLines = [
             `DATA: ${appointmentDateLabel}`,
-            `HORÁRIO: ${scheduledTime}`,
+            `HORÁRIO: ${horarioLabel}`,
             ...(customFieldLines.length ? ["", ...customFieldLines] : []),
         ]
         form.getTextField("Text1").setText((appointment.patient_name || "").toUpperCase())
@@ -1154,13 +1154,13 @@ export default function CalendarUI() {
         const count = appointmentCounts[date] || 0
         const isPastDate = date < hojeIso()
         const countColor = allTimeMaxAppointments[selectedCalendarId] === undefined
-            ? { background: "var(--editor-bg, Canvas)", border: "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))" }
-            : corDoDia(count, appointmentP50, maxAppointmentsInCalendar)
+            ? { background: "var(--editor-bg, Canvas)", border: "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))", badge: "#57534e", badgeText: "#ffffff" }
+            : corDoDia(count, maxAppointmentsInCalendar)
         const patientNames = appointmentNamesByDate[date] || []
         return <button type="button" aria-label={`${date}${holiday ? `, feriado nacional: ${holiday}` : ""}`} title={holiday || undefined} aria-pressed={isSelected} onClick={() => setSelectedDate(date)} style={{ position: "relative", display: "flex", width: "100%", minWidth: 0, minHeight: isMonth ? 72 : 200, boxSizing: "border-box", flexDirection: "column", alignItems: "flex-start", gap: 5, padding: "8px 7px", borderRadius: 8, border: isSelected ? "2px solid var(--editor-text, CanvasText)" : `1px solid ${isPastDate ? "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))" : holiday ? "color-mix(in srgb, #ef4444 55%, transparent)" : countColor.border}`, background: isPastDate ? "var(--editor-bg, Canvas)" : holiday ? "color-mix(in srgb, #ef4444 14%, var(--editor-bg, Canvas))" : countColor.background, color: "var(--editor-text, CanvasText)", textAlign: "left", cursor: "pointer" }}>
             <span className="calendar-date-display" style={{ fontSize: 18, lineHeight: 1.1, fontWeight: isSelected ? 750 : 550 }}>{date.slice(8, 10)}<span style={{ fontSize: 14, fontWeight: 400, marginLeft: 2 }}>/</span><span style={{ fontSize: 14, fontWeight: 400, marginLeft: 1 }}>{date.slice(5, 7)}</span></span>
             {holiday ? <span aria-hidden="true" style={{ position: "absolute", left: 7, bottom: 6, color: "#a16207", fontSize: 10, fontWeight: 800 }}>F</span> : null}
-            {isMonth ? <span aria-label={`${count} agendamentos`} style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", maxWidth: "100%", borderRadius: 999, padding: "3px 7px", background: "rgba(120, 113, 108, .12)", color: "var(--meta-text, GrayText)", fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{count}</span> : <div style={{ display: "grid", gap: 3, width: "100%", maxHeight: 150, overflowY: "auto", fontSize: 14, lineHeight: 1.3 }}>{patientNames.map((name, index) => <span key={`${date}-${index}`} style={{ width: "100%", overflowWrap: "anywhere" }}>{name}</span>)}</div>}
+            {isMonth ? <span aria-label={`${count} agendamentos`} style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", maxWidth: "100%", borderRadius: 999, padding: "3px 7px", background: countColor.badge, color: countColor.badgeText, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{count}</span> : <div style={{ display: "grid", gap: 3, width: "100%", maxHeight: 150, overflowY: "auto", fontSize: 14, lineHeight: 1.3 }}>{patientNames.map((name, index) => <span key={`${date}-${index}`} style={{ width: "100%", overflowWrap: "anywhere" }}>{name}</span>)}</div>}
         </button>
     }
 
