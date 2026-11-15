@@ -161,7 +161,7 @@ export function parseTextoLaudo(texto: string): ResultadoExames {
     data,
     idade,
     sexo,
-    outros: extras.length > 0 ? extras.join(" // ") : null,
+    outros: extras.length > 0 ? extras.join(" | ") : null,
     reconhecidos: Object.keys(campos).length,
     naoReconhecidos,
   }

@@ -1,9 +1,10 @@
 /* =============================================================================
  * FASTMEDIC EXAMES — Bookmarklet de Extração de Laudos
  * -----------------------------------------------------------------------------
- * Espelha a formatação, cálculos (LDL Martin-Hopkins, TFG CKD-EPI 2021) e
- * ordem de campos do exames_ui.
+ * Espelha a formatação, cálculos (LDL Martin-Hopkins, TFG CKD-EPI 2021),
+ * ordem de campos e tema visual (exames_ui, geriatria_ui, bloco_ui).
  *
+ * Inclui checklist interativo para selecionar o que importar do PDF aberto.
  * Não persiste dados ao fechar.
  * Compatível com o prontuário FastMedic (Fortaleza / SUS).
  * ========================================================================== */
@@ -465,7 +466,7 @@
     }
 
     if (!partes.length) return '';
-    return prefixoData + partes.join(' // ');
+    return prefixoData + partes.join(' | ');
   }
 
   /* ===========================================================================
@@ -651,56 +652,139 @@
   }
 
   /* ===========================================================================
-   * INTERFACE VISUAL (PAINEL FLUTUANTE)
+   * INTERFACE VISUAL (TEMA EXAMES_UI / GERIATRIA_UI / BLOCO_UI)
    * ======================================================================== */
   var CSS_PAINEL = [
-    '#fmed-exames-root {',
-    '  position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);',
-    '  z-index: 2147483640; width: min(880px, 95vw); box-sizing: border-box;',
-    '  background: #ffffff; border: 1.5px solid #1e6b47; border-radius: 8px;',
-    '  box-shadow: 0 10px 30px rgba(0,0,0,0.28); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;',
-    '  font-size: 13px; line-height: 1.4; color: #1a1916; padding: 10px 14px 12px;',
+    '#fmed-exames-backdrop {',
+    '  position: fixed; inset: 0; z-index: 2147483640;',
+    '  background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);',
+    '  display: flex; align-items: center; justify-content: center; padding: 16px;',
+    '  box-sizing: border-box;',
     '}',
-    '#fmed-exames-root * { box-sizing: border-box; text-transform: none !important; }',
-    '#fmed-exames-root .header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }',
-    '#fmed-exames-root .badge { background: #1e6b47; color: #fff; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.04em; }',
-    '#fmed-exames-root .titulo { font-weight: 600; font-size: 13px; color: #1a1916; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
-    '#fmed-exames-root .status { font-size: 12px; color: #6b6760; }',
-    '#fmed-exames-root textarea {',
-    '  width: 100%; height: 56px; border: 1px solid #d1d5db; border-radius: 6px;',
-    '  padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;',
-    '  font-size: 12.5px; line-height: 18px; color: #111; background: #fafafa; resize: vertical;',
+    '#fmed-exames-modal {',
+    '  --fmed-bg: #ffffff;',
+    '  --fmed-text: #1a1916;',
+    '  --fmed-text-muted: #6b6760;',
+    '  --fmed-input-bg: rgba(120, 120, 120, 0.08);',
+    '  --fmed-border: rgba(120, 120, 120, 0.18);',
+    '  --fmed-ok: #0284c7;',
+    '  --fmed-ok-bg: rgba(2, 132, 199, 0.08);',
+    '  --fmed-ok-border: rgba(2, 132, 199, 0.35);',
+    '  --fmed-danger: #ba120a;',
+    '  --fmed-danger-bg: rgba(245, 49, 39, 0.06);',
+    '  --fmed-danger-border: rgba(245, 49, 39, 0.3);',
+    '  --fmed-primary: #0284c7;',
+    '  --fmed-primary-hover: #0369a1;',
+    '  position: relative; width: 80vw; max-height: 90vh;',
+    '  display: flex; flex-direction: column; background: var(--fmed-bg); color: var(--fmed-text);',
+    '  border: 1px solid var(--fmed-border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);',
+    '  padding: 20px 24px; gap: 12px; box-sizing: border-box; overflow: hidden;',
+    '  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;',
+    '  font-size: 13px; line-height: 1.4;',
     '}',
-    '#fmed-exames-root textarea:focus { outline: none; border-color: #1e6b47; background: #fff; box-shadow: 0 0 0 2px rgba(30,107,71,0.15); }',
-    '#fmed-exames-root .acoes { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }',
-    '#fmed-exames-root button {',
-    '  display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600;',
-    '  padding: 5px 14px; border-radius: 5px; cursor: pointer; border: 1px solid transparent; transition: all .15s ease;',
+    '@media (prefers-color-scheme: dark) {',
+    '  #fmed-exames-modal {',
+    '    --fmed-bg: #1c1917;',
+    '    --fmed-text: #f5f5f4;',
+    '    --fmed-text-muted: #78716c;',
+    '    --fmed-input-bg: #2e2b29;',
+    '    --fmed-border: rgba(255, 255, 255, 0.15);',
+    '    --fmed-ok: #38bdf8;',
+    '    --fmed-ok-bg: rgba(56, 189, 248, 0.14);',
+    '    --fmed-ok-border: rgba(56, 189, 248, 0.4);',
+    '    --fmed-danger: #f87171;',
+    '    --fmed-danger-bg: rgba(248, 113, 113, 0.14);',
+    '    --fmed-danger-border: rgba(248, 113, 113, 0.35);',
+    '    --fmed-primary: #38bdf8;',
+    '    --fmed-primary-hover: #0284c7;',
+    '  }',
     '}',
-    '#fmed-exames-root .btn-primary { background: #1e6b47; color: #fff; border-color: #1e6b47; }',
-    '#fmed-exames-root .btn-primary:hover { background: #165236; }',
-    '#fmed-exames-root .btn-copiado { background: #007a30 !important; color: #fff !important; border-color: #007a30 !important; }',
-    '#fmed-exames-root .btn-secundario { background: #f3f4f6; color: #374151; border-color: #d1d5db; }',
-    '#fmed-exames-root .btn-secundario:hover { background: #e5e7eb; color: #111; }',
-    '#fmed-exames-root .btn-data { background: #eef7f2; color: #1e6b47; border-color: #b9dfcb; font-size: 11.5px; padding: 3px 8px; }',
-    '#fmed-exames-root .btn-data:hover { background: #d7efe2; }',
-    '#fmed-exames-root .info-msg { font-size: 12px; color: #555; }',
-    '#fmed-exames-root .datas-box { margin-top: 6px; padding-top: 6px; border-top: 1px solid #e5e7eb; }',
-    '#fmed-exames-root .datas-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; max-height: 85px; overflow-y: auto; }',
-    '#fmed-exames-root.aguardando { pointer-events: none; opacity: 0.96; }',
-    '#fmed-exames-root.aguardando button { pointer-events: auto; }',
-    '#fmed-exames-viewer-fundo { position: fixed; inset: 0; z-index: 2147483641; background: rgba(0,0,0,0.45); }',
+    '#fmed-exames-modal * { box-sizing: border-box; text-transform: none !important; }',
+    '#fmed-exames-modal .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }',
+    '#fmed-exames-modal .badge { display: inline-block; background: #0284c7; color: #fff; font-weight: 700; font-size: 11px; padding: 2px 7px; border-radius: 4px; letter-spacing: 0.04em; margin-bottom: 4px; }',
+    '#fmed-exames-modal .titulo-box { display: flex; flex-direction: column; min-width: 0; flex: 1; }',
+    '#fmed-exames-modal .titulo { font-size: 15px; font-weight: 700; color: var(--fmed-text); margin: 0; }',
+    '#fmed-exames-modal .subtitulo { font-size: 12px; color: var(--fmed-text-muted); margin-top: 2px; }',
+    '#fmed-exames-modal .btn-fechar-topo { background: none; border: none; cursor: pointer; color: var(--fmed-text-muted); font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 6px; transition: all 0.15s ease; }',
+    '#fmed-exames-modal .btn-fechar-topo:hover { background: var(--fmed-input-bg); color: var(--fmed-text); }',
+    '#fmed-exames-modal .checklist-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; }',
+    '#fmed-exames-modal .checklist-toolbar span { font-size: 12px; font-weight: 600; color: var(--fmed-text); }',
+    '#fmed-exames-modal .toolbar-actions { display: flex; align-items: center; gap: 10px; }',
+    '#fmed-exames-modal .link-acao { background: none; border: none; cursor: pointer; color: var(--fmed-primary); font-size: 11.5px; font-weight: 600; padding: 0; text-decoration: underline; }',
+    '#fmed-exames-modal .link-acao:hover { opacity: 0.8; }',
+    '#fmed-exames-modal .checklist-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 5px; max-height: 240px; overflow-y: auto; padding: 2px; }',
+    '#fmed-exames-modal .check-card { display: flex; align-items: center; gap: 6px; padding: 7px 8px; border-radius: 8px; border: 1px solid var(--fmed-border); background: var(--fmed-input-bg); color: var(--fmed-text-muted); font-size: 11.5px; cursor: pointer; opacity: 0.6; transition: all 0.12s ease; user-select: none; }',
+    '#fmed-exames-modal .check-card.selected { border-color: var(--fmed-ok-border); background: var(--fmed-ok-bg); color: var(--fmed-text); opacity: 1; }',
+    '#fmed-exames-modal .check-card input[type="checkbox"] { margin: 0; flex-shrink: 0; cursor: pointer; accent-color: #0284c7; }',
+    '#fmed-exames-modal .check-card .item-info { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-width: 0; }',
+    '#fmed-exames-modal .check-card .item-label { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }',
+    '#fmed-exames-modal .check-card .item-valor { font-weight: 700; color: var(--fmed-text); flex-shrink: 0; }',
+    '#fmed-exames-modal .check-card .item-valor.alterado { color: var(--fmed-danger); font-weight: 800; background: var(--fmed-danger-bg); border: 1px solid var(--fmed-danger-border); border-radius: 4px; padding: 1px 5px; }',
+    '#fmed-exames-modal .check-card.card-alterado { border-left: 3px solid var(--fmed-danger); }',
+    '#fmed-exames-modal .check-card.selected.card-alterado { border-left-color: var(--fmed-danger); }',
+    '#fmed-exames-modal .output-section { display: flex; flex-direction: column; gap: 6px; }',
+    '#fmed-exames-modal textarea { width: 100%; height: 112px; border: 1px solid var(--fmed-border); border-radius: 8px; padding: 8px 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12.5px; line-height: 18px; color: var(--fmed-text); background: var(--fmed-input-bg); resize: vertical; }',
+    '#fmed-exames-modal textarea:focus { outline: none; border-color: #0284c7; background: var(--fmed-bg); box-shadow: 0 0 0 2px var(--fmed-ok-bg); }',
+    '#fmed-exames-modal .acoes { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }',
+    '#fmed-exames-modal button.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 12.5px; font-weight: 600; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: all 0.15s ease; font-family: inherit; }',
+    '#fmed-exames-modal .btn-primary { background: #0284c7; color: #fff; border-color: #0284c7; }',
+    '#fmed-exames-modal .btn-primary:hover { background: #0369a1; border-color: #0369a1; }',
+    '#fmed-exames-modal .btn-prevent { background: var(--fmed-ok-bg); color: #0284c7; border: 1px solid var(--fmed-ok-border); font-weight: 600; }',
+    '#fmed-exames-modal .btn-prevent:hover { background: rgba(2, 132, 199, 0.16); border-color: #0284c7; }',
+    '#fmed-exames-modal .btn-copiado { background: var(--fmed-ok-bg) !important; color: var(--fmed-ok) !important; border-color: var(--fmed-ok-border) !important; }',
+    '#fmed-exames-modal .btn-secundario { background: var(--fmed-input-bg); color: var(--fmed-text); border-color: var(--fmed-border); }',
+    '#fmed-exames-modal .btn-secundario:hover { background: rgba(120, 120, 120, 0.14); }',
+    '#fmed-exames-modal .btn-data { background: var(--fmed-ok-bg); color: var(--fmed-primary); border: 1px solid var(--fmed-ok-border); font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: all 0.12s ease; }',
+    '#fmed-exames-modal .btn-data:hover { filter: brightness(0.95); }',
+    '#fmed-exames-modal .datas-lista { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; max-height: 120px; overflow-y: auto; }',
+    '#fmed-exames-modal .prevent-view { display: flex; flex-direction: column; gap: 12px; }',
+    '#fmed-exames-modal .prevent-corpo { display: grid; grid-template-columns: 1fr; gap: 14px; max-height: calc(88vh - 145px); overflow-y: auto; padding-right: 4px; }',
+    '@media (min-width: 660px) {',
+    '  #fmed-exames-modal .prevent-corpo { grid-template-columns: 1.05fr 1fr; align-items: start; }',
+    '}',
+    '#fmed-exames-modal .prevent-painel-dados { display: flex; flex-direction: column; gap: 10px; }',
+    '#fmed-exames-modal .prevent-mini-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase !important; letter-spacing: 0.06em; color: var(--fmed-text-muted); margin-bottom: 4px; border-bottom: 1px solid var(--fmed-border); padding-bottom: 3px; }',
+    '#fmed-exames-modal .prevent-chips-box { display: flex; flex-wrap: wrap; gap: 5px; }',
+    '#fmed-exames-modal .prevent-chip { display: inline-flex; align-items: center; gap: 4px; background: var(--fmed-input-bg); border: 1px solid var(--fmed-border); border-radius: 6px; padding: 3px 7px; font-size: 11px; color: var(--fmed-text); }',
+    '#fmed-exames-modal .prevent-chip-ok { border-color: var(--fmed-ok-border); background: var(--fmed-ok-bg); font-weight: 600; }',
+    '#fmed-exames-modal .prevent-field-group { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }',
+    '#fmed-exames-modal .prevent-field-group label { font-size: 11.5px; font-weight: 600; color: var(--fmed-text); }',
+    '#fmed-exames-modal .prevent-input { width: 100%; border: 1px solid var(--fmed-border); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-weight: 600; color: var(--fmed-text); background: var(--fmed-input-bg); }',
+    '#fmed-exames-modal .prevent-input:focus { outline: none; border-color: #0284c7; background: var(--fmed-bg); box-shadow: 0 0 0 2px var(--fmed-ok-bg); }',
+    '#fmed-exames-modal .prevent-toggles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }',
+    '#fmed-exames-modal .prevent-toggle-item { display: flex; flex-direction: column; gap: 4px; }',
+    '#fmed-exames-modal .prevent-toggle-label { font-size: 11px; font-weight: 600; color: var(--fmed-text-muted); }',
+    '#fmed-exames-modal .prevent-switch-group { display: inline-flex; background: var(--fmed-input-bg); border: 1px solid var(--fmed-border); border-radius: 6px; padding: 2px; gap: 2px; }',
+    '#fmed-exames-modal .switch-opt { flex: 1; background: transparent; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; color: var(--fmed-text-muted); cursor: pointer; transition: all 0.12s ease; text-align: center; }',
+    '#fmed-exames-modal .switch-opt.active { background: #0284c7; color: #fff; }',
+    '#fmed-exames-modal .prevent-result-card { border-radius: 12px; padding: 16px; box-sizing: border-box; transition: background 0.3s ease, border 0.3s ease; }',
+    '#fmed-exames-modal .prevent-result-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }',
+    '#fmed-exames-modal .prevent-badge-risco { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase !important; padding: 4px 9px; border-radius: 6px; letter-spacing: 0.04em; }',
+    '#fmed-exames-modal .prevent-btn-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--fmed-border); background: var(--fmed-input-bg); color: var(--fmed-text-muted); cursor: pointer; transition: all 0.15s ease; padding: 0; }',
+    '#fmed-exames-modal .prevent-btn-icon:hover { color: var(--fmed-text); background: var(--fmed-border); }',
+    '#fmed-exames-modal .prevent-btn-icon.copiado { background: var(--fmed-ok-bg); color: var(--fmed-ok); border-color: var(--fmed-ok-border); }',
+    '#fmed-exames-modal .prevent-label { font-size: 11px; text-transform: uppercase !important; font-weight: 700; color: var(--fmed-text-muted); letter-spacing: 0.04em; margin-top: 8px; }',
+    '#fmed-exames-modal .prevent-score-val { font-size: 28px; font-weight: 800; color: var(--fmed-text); line-height: 1.1; margin: 2px 0 8px 0; }',
+    '#fmed-exames-modal .prevent-conduta-box { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(120, 120, 120, 0.2); }',
+    '#fmed-exames-modal .prevent-ldl-box { background: rgba(120, 120, 120, 0.08); padding: 10px 12px; border-radius: 8px; border-left: 4px solid var(--fmed-text); margin-bottom: 10px; }',
+    '#fmed-exames-modal .prevent-conduta-title { font-size: 10.5px; text-transform: uppercase !important; font-weight: 700; color: var(--fmed-text-muted); letter-spacing: 0.05em; margin-bottom: 3px; }',
+    '#fmed-exames-modal .prevent-conduta-text { font-size: 12px; color: var(--fmed-text); line-height: 1.38; margin-bottom: 8px; }',
+    '#fmed-exames-modal .prevent-alvos-sec { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }',
+    '#fmed-exames-modal .prevent-alvo-badge { background: var(--fmed-input-bg); border: 1px solid var(--fmed-border); padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; color: var(--fmed-text); }',
+    '#fmed-exames-modal .prevent-crit-item { font-size: 12px; color: var(--fmed-text); line-height: 1.35; margin-bottom: 3px; }',
+    '#fmed-exames-modal .prevent-empty { border: 1px dashed var(--fmed-border); border-radius: 12px; padding: 30px 16px; text-align: center; color: var(--fmed-text-muted); font-size: 12.5px; line-height: 1.5; background: var(--fmed-input-bg); }',
+    '#fmed-exames-viewer-fundo { position: fixed; inset: 0; z-index: 2147483641; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }',
     '#fmed-exames-viewer {',
-    '  position: fixed; z-index: 2147483642; top: 40px; left: 50%; transform: translateX(-50%);',
-    '  width: min(940px, 95vw); height: calc(100vh - 40px - 180px); min-height: 280px;',
-    '  display: flex; flex-direction: column; background: #fff; border: 2px solid #1e6b47;',
-    '  border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden;',
+    '  position: fixed; z-index: 2147483642; top: 32px; left: 50%; transform: translateX(-50%);',
+    '  width: min(940px, 95vw); height: calc(100vh - 64px);',
+    '  display: flex; flex-direction: column; background: var(--fmed-bg, #ffffff); color: var(--fmed-text, #1a1916); border: 1px solid var(--fmed-border, rgba(120,120,120,0.25));',
+    '  border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); overflow: hidden;',
     '}',
-    '#fmed-exames-viewer .barra { display: flex; align-items: center; justify-content: space-between; background: #1e6b47; color: #fff; padding: 7px 12px; font-weight: bold; font-size: 13px; }',
+    '#fmed-exames-viewer .barra { display: flex; align-items: center; justify-content: space-between; background: #0284c7; color: #fff; padding: 8px 14px; font-weight: 700; font-size: 13px; }',
     '#fmed-exames-viewer iframe { flex: 1; border: 0; background: #555; width: 100%; height: 100%; }'
   ].join('\n');
 
-  var painelEl = null;
+  var backdropEl = null;
   var vigiaTimer = null;
   var pdfViewerUrl = null;
 
@@ -743,7 +827,7 @@
       modal.innerHTML = [
         '<div class="barra">',
         '  <span>' + (titulo || 'Visualizador de Laudo') + '</span>',
-        '  <button type="button" id="fmed-v-fechar" style="background:transparent;border:1px solid #fff;color:#fff;padding:2px 8px;border-radius:3px;cursor:pointer;">Fechar</button>',
+        '  <button type="button" id="fmed-v-fechar" style="background:transparent;border:1px solid #fff;color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">Fechar</button>',
         '</div>',
         '<iframe title="Laudo"></iframe>'
       ].join('');
@@ -759,22 +843,22 @@
   function fecharPainel() {
     pararVigia();
     fecharVisualizadorPdf();
-    if (painelEl && painelEl.parentNode) {
-      painelEl.parentNode.removeChild(painelEl);
+    if (backdropEl && backdropEl.parentNode) {
+      backdropEl.parentNode.removeChild(backdropEl);
     }
-    painelEl = null;
+    backdropEl = null;
     // Não salvar nada no fechamento
     try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
   }
 
-  function garantirPainel() {
+  function garantirBackdrop() {
     injetarEstilos();
-    if (!painelEl) {
-      painelEl = document.createElement('div');
-      painelEl.id = 'fmed-exames-root';
-      document.documentElement.appendChild(painelEl);
+    if (!backdropEl || !backdropEl.parentNode) {
+      backdropEl = document.createElement('div');
+      backdropEl.id = 'fmed-exames-backdrop';
+      document.documentElement.appendChild(backdropEl);
     }
-    return painelEl;
+    return backdropEl;
   }
 
   function copiarParaClipboard(texto) {
@@ -802,9 +886,6 @@
     }
   }
 
-  /* ===========================================================================
-   * FLUXO DE EXECUÇÃO
-   * ======================================================================== */
   function pararVigia() {
     if (vigiaTimer) {
       clearInterval(vigiaTimer);
@@ -812,95 +893,1273 @@
     }
   }
 
-  function processarBase64(base64, tituloOpcional) {
-    var p = garantirPainel();
-    p.className = '';
-    p.innerHTML = [
-      '<div class="header">',
-      '  <span class="badge">LABORATÓRIO</span>',
-      '  <span class="titulo">Extraindo dados do laudo...</span>',
-      '</div>',
-      '<div class="info-msg">Processando laudo com o modelo do exames_ui...</div>',
-      '<div class="acoes"><button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button></div>'
+  /* ===========================================================================
+   * BANCO DE VALORES DE REFERÊNCIA E DETECÇÃO DE VALORES FORA DA FAIXA
+   * ======================================================================== */
+  var VALORES_REFERENCIA = {
+    // Hemograma
+    hb: function (s) { return s === 'F' ? { min: 12.0, max: 16.0 } : s === 'M' ? { min: 13.0, max: 17.5 } : { min: 12.0, max: 17.5 }; },
+    ht: function (s) { return s === 'F' ? { min: 36.0, max: 48.0 } : s === 'M' ? { min: 39.0, max: 53.0 } : { min: 36.0, max: 53.0 }; },
+    vcm: { min: 80.0, max: 100.0 },
+    hcm: { min: 27.0, max: 33.0 },
+    leuco: { min: 4000, max: 11000 },
+    neutro: { min: 1500, max: 7500 },
+    plaq: { min: 150000, max: 450000 },
+
+    // Perfil lipídico (Diretrizes SBC / AHA)
+    ct: { max: 190 },
+    hdl: function (s) { return s === 'F' ? { min: 50 } : { min: 40 }; },
+    trig: { max: 150 },
+    ldl: { max: 130 },
+
+    // Glicemia (SBD / ADA)
+    glic: { min: 70, max: 99 },
+    hba1c: { max: 5.6 }, // 5.7+ pré-diabetes / diabetes
+
+    // Função renal e metabólica
+    ur: { min: 15, max: 45 },
+    cr: function (s) { return s === 'F' ? { min: 0.50, max: 1.10 } : s === 'M' ? { min: 0.70, max: 1.30 } : { min: 0.50, max: 1.30 }; },
+    tfg: { min: 60 }, // < 60 mL/min alterada (KDIGO)
+    rac: { max: 29.9 }, // >= 30 mg/g microalbuminúria
+    acur: function (s) { return s === 'F' ? { min: 2.6, max: 6.0 } : s === 'M' ? { min: 3.5, max: 7.2 } : { min: 2.6, max: 7.2 }; },
+
+    // Tireoide
+    tsh: { min: 0.40, max: 4.50 },
+    t4l: { min: 0.80, max: 1.80 },
+
+    // Fígado e enzimas
+    ast: function (s) { return s === 'F' ? { max: 35 } : { max: 40 }; },
+    alt: function (s) { return s === 'F' ? { max: 35 } : { max: 40 }; },
+    fa: { min: 35, max: 105 },
+    ggt: function (s) { return s === 'F' ? { max: 38 } : { max: 60 }; },
+    bt: { max: 1.20 },
+    bd: { max: 0.40 },
+    bi: { max: 0.80 },
+    alb: { min: 3.5, max: 5.2 },
+    amil: { min: 28, max: 100 },
+    lip: { max: 60 },
+
+    // Coagulação
+    tp: { min: 10.0, max: 14.0 },
+    ttpa: { min: 24.0, max: 38.0 },
+    inr: { min: 0.8, max: 1.2 },
+
+    // Inflamação
+    pcr: { max: 0.5 },
+
+    // Eletrólitos
+    na: { min: 135, max: 145 },
+    k: { min: 3.5, max: 5.1 },
+
+    // Vitaminas
+    vitd: { min: 20 },
+    vitb12: { min: 200, max: 900 },
+
+    // Perfil do ferro
+    fe: { min: 50, max: 170 },
+    ferrit: function (s) { return s === 'F' ? { min: 15, max: 200 } : s === 'M' ? { min: 30, max: 400 } : { min: 15, max: 400 }; },
+    transferr: { min: 200, max: 360 },
+    sattransf: { min: 20, max: 50 },
+
+    // Extras frequentes
+    rdw: { min: 11.5, max: 14.5 },
+    chcm: { min: 31.0, max: 36.0 },
+    vpm: { min: 7.0, max: 12.0 },
+    calcio: { min: 8.5, max: 10.5 },
+    magnesio: { min: 1.7, max: 2.5 },
+    fosforo: { min: 2.5, max: 4.5 },
+    psa: { max: 4.0 },
+    vhs: function (s) { return s === 'F' ? { max: 20 } : { max: 15 }; }
+  };
+
+  function verificarForaDaReferencia(idOuLabel, valorStr, sexo, idade) {
+    if (!valorStr) return false;
+    var str = String(valorStr).trim();
+    if (!str) return false;
+
+    if (str.indexOf('*AVALIAR*') >= 0 || /reagente|positivo/i.test(str)) {
+      return true;
+    }
+
+    var numLimpo = str.replace(/\s/g, '');
+    var m = numLimpo.match(/-?\d+(?:[.,]\d+)?/);
+    if (!m) return false;
+
+    var valNum = parseFloat(m[0].replace(',', '.'));
+    if (isNaN(valNum)) return false;
+
+    var rawKey = String(idOuLabel || '').toLowerCase();
+    var key = rawKey.normalize ? rawKey.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : rawKey;
+    key = key.replace(/[^a-z0-9]/g, '');
+
+    var ref = VALORES_REFERENCIA[key];
+    if (!ref) return false;
+
+    var faixa = typeof ref === 'function' ? ref(sexo, idade) : ref;
+    if (!faixa) return false;
+
+    if (faixa.min !== undefined && valNum < faixa.min) return true;
+    if (faixa.max !== undefined && valNum > faixa.max) return true;
+    return false;
+  }
+
+  /* ===========================================================================
+   * MONTAGEM DO CHECKLIST INTERATIVO (ESPELHO DO EXAMES_UI)
+   * ======================================================================== */
+  function criarItemChecklist(id, label, valor, isCalculado, fieldKey, alterado) {
+    return {
+      id: id,
+      label: label,
+      valor: valor,
+      isCalculado: !!isCalculado,
+      fieldKey: fieldKey,
+      selected: true,
+      alterado: !!alterado
+    };
+  }
+
+  function gerarTextoDeItens(itens, dataLaudo, metadata) {
+    var mapa = {};
+    var extras = [];
+
+    itens.forEach(function (item) {
+      if (!item.selected) return;
+      if (item.fieldKey !== null) {
+        mapa[item.fieldKey] = item.valor;
+      } else {
+        extras.push({ label: item.label, valor: item.valor });
+      }
+    });
+
+    // Se CT, HDL ou Trig forem desmarcados, recalcular ou remover LDL
+    if (mapa.ldl && (!mapa.ct || !mapa.hdl || !mapa.trig)) {
+      var recalculadoLdl = calcLdl(mapa);
+      if (!recalculadoLdl) delete mapa.ldl;
+      else mapa.ldl = recalculadoLdl;
+    }
+
+    // Se Cr for desmarcada, remover TFG
+    if (mapa.tfg && (!mapa.cr || !metadata.idade || !metadata.sexo)) {
+      delete mapa.tfg;
+    }
+
+    var partes = [];
+    CAMPOS_FIXOS.forEach(function (campo) {
+      var val = mapa[campo.id];
+      if (val && String(val).trim()) {
+        partes.push(campo.label + ' ' + String(val).trim());
+      }
+    });
+
+    extras.forEach(function (extra) {
+      if (extra.valor && String(extra.valor).trim()) {
+        partes.push(extra.label + ' ' + String(extra.valor).trim());
+      }
+    });
+
+    if (!partes.length) return '';
+    var dataBr = formatarDataBR(dataLaudo || '');
+    return (dataBr ? '(' + dataBr + '): ' : '') + partes.join(' | ');
+  }
+
+  /* ===========================================================================
+   * PREVENT — CÁLCULO E CARD DE RESULTADO (ESPELHO DO ESCORES_UI)
+   * ======================================================================== */
+  var PREVENT_RISCOS = {
+    Extremo: { bg: 'rgba(180, 0, 60, 0.14)', t: '#b4003c', border: 'rgba(180, 0, 60, 0.5)' },
+    'Muito Alto': { bg: 'rgba(245, 49, 39, 0.12)', t: '#e62219', border: 'rgba(245, 49, 39, 0.45)' },
+    Alto: { bg: 'rgba(242, 100, 0, 0.1)', t: '#ff5d00', border: 'rgba(242, 100, 0, 0.45)' },
+    'Intermediário': { bg: 'rgba(242, 143, 0, 0.09)', t: '#ff9900', border: 'rgba(242, 143, 0, 0.45)' },
+    Baixo: { bg: 'rgba(0, 184, 73, 0.09)', t: '#00cc52', border: 'rgba(0, 184, 73, 0.45)' }
+  };
+
+  var PREVENT_SVG_COPIAR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  var PREVENT_SVG_OK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+
+  function prevNum(v) {
+    if (v === null || v === undefined) return NaN;
+    var n = parseFloat(String(v).replace(',', '.'));
+    return isNaN(n) ? NaN : n;
+  }
+
+  function prevEscapar(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function prevLegivelSobre(hex) {
+    var h = String(hex || '').replace('#', '');
+    var r = parseInt(h.slice(0, 2), 16) / 255;
+    var g = parseInt(h.slice(2, 4), 16) / 255;
+    var b = parseInt(h.slice(4, 6), 16) / 255;
+    if (isNaN(r) || isNaN(g) || isNaN(b)) return '#ffffff';
+    var lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return lum > 0.42 ? '#161513' : '#ffffff';
+  }
+
+  // Algoritmo PREVENT idêntico ao de escores_ui (nEventos = 0, sem checklist).
+  function calcularPrevent(d) {
+    var i = parseInt(d.idade, 10);
+    var p = parseInt(d.pas, 10);
+    var ct = parseInt(d.ct, 10);
+    var h = parseInt(d.hdl, 10);
+    var valorTfg = parseInt(d.tfg, 10);
+    var valorHba1c = prevNum(d.hba1c);
+    var valorRac = prevNum(d.rac);
+    var valorLdl = prevNum(d.ldl);
+    var valorLpa = prevNum(d.lpa);
+
+    var examesOk = i && d.sexo && p && ct && h;
+
+    var temDiabetes = !!d.diabetes || (!isNaN(valorHba1c) && valorHba1c >= 6.5);
+    var limiarDm2 = d.sexo === 'F' ? 56 : 50;
+    var dm2AcimaLimiar = temDiabetes && !isNaN(i) && i >= limiarDm2;
+    var earAuto =
+      (d.antiHipertensivos ? 1 : 0) +
+      (d.fumante ? 1 : 0) +
+      (d.cac === '10-100' || d.cac === '100-300' ? 1 : 0);
+    var nEar = earAuto;
+    var emarAuto =
+      (nEar >= 3 ? 1 : 0) +
+      (ct > 310 || valorLdl >= 190 ? 1 : 0);
+    var emar = emarAuto > 0;
+    var nEventos = 0;
+    var condAuto =
+      (!isNaN(i) && i >= 65 ? 1 : 0) +
+      (temDiabetes ? 1 : 0) +
+      (d.antiHipertensivos ? 1 : 0) +
+      (!isNaN(valorTfg) && valorTfg < 60 ? 1 : 0) +
+      (d.fumante ? 1 : 0);
+    var nCondicoes = condAuto;
+    var doencaAtero = !!d.doencaAtero;
+    var subclinica = !!d.subclinica;
+    var agravante = !isNaN(valorLpa) && valorLpa > 50;
+    var ldlConhecido = d.ldl !== '' && d.ldl !== null && d.ldl !== undefined && !isNaN(valorLdl) && valorLdl > 0;
+    var ldlMuitoAlto = ldlConhecido && valorLdl >= 190;
+    var ldlIntermediario = ldlConhecido && valorLdl >= 160 && valorLdl < 190;
+    var lpaAlto = !isNaN(valorLpa) && valorLpa > 180;
+
+    var temCriterioDefinidor =
+      nEventos >= 2 ||
+      (nEventos === 1 && nCondicoes >= 2) ||
+      doencaAtero ||
+      d.cac === '>300' ||
+      (temDiabetes && (nEar >= 3 || emar)) ||
+      subclinica ||
+      d.cac === '100-300' ||
+      ldlMuitoAlto ||
+      lpaAlto ||
+      (temDiabetes && dm2AcimaLimiar) ||
+      (temDiabetes && (nEar === 1 || nEar === 2) && !emar) ||
+      (temDiabetes && !dm2AcimaLimiar && nEar === 0 && !emar);
+
+    if (!examesOk && !temCriterioDefinidor) return null;
+
+    var riscoCalculado = 0;
+
+    if (examesOk) {
+      var X_id = (i - 55) / 10;
+      var X_pas_min = (Math.min(p, 110) - 110) / 20;
+      var X_pas_max = (Math.max(p, 110) - 130) / 20;
+      var X_ct = ct * 0.02586 - 3.5;
+      var X_hdl = (h * 0.02586 - 1.3) / 0.3;
+      var X_tfg_min = (Math.min(!isNaN(valorTfg) ? valorTfg : 90, 60) - 60) / -15;
+      var X_tfg_max = (Math.max(!isNaN(valorTfg) ? valorTfg : 90, 60) - 90) / -15;
+
+      var temHbA1c = d.hba1c !== '' && d.hba1c !== null && d.hba1c !== undefined && !isNaN(valorHba1c);
+      var temRac = d.rac !== '' && d.rac !== null && d.rac !== undefined && !isNaN(valorRac) && valorRac > 0;
+      var temDiab = d.diabetes ? 1 : 0;
+      var temFum = d.fumante ? 1 : 0;
+      var temAntiHip = d.antiHipertensivos ? 1 : 0;
+      var temEstatina = d.usoEstatinas ? 1 : 0;
+
+      var linearPredictor = 0;
+
+      if (d.sexo === 'F') {
+        if (!temHbA1c && !temRac) {
+          linearPredictor =
+            -3.307728 +
+            0.7939329 * X_id +
+            0.0305239 * X_ct -
+            0.1606857 * X_hdl -
+            0.2394003 * X_pas_min +
+            0.3600781 * X_pas_max +
+            0.8667604 * temDiab +
+            0.5360739 * temFum +
+            0.6045917 * X_tfg_min +
+            0.0433769 * X_tfg_max +
+            0.3151672 * temAntiHip -
+            0.1477655 * temEstatina -
+            0.0663612 * temAntiHip * X_pas_max +
+            0.1197879 * temEstatina * X_ct -
+            0.0819715 * X_id * X_ct +
+            0.0306769 * X_id * X_hdl -
+            0.0946348 * X_id * X_pas_max -
+            0.27057 * temDiab * X_id -
+            0.078715 * temFum * X_id -
+            0.1637806 * X_id * X_tfg_min;
+        } else if (temHbA1c && !temRac) {
+          var f_hba1c = temDiab === 1 ? 0.1338348 * (valorHba1c - 5.3) : 0.1622409 * (valorHba1c - 5.3);
+          linearPredictor =
+            -3.306162 +
+            0.7858178 * X_id +
+            0.0194438 * X_ct -
+            0.1521964 * X_hdl -
+            0.2296681 * X_pas_min +
+            0.3465777 * X_pas_max +
+            0.5366241 * temDiab +
+            0.5411682 * temFum +
+            0.5931898 * X_tfg_min +
+            0.0472458 * X_tfg_max +
+            0.3158567 * temAntiHip -
+            0.1535174 * temEstatina -
+            0.0687752 * temAntiHip * X_pas_max +
+            0.1054746 * temEstatina * X_ct -
+            0.0761119 * X_id * X_ct +
+            0.0307469 * X_id * X_hdl -
+            0.0905966 * X_id * X_pas_max -
+            0.2241857 * temDiab * X_id -
+            0.080186 * temFum * X_id -
+            0.1667286 * X_id * X_tfg_min +
+            f_hba1c;
+        } else if (!temHbA1c && temRac) {
+          linearPredictor =
+            -3.738341 +
+            0.7969249 * X_id +
+            0.0256635 * X_ct -
+            0.1588107 * X_hdl -
+            0.2255701 * X_pas_min +
+            0.3396649 * X_pas_max +
+            0.8047515 * temDiab +
+            0.5285338 * temFum +
+            0.4803511 * X_tfg_min +
+            0.0434472 * X_tfg_max +
+            0.2985207 * temAntiHip -
+            0.1497787 * temEstatina -
+            0.0742889 * temAntiHip * X_pas_max +
+            0.106756 * temEstatina * X_ct -
+            0.0778126 * X_id * X_ct +
+            0.0306768 * X_id * X_hdl -
+            0.0907168 * X_id * X_pas_max -
+            0.2705122 * temDiab * X_id -
+            0.0830564 * temFum * X_id -
+            0.1389249 * X_id * X_tfg_min +
+            0.1793037 * Math.log(valorRac);
+        } else {
+          var f_hba1c_full = temDiab === 1 ? 0.1298513 * (valorHba1c - 5.3) : 0.1412555 * (valorHba1c - 5.3);
+          var sdiMissingAdjustmentF = 0.1804508;
+          var uacrMissingAdjustmentF = d.rac === '' || d.rac === null || d.rac === undefined ? 0.0198413 : 0;
+          var hba1cMissingAdjustmentF = d.hba1c === '' || d.hba1c === null || d.hba1c === undefined ? 0.0031658 : 0;
+
+          linearPredictor =
+            -3.860385 +
+            0.7716794 * X_id +
+            0.0062109 * X_ct -
+            0.1547756 * X_hdl -
+            0.1933123 * X_pas_min +
+            0.3071217 * X_pas_max +
+            0.496753 * temDiab +
+            0.466605 * temFum +
+            0.4780697 * X_tfg_min +
+            0.0529077 * X_tfg_max +
+            0.3034892 * temAntiHip -
+            0.1556524 * temEstatina -
+            0.0667026 * temAntiHip * X_pas_max +
+            0.1061825 * temEstatina * X_ct -
+            0.0742271 * X_id * X_ct +
+            0.0288245 * X_id * X_hdl -
+            0.0875188 * X_id * X_pas_max -
+            0.2267102 * temDiab * X_id -
+            0.0676125 * temFum * X_id -
+            0.1493231 * X_id * X_tfg_min +
+            f_hba1c_full +
+            sdiMissingAdjustmentF +
+            uacrMissingAdjustmentF -
+            hba1cMissingAdjustmentF +
+            0.1645922 * Math.log(valorRac);
+        }
+      } else {
+        if (!temHbA1c && !temRac) {
+          linearPredictor =
+            -3.031168 +
+            0.7688528 * X_id +
+            0.0736174 * X_ct -
+            0.0954431 * X_hdl -
+            0.4347345 * X_pas_min +
+            0.3362658 * X_pas_max +
+            0.7692857 * temDiab +
+            0.4386871 * temFum +
+            0.5378979 * X_tfg_min +
+            0.0164827 * X_tfg_max +
+            0.288879 * temAntiHip -
+            0.1337349 * temEstatina -
+            0.0475924 * temAntiHip * X_pas_max +
+            0.150273 * temEstatina * X_ct -
+            0.0517874 * X_id * X_ct +
+            0.0191169 * X_id * X_hdl -
+            0.1049477 * X_id * X_pas_max -
+            0.2251948 * temDiab * X_id -
+            0.0895067 * temFum * X_id -
+            0.1543702 * X_id * X_tfg_min;
+        } else if (temHbA1c && !temRac) {
+          var m_hba1c = temDiab === 1 ? 0.13159 * (valorHba1c - 5.3) : 0.1295185 * (valorHba1c - 5.3);
+          linearPredictor =
+            -3.040901 +
+            0.7699177 * X_id +
+            0.0605093 * X_ct -
+            0.0888525 * X_hdl -
+            0.417713 * X_pas_min +
+            0.3288657 * X_pas_max +
+            0.4759471 * temDiab +
+            0.4385663 * temFum +
+            0.5334616 * X_tfg_min +
+            0.0206431 * X_tfg_max +
+            0.2917524 * temAntiHip -
+            0.1383313 * temEstatina -
+            0.0482622 * temAntiHip * X_pas_max +
+            0.1393796 * temEstatina * X_ct -
+            0.0463501 * X_id * X_ct +
+            0.0205926 * X_id * X_hdl -
+            0.1037717 * X_id * X_pas_max -
+            0.1737697 * temDiab * X_id -
+            0.0915839 * temFum * X_id -
+            0.1637039 * X_id * X_tfg_min +
+            m_hba1c;
+        } else if (!temHbA1c && temRac) {
+          linearPredictor =
+            -3.510705 +
+            0.7768655 * X_id +
+            0.0659949 * X_ct -
+            0.0951111 * X_hdl -
+            0.420667 * X_pas_min +
+            0.3120151 * X_pas_max +
+            0.698521 * temDiab +
+            0.4314669 * temFum +
+            0.3841364 * X_tfg_min +
+            0.009384 * X_tfg_max +
+            0.2676494 * temAntiHip -
+            0.1390966 * temEstatina -
+            0.0579315 * temAntiHip * X_pas_max +
+            0.1383719 * temEstatina * X_ct -
+            0.0488332 * X_id * X_ct +
+            0.0200406 * X_id * X_hdl -
+            0.102454 * X_id * X_pas_max -
+            0.2236355 * temDiab * X_id -
+            0.089485 * temFum * X_id -
+            0.1321848 * X_id * X_tfg_min +
+            0.1887974 * Math.log(valorRac);
+        } else {
+          var m_hba1c_full = temDiab === 1 ? 0.1165698 * (valorHba1c - 5.3) : 0.1048297 * (valorHba1c - 5.3);
+          var sdiMissingAdjustmentM = 0.144759;
+          var uacrMissingAdjustmentM = d.rac === '' || d.rac === null || d.rac === undefined ? 0.1095674 : 0;
+          var hba1cMissingAdjustmentM = d.hba1c === '' || d.hba1c === null || d.hba1c === undefined ? 0.0230072 : 0;
+
+          linearPredictor =
+            -3.631387 +
+            0.7847578 * X_id +
+            0.0534485 * X_ct -
+            0.0911282 * X_hdl -
+            0.4921973 * X_pas_min +
+            0.2972415 * X_pas_max +
+            0.4527054 * temDiab +
+            0.3726641 * temFum +
+            0.3886854 * X_tfg_min +
+            0.0081661 * X_tfg_max +
+            0.2508052 * temAntiHip -
+            0.1538484 * temEstatina -
+            0.0474695 * temAntiHip * X_pas_max +
+            0.1415382 * temEstatina * X_ct -
+            0.0436455 * X_id * X_ct +
+            0.0199549 * X_id * X_hdl -
+            0.1022686 * X_id * X_pas_max -
+            0.1762507 * temDiab * X_id -
+            0.0715873 * temFum * X_id -
+            0.1428668 * X_id * X_tfg_min +
+            m_hba1c_full +
+            sdiMissingAdjustmentM +
+            uacrMissingAdjustmentM -
+            hba1cMissingAdjustmentM +
+            0.1772853 * Math.log(valorRac);
+        }
+      }
+
+      riscoCalculado = (Math.exp(linearPredictor) / (1 + Math.exp(linearPredictor))) * 100;
+    }
+
+    var idadeVascular = '';
+    if (examesOk && nEventos === 0) {
+      if (d.sexo === 'F') {
+        idadeVascular = Math.round(45.03746 + 11.27498 * Math.log((riscoCalculado / 100) * 100)).toString();
+      } else {
+        idadeVascular = Math.round(41.55092 + 11.7171 * Math.log((riscoCalculado / 100) * 100)).toString();
+      }
+    }
+
+    var criterios = [];
+    var categoriaRisco = 'Baixo';
+
+    if (nEventos >= 2) {
+      categoriaRisco = 'Extremo';
+      criterios.push('2 ou mais eventos cardiovasculares ateroscleróticos maiores');
+    } else if (nEventos === 1 && nCondicoes >= 2) {
+      categoriaRisco = 'Extremo';
+      criterios.push('1 evento cardiovascular aterosclerótico maior + 2 ou mais condições de alto risco');
+    } else if (doencaAtero) {
+      categoriaRisco = 'Muito Alto';
+      criterios.push('Carga significativa de doença aterosclerótica ou obstrução ≥ 50% em qualquer território arterial');
+    } else if (d.cac === '>300') {
+      categoriaRisco = 'Muito Alto';
+      criterios.push('Escore de cálcio coronariano (CAC) > 300 UA');
+    } else if (temDiabetes && (nEar >= 3 || emar)) {
+      categoriaRisco = 'Muito Alto';
+      criterios.push('DM2 com 3 ou mais estratificadores de alto risco (EAR) ou com EMAR');
+    } else if (examesOk && riscoCalculado >= 20) {
+      categoriaRisco = 'Alto';
+      criterios.push('Risco estimado ≥ 20% em 10 anos');
+    } else if (examesOk && riscoCalculado >= 5 && agravante) {
+      categoriaRisco = 'Alto';
+      criterios.push('Risco estimado entre 5 e <20% com fator agravante de risco');
+    } else if (subclinica || d.cac === '100-300') {
+      categoriaRisco = 'Alto';
+      criterios.push('Aterosclerose subclínica (placas, CAC entre 100-300 UA ou percentil > 75, aneurisma de aorta)');
+    } else if (ldlMuitoAlto) {
+      categoriaRisco = 'Alto';
+      criterios.push('LDL-c ≥ 190 mg/dL');
+    } else if (lpaAlto) {
+      categoriaRisco = 'Alto';
+      criterios.push('Lp(a) > 180 mg/dL (> 390 nmol/L)');
+    } else if (temDiabetes && dm2AcimaLimiar) {
+      categoriaRisco = 'Alto';
+      criterios.push('DM2 com idade ≥ ' + limiarDm2 + ' anos');
+    } else if (temDiabetes && (nEar === 1 || nEar === 2) && !emar) {
+      categoriaRisco = 'Alto';
+      criterios.push('DM2 com 1 a 2 estratificadores de alto risco (EAR), sem EMAR');
+    } else if (examesOk && riscoCalculado < 5 && (agravante || ldlIntermediario)) {
+      categoriaRisco = 'Intermediário';
+      criterios.push('Risco estimado < 5% com fator agravante de risco ou LDL-c 160-189 mg/dL');
+    } else if (examesOk && riscoCalculado >= 5 && !agravante) {
+      categoriaRisco = 'Intermediário';
+      criterios.push('Risco estimado entre 5 e <20% sem fator agravante de risco');
+    } else if (temDiabetes && !dm2AcimaLimiar && nEar === 0 && !emar) {
+      categoriaRisco = 'Intermediário';
+      criterios.push('DM2 com idade < ' + limiarDm2 + ' anos, sem EAR ou EMAR');
+    } else if (examesOk) {
+      categoriaRisco = 'Baixo';
+      criterios.push('Risco estimado < 5% em 10 anos, sem fator agravante, LDL-c < 160 mg/dL e ausência de DM2');
+    } else {
+      categoriaRisco = 'Baixo';
+      criterios.push('Mantém risco baixo conforme os dados informados');
+    }
+
+    var alvoLdl = '', alvoNaoHdl = '', alvoApoB = '', estatinaSugerida = '', seguimento = '';
+    switch (categoriaRisco) {
+      case 'Extremo':
+        alvoLdl = '< 40 mg/dL (redução ≥ 50% do basal)';
+        alvoNaoHdl = 'Não-HDL < 70 mg/dL';
+        alvoApoB = 'ApoB < 45 mg/dL';
+        estatinaSugerida = 'Alta intensidade + ezetimiba e, se necessário, iPCSK9 ou inclisiran para atingir o alvo. Não reduzir intensidade.';
+        seguimento = 'Risco extremo: controle periódico do perfil lipídico, adesão estrita e reavaliação farmacológica até alcançar a meta.';
+        break;
+      case 'Muito Alto':
+        alvoLdl = '< 50 mg/dL (redução ≥ 50% do basal)';
+        alvoNaoHdl = 'Não-HDL < 80 mg/dL';
+        alvoApoB = 'ApoB < 55 mg/dL';
+        estatinaSugerida = d.usoEstatinas
+          ? 'Intensificar: alta intensidade (atorvastatina 40-80mg ou rosuvastatina 20-40mg) + ezetimiba 10mg se fora da meta.'
+          : 'Alta intensidade: atorvastatina 40-80mg OU rosuvastatina 20-40mg. Se não atingir alvo, associar ezetimiba 10mg.';
+        seguimento = 'Doença aterosclerótica ou DM2 de muito alto risco. Controle estrito de fatores metabólicos. Repetir perfil lipídico em 4 a 8 semanas.';
+        break;
+      case 'Alto':
+        alvoLdl = '< 70 mg/dL (redução ≥ 50% do basal)';
+        alvoNaoHdl = 'Não-HDL < 100 mg/dL';
+        alvoApoB = 'ApoB < 70 mg/dL';
+        estatinaSugerida = d.usoEstatinas
+          ? 'Manter terapia ou intensificar se fora da meta. Considerar atorvastatina 40-80mg ou rosuvastatina 20-40mg. Associar ezetimiba 10mg se necessário.'
+          : 'Alta intensidade: atorvastatina 40mg OU rosuvastatina 20mg.';
+        seguimento = 'Prevenção primária de alto risco ou critério clínico. Foco em atingir a meta terapêutica de LDL de forma agressiva.';
+        break;
+      case 'Intermediário':
+        alvoLdl = '< 100 mg/dL (redução ≥ 30% do basal)';
+        alvoNaoHdl = 'Não-HDL < 130 mg/dL';
+        alvoApoB = 'ApoB < 90 mg/dL';
+        estatinaSugerida = d.usoEstatinas
+          ? 'Manter esquema atual se LDL estiver dentro da meta (< 100 mg/dL). Se acima, titular dose ou trocar por mais potente.'
+          : 'Moderada intensidade: atorvastatina 10-20mg, rosuvastatina 5-10mg ou sinvastatina 20-40mg.';
+        seguimento = 'Discussão clínica compartilhada. Avaliar presença de fatores agravantes de risco para guiar a intensidade do tratamento.';
+        break;
+      default:
+        alvoLdl = '< 115 mg/dL (redução ≥ 30% do basal)';
+        alvoNaoHdl = 'Não-HDL < 145 mg/dL';
+        alvoApoB = 'ApoB < 100 mg/dL';
+        estatinaSugerida = 'Não indicado o início de estatinas (salvo se indicação prévia).';
+        seguimento = 'Estimular hábitos de vida saudáveis. Reestratificação em 3 a 5 anos.';
+    }
+
+    return {
+      risco10Anos: examesOk && nEventos === 0 ? riscoCalculado.toFixed(1) + '%' : 'Não calculável',
+      idadeVascular: examesOk && nEventos === 0 ? idadeVascular : 'Não calculável',
+      categoriaRisco: categoriaRisco,
+      alvoLdl: alvoLdl,
+      alvoNaoHdl: alvoNaoHdl,
+      alvoApoB: alvoApoB,
+      estatinaSugerida: estatinaSugerida,
+      seguimento: seguimento,
+      criterios: criterios
+    };
+  }
+
+  function textoPrevent(r) {
+    return 'PREVENT (' + new Date().toLocaleDateString('pt-BR') + '): ' +
+      r.risco10Anos + ' (' + r.categoriaRisco.toLowerCase() + ') = LDL ' + r.alvoLdl;
+  }
+
+  function htmlResultadoPrevent(r) {
+    var cfg = PREVENT_RISCOS[r.categoriaRisco] || PREVENT_RISCOS.Baixo;
+    var corTexto = prevLegivelSobre(cfg.t);
+    var criteriosHtml = r.criterios.map(function (c) {
+      return '<div class="prevent-crit-item">• ' + prevEscapar(c) + '</div>';
+    }).join('');
+    var idadeVascularHtml = r.idadeVascular && r.idadeVascular !== 'Não calculável'
+      ? '<div class="prevent-label">Idade Vascular</div><div class="prevent-score-val">' + prevEscapar(r.idadeVascular) + ' anos</div>'
+      : '';
+    return [
+      '<div class="prevent-result-card" style="background:' + cfg.bg + ';border:1px solid ' + cfg.border + '">',
+      '  <div class="prevent-result-header">',
+      '    <span class="prevent-badge-risco" style="background:' + cfg.t + ';color:' + corTexto + ';border:1px solid ' + cfg.border + '">Risco Global: ' + prevEscapar(r.categoriaRisco) + '</span>',
+      '    <button type="button" class="prevent-btn-icon" id="fmed-prevent-copiar" title="Copiar PREVENT">' + PREVENT_SVG_COPIAR + '</button>',
+      '  </div>',
+      '  <div class="prevent-label">Estimativa em 10 Anos</div>',
+      '  <div class="prevent-score-val">' + prevEscapar(r.risco10Anos) + '</div>',
+      idadeVascularHtml,
+      '  <div class="prevent-conduta-box">',
+      '    <div class="prevent-ldl-box">',
+      '      <div class="prevent-conduta-title" style="color:' + cfg.t + '">Alvo de LDL-c</div>',
+      '      <div style="font-size:16px;font-weight:700;color:var(--fmed-text)">' + prevEscapar(r.alvoLdl) + '</div>',
+      '    </div>',
+      '    <div class="prevent-alvos-sec">',
+      '      <div class="prevent-alvo-badge">' + prevEscapar(r.alvoNaoHdl) + '</div>',
+      '      <div class="prevent-alvo-badge">' + prevEscapar(r.alvoApoB) + '</div>',
+      '    </div>',
+      '    <div class="prevent-conduta-title">Critérios que definem o risco</div>',
+      criteriosHtml,
+      '    <div class="prevent-conduta-title">Esquema terapêutico</div>',
+      '    <div class="prevent-conduta-text">' + prevEscapar(r.estatinaSugerida) + '</div>',
+      '    <div class="prevent-conduta-title">Seguimento</div>',
+      '    <div class="prevent-conduta-text">' + prevEscapar(r.seguimento) + '</div>',
+      '  </div>',
+      '</div>'
+    ].join('\n');
+  }
+
+  function htmlFaltandoPrevent(faltando) {
+    var msg = faltando && faltando.length
+      ? 'Faltam dados para calcular o escore PREVENT:<br><b>' + faltando.join(', ') + '</b>'
+      : 'Preencha os dados para calcular o escore.';
+    return '<div class="prevent-empty">' + msg + '</div>';
+  }
+
+  var LINHAS_EXEMPLO = [
+    "Nome do Paciente: MARIA DE SOUZA OLIVEIRA     Data de cadastro: 15/03/2026",
+    "Nascimento: 24/08/1968 Sexo: F",
+    "HEMOGRAMA",
+    "Hemoglobina: 13,8 g/dL",
+    "Hematócrito: 41,2 %",
+    "V.C.M.: 88,5 fL",
+    "H.C.M.: 29,6 pg",
+    "Leucócitos: 6.400 /mm³",
+    "Segmentados: 3.900 /mm³",
+    "Plaquetas: 260.000 /mm³",
+    "RDW: 12,8 %",
+    "GLICEMIA DE JEJUM",
+    "Glicemia: 112 mg/dL",
+    "HEMOGLOBINA GLICADA",
+    "Hb A1c: 6,1 %",
+    "PERFIL LIPÍDICO",
+    "Colesterol Total: 215 mg/dL",
+    "Colesterol HDL: 52 mg/dL",
+    "Triglicerídeos: 185 mg/dL",
+    "FUNÇÃO RENAL",
+    "Ureia: 28 mg/dL",
+    "Creatinina: 0,82 mg/dL",
+    "Ácido Úrico: 4,6 mg/dL",
+    "TSH: 5,40 mUI/L",
+    "T4 Livre: 1,15 ng/dL",
+    "TGO: 21 U/L",
+    "TGP: 24 U/L",
+    "Sódio: 139 mEq/L",
+    "Potássio: 4,2 mEq/L",
+    "Vitamina D (25-OH): 34 ng/mL",
+    "Vitamina B12: 480 pg/mL"
+  ];
+
+  function exibirModalChecklist(parsed, tituloOpcional, base64Pdf) {
+    var backdrop = garantirBackdrop();
+
+    // Prepara lista de itens para o checklist
+    var itensChecklist = [];
+
+    CAMPOS_FIXOS.forEach(function (campo) {
+      var val = parsed.valores[campo.id];
+      if (val && String(val).trim()) {
+        var alterado = verificarForaDaReferencia(campo.id, val, parsed.sexo, parsed.idade);
+        itensChecklist.push(criarItemChecklist(campo.id, campo.label, String(val).trim(), !!campo.calculado, campo.id, alterado));
+      }
+    });
+
+    if (parsed.extras && parsed.extras.length) {
+      parsed.extras.forEach(function (extra, idx) {
+        if (extra.valor && String(extra.valor).trim()) {
+          var alterado = verificarForaDaReferencia(extra.label, extra.valor, parsed.sexo, parsed.idade);
+          itensChecklist.push(criarItemChecklist('extra_' + idx, extra.label, String(extra.valor).trim(), false, null, alterado));
+        }
+      });
+    }
+
+    if (!itensChecklist.length) {
+      backdrop.innerHTML = [
+        '<div id="fmed-exames-modal">',
+        '  <div class="header">',
+        '    <div class="titulo-box">',
+        '      <span class="badge">LABORATÓRIO</span>',
+        '      <h3 class="titulo">Nenhum exame reconhecido</h3>',
+        '      <p class="subtitulo">O laudo foi lido, mas nenhum exame compatível com o template foi identificado.</p>',
+        '    </div>',
+        '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo">✕</button>',
+        '  </div>',
+        '</div>'
+      ].join('');
+      backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
+      return;
+    }
+
+    var subTitulo = parsed.nomePaciente
+      ? (parsed.data ? parsed.data + ' — ' : '') + parsed.nomePaciente
+      : (tituloOpcional || 'Laudo Importado');
+
+    var metadataInfo = [
+      parsed.idade ? parsed.idade + ' anos' : '',
+      parsed.sexo ? 'sexo ' + parsed.sexo : ''
+    ].filter(Boolean).join(', ');
+
+    var subtituloTexto = metadataInfo ? subTitulo + ' (' + metadataInfo + ')' : subTitulo;
+
+    var htmlChecklist = '';
+    itensChecklist.forEach(function (item, idx) {
+      var classeValor = item.alterado ? 'item-valor alterado' : 'item-valor';
+      var classeCard = item.alterado ? 'check-card selected card-alterado' : 'check-card selected';
+      var tituloValor = item.alterado ? ' title="Valor fora dos limites de referência habituais"' : '';
+      htmlChecklist += [
+        '<label class="' + classeCard + '" id="fmed-card-' + idx + '" data-idx="' + idx + '">',
+        '  <input type="checkbox" id="fmed-chk-' + idx + '" checked>',
+        '  <span class="item-info">',
+        '    <span class="item-label">' + item.label + '</span>',
+        '    <span class="' + classeValor + '"' + tituloValor + '>' + item.valor + '</span>',
+        '  </span>',
+        '</label>'
+      ].join('');
+    });
+
+    var metadataObj = { idade: parsed.idade, sexo: parsed.sexo };
+    var textoInicial = gerarTextoDeItens(itensChecklist, parsed.data, metadataObj);
+
+    var botaoVerPdf = base64Pdf
+      ? '<button type="button" class="btn btn-secundario" id="fmed-ver-pdf">Ver Laudo PDF</button>'
+      : '<button type="button" class="btn btn-secundario" id="fmed-ver-pdf" style="display:none;">Ver Laudo PDF</button>';
+
+    backdrop.innerHTML = [
+      '<div id="fmed-exames-modal">',
+      '  <div id="fmed-view-checklist" style="display:flex;flex-direction:column;gap:12px;">',
+      '    <div class="header">',
+      '      <div class="titulo-box">',
+      '        <div><span class="badge">LABORATÓRIO</span></div>',
+      '        <h3 class="titulo">' + subtituloTexto + '</h3>',
+      '        <span class="subtitulo" id="fmed-counter">' + itensChecklist.length + ' de ' + itensChecklist.length + ' exames selecionados</span>',
+      '      </div>',
+      '      <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo" title="Fechar">✕</button>',
+      '    </div>',
+      '    <div class="checklist-toolbar">',
+      '      <span>Selecione os exames a incluir:</span>',
+      '      <div class="toolbar-actions">',
+      '        <button type="button" class="link-acao" id="fmed-sel-todos">Selecionar todos</button>',
+      '        <button type="button" class="link-acao" id="fmed-des-todos">Desmarcar todos</button>',
+      '      </div>',
+      '    </div>',
+      '    <div class="checklist-container" id="fmed-checklist-box">',
+      htmlChecklist,
+      '    </div>',
+      '    <div class="output-section">',
+      '      <textarea id="fmed-texto" spellcheck="false"></textarea>',
+      '    </div>',
+      '    <div class="acoes">',
+      botaoVerPdf,
+      '      <div style="display:flex;gap:8px;margin-left:auto;">',
+      '        <button type="button" class="btn btn-prevent" id="fmed-prevent-abrir">Calcular PREVENT</button>',
+      '        <button type="button" class="btn btn-primary" id="fmed-copiar">Copiar</button>',
+      '      </div>',
+      '    </div>',
+      '  </div>',
+      '  <div id="fmed-view-prevent" class="prevent-view" style="display:none;"></div>',
+      '</div>'
     ].join('');
-    p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
+
+    var area = backdrop.querySelector('#fmed-texto');
+    area.value = textoInicial;
+
+    var btnCopiar = backdrop.querySelector('#fmed-copiar');
+    var counterEl = backdrop.querySelector('#fmed-counter');
+    var copiaTimer = null;
+
+    function sinalizarCopia(ok) {
+      window.clearTimeout(copiaTimer);
+      if (!ok) {
+        btnCopiar.textContent = 'Copie com Ctrl+C';
+        btnCopiar.className = 'btn btn-secundario';
+        return;
+      }
+      btnCopiar.textContent = '✓ Copiado!';
+      btnCopiar.className = 'btn btn-primary btn-copiado';
+      copiaTimer = window.setTimeout(function () {
+        if (!btnCopiar.parentNode) return;
+        btnCopiar.textContent = 'Copiar';
+        btnCopiar.className = 'btn btn-primary';
+      }, 3000);
+    }
+
+    function atualizarEstadoVisual() {
+      var selecionados = 0;
+      itensChecklist.forEach(function (item, idx) {
+        var card = backdrop.querySelector('#fmed-card-' + idx);
+        var chk = backdrop.querySelector('#fmed-chk-' + idx);
+        if (card && chk) {
+          chk.checked = item.selected;
+          if (item.selected) {
+            card.className = item.alterado ? 'check-card selected card-alterado' : 'check-card selected';
+            selecionados++;
+          } else {
+            card.className = item.alterado ? 'check-card card-alterado' : 'check-card';
+          }
+        }
+      });
+      counterEl.textContent = selecionados + ' de ' + itensChecklist.length + ' exames selecionados';
+      area.value = gerarTextoDeItens(itensChecklist, parsed.data, metadataObj);
+    }
+
+    // Event listeners para os checkboxes
+    itensChecklist.forEach(function (item, idx) {
+      var card = backdrop.querySelector('#fmed-card-' + idx);
+      var chk = backdrop.querySelector('#fmed-chk-' + idx);
+      if (chk) {
+        chk.addEventListener('change', function (ev) {
+          ev.stopPropagation();
+          item.selected = chk.checked;
+          atualizarEstadoVisual();
+        });
+      }
+      if (card) {
+        card.addEventListener('click', function (ev) {
+          if (ev.target && ev.target.tagName === 'INPUT') return;
+          item.selected = !item.selected;
+          atualizarEstadoVisual();
+        });
+      }
+    });
+
+    // Selecionar todos / Desmarcar todos
+    backdrop.querySelector('#fmed-sel-todos').addEventListener('click', function () {
+      itensChecklist.forEach(function (i) { i.selected = true; });
+      atualizarEstadoVisual();
+    });
+
+    backdrop.querySelector('#fmed-des-todos').addEventListener('click', function () {
+      itensChecklist.forEach(function (i) { i.selected = false; });
+      atualizarEstadoVisual();
+    });
+
+    // Copiar
+    btnCopiar.addEventListener('click', function () {
+      copiarParaClipboard(area.value).then(function (ok) {
+        sinalizarCopia(ok);
+        if (!ok) { area.focus(); area.select(); }
+      });
+    });
+
+    // Ver Laudo PDF se houver base64
+    if (base64Pdf) {
+      var btnVerPdf = backdrop.querySelector('#fmed-ver-pdf');
+      if (btnVerPdf) {
+        btnVerPdf.addEventListener('click', function () {
+          abrirVisualizadorPdf(base64Pdf, subTitulo);
+        });
+      }
+    }
+
+    // Fechar botão
+    backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
+
+    /* =========================================================================
+     * PREVENT — PERGUNTA O QUE FALTA E CALCULA AUTOMATICAMENTE
+     * ====================================================================== */
+    var preventConstruido = false;
+
+    function valorDoChecklist(fieldKey) {
+      for (var k = 0; k < itensChecklist.length; k++) {
+        var it = itensChecklist[k];
+        if (it.selected && it.fieldKey === fieldKey) return it.valor;
+      }
+      return '';
+    }
+
+    function irParaPrevent() {
+      var view = backdrop.querySelector('#fmed-view-prevent');
+      if (!preventConstruido) {
+        montarPreventView(view);
+        preventConstruido = true;
+      }
+      backdrop.querySelector('#fmed-view-checklist').style.display = 'none';
+      view.style.display = 'flex';
+    }
+
+    function voltarParaChecklist() {
+      var view = backdrop.querySelector('#fmed-view-prevent');
+      if (view) view.style.display = 'none';
+      backdrop.querySelector('#fmed-view-checklist').style.display = 'flex';
+    }
+
+    function montarPreventView(view) {
+      var dp = {
+        idade: parsed.idade ? String(parsed.idade) : '',
+        sexo: parsed.sexo || '',
+        pas: '',
+        ct: valorDoChecklist('ct'),
+        hdl: valorDoChecklist('hdl'),
+        trig: valorDoChecklist('trig'),
+        cr: valorDoChecklist('cr'),
+        hba1c: valorDoChecklist('hba1c'),
+        rac: valorDoChecklist('rac'),
+        ldl: valorDoChecklist('ldl'),
+        lpa: '',
+        cac: '',
+        diabetes: false,
+        fumante: false,
+        antiHipertensivos: false,
+        usoEstatinas: false,
+        doencaAtero: false,
+        subclinica: false
+      };
+
+      var hbaInicial = prevNum(dp.hba1c);
+      if (!isNaN(hbaInicial) && hbaInicial >= 6.5) dp.diabetes = true;
+
+      function campoNumero(key, label, placeholder, passo) {
+        return [
+          '<div class="prevent-field-group">',
+          '  <label>' + label + '</label>',
+          '  <input type="number" class="prevent-input" data-prevent-key="' + key + '" value="' + prevEscapar(dp[key]) + '" placeholder="' + placeholder + '"' + (passo ? ' step="' + passo + '"' : '') + '>',
+          '</div>'
+        ].join('');
+      }
+
+      function campoSexo() {
+        return [
+          '<div class="prevent-field-group">',
+          '  <label>Sexo</label>',
+          '  <div class="prevent-switch-group">',
+          '    <button type="button" class="switch-opt' + (dp.sexo === 'F' ? ' active' : '') + '" data-key="sexo" data-val="F">Feminino</button>',
+          '    <button type="button" class="switch-opt' + (dp.sexo === 'M' ? ' active' : '') + '" data-key="sexo" data-val="M">Masculino</button>',
+          '  </div>',
+          '</div>'
+        ].join('');
+      }
+
+      function campoToggle(key, label, valorAtual) {
+        return [
+          '<div class="prevent-toggle-item">',
+          '  <span class="prevent-toggle-label">' + label + '</span>',
+          '  <div class="prevent-switch-group">',
+          '    <button type="button" class="switch-opt' + (valorAtual ? ' active' : '') + '" data-key="' + key + '" data-val="true">Sim</button>',
+          '    <button type="button" class="switch-opt' + (!valorAtual ? ' active' : '') + '" data-key="' + key + '" data-val="false">Não</button>',
+          '  </div>',
+          '</div>'
+        ].join('');
+      }
+
+      function campoCac() {
+        var opcoes = [
+          { valor: '', label: 'Não informado' },
+          { valor: '<10', label: '< 10 UA' },
+          { valor: '10-100', label: '10-100 UA' },
+          { valor: '100-300', label: '100-300 UA' },
+          { valor: '>300', label: '> 300 UA' }
+        ];
+        var html = [
+          '<div class="prevent-field-group">',
+          '  <label>CAC (escore de cálcio coronariano)</label>',
+          '  <select class="prevent-input" data-prevent-key="cac">'
+        ];
+        for (var o = 0; o < opcoes.length; o++) {
+          html.push('<option value="' + opcoes[o].valor + '"' + (dp.cac === opcoes[o].valor ? ' selected' : '') + '>' + opcoes[o].label + '</option>');
+        }
+        html.push('  </select>', '</div>');
+        return html.join('');
+      }
+
+      var faltantes = [];
+      if (!dp.idade) faltantes.push(campoNumero('idade', 'Idade (anos)', 'Ex: 62', '1'));
+      if (!dp.sexo) faltantes.push(campoSexo());
+      if (!dp.pas) faltantes.push(campoNumero('pas', 'Pressão arterial sistólica (mmHg)', 'Ex: 138', '1'));
+      if (!dp.ct) faltantes.push(campoNumero('ct', 'Colesterol total (mg/dL)', 'Ex: 210', '1'));
+      if (!dp.hdl) faltantes.push(campoNumero('hdl', 'HDL-c (mg/dL)', 'Ex: 48', '1'));
+
+      var adicionais = [];
+      if (!dp.ldl && !(dp.ct && dp.hdl && dp.trig)) adicionais.push(campoNumero('ldl', 'LDL-c (mg/dL)', 'Opcional', '1'));
+      if (!dp.hba1c) adicionais.push(campoNumero('hba1c', 'HbA1c (%)', 'Opcional', '0.1'));
+      if (!dp.rac) adicionais.push(campoNumero('rac', 'RAC (mg/g)', 'Opcional', '0.1'));
+      adicionais.push(campoNumero('lpa', 'Lp(a) (mg/dL)', 'Opcional', '0.1'));
+      adicionais.push(campoCac());
+
+      var toggles = [
+        campoToggle('diabetes', 'Diabetes', !!dp.diabetes),
+        campoToggle('fumante', 'Tabagismo', !!dp.fumante),
+        campoToggle('antiHipertensivos', 'Anti-hipertensivo', !!dp.antiHipertensivos),
+        campoToggle('usoEstatinas', 'Estatina', !!dp.usoEstatinas),
+        campoToggle('doencaAtero', 'Doença aterosclerótica', !!dp.doencaAtero),
+        campoToggle('subclinica', 'Aterosclerose subclínica', !!dp.subclinica)
+      ].join('');
+
+      view.innerHTML = [
+        '<div class="header">',
+        '  <div class="titulo-box">',
+        '    <div><span class="badge">PREVENT</span></div>',
+        '    <h3 class="titulo">Risco cardiovascular em 10 anos</h3>',
+        '    <span class="subtitulo">Complete os dados ausentes — o cálculo é automático.</span>',
+        '  </div>',
+        '  <button type="button" class="btn-fechar-topo" id="fmed-prevent-fechar" title="Fechar">✕</button>',
+        '</div>',
+        '<div class="prevent-corpo">',
+        '  <div class="prevent-painel-dados">',
+        '    <div>',
+        '      <div class="prevent-mini-titulo">Dados do laudo</div>',
+        '      <div class="prevent-chips-box" id="fmed-prevent-chips"></div>',
+        '    </div>',
+        '    <div>',
+        '      <div class="prevent-mini-titulo">Completar dados</div>',
+        '      <div style="display:flex;flex-direction:column;gap:8px;">',
+        faltantes.length ? faltantes.join('') : '<div class="prevent-crit-item" style="opacity:.7;">Nenhum dado obrigatório ausente.</div>',
+        '      </div>',
+        '    </div>',
+        '    <div>',
+        '      <div class="prevent-mini-titulo">Fatores clínicos</div>',
+        '      <div class="prevent-toggles-grid">',
+        toggles,
+        '      </div>',
+        '    </div>',
+        '    <div>',
+        '      <div class="prevent-mini-titulo">Biomarcadores adicionais</div>',
+        '      <div style="display:flex;flex-direction:column;gap:8px;">',
+        adicionais.join(''),
+        '      </div>',
+        '    </div>',
+        '  </div>',
+        '  <div id="fmed-prevent-resultado"></div>',
+        '</div>',
+        '<div class="acoes" style="justify-content:flex-end;">',
+        '  <button type="button" class="btn btn-secundario" id="fmed-prevent-voltar">Voltar ao checklist</button>',
+        '</div>'
+      ].join('');
+
+      var chipsEl = view.querySelector('#fmed-prevent-chips');
+      var resultadoEl = view.querySelector('#fmed-prevent-resultado');
+      var ultimoResultado = null;
+
+      function escopoDados() {
+        var dados = {
+          idade: dp.idade,
+          sexo: dp.sexo,
+          pas: dp.pas,
+          ct: dp.ct,
+          hdl: dp.hdl,
+          trig: dp.trig,
+          cr: dp.cr,
+          ldl: dp.ldl,
+          hba1c: dp.hba1c,
+          rac: dp.rac,
+          tfg: '',
+          lpa: dp.lpa,
+          cac: dp.cac,
+          diabetes: !!dp.diabetes,
+          fumante: !!dp.fumante,
+          antiHipertensivos: !!dp.antiHipertensivos,
+          usoEstatinas: !!dp.usoEstatinas,
+          doencaAtero: !!dp.doencaAtero,
+          subclinica: !!dp.subclinica
+        };
+        if (!dados.ldl && dados.ct && dados.hdl && dados.trig) {
+          var ldlCalc = calcLdl(dados);
+          if (ldlCalc) dados.ldl = ldlCalc;
+        }
+        if (dados.cr && dados.idade && dados.sexo) {
+          var tfgCalc = calcTfg(dados);
+          if (tfgCalc) dados.tfg = tfgCalc;
+        }
+        return dados;
+      }
+
+      function renderChips(dados) {
+        var chips = [];
+        function add(label, val, sufixo) {
+          if (val === '' || val === null || val === undefined) return;
+          if (String(val).trim() === '') return;
+          chips.push('<span class="prevent-chip prevent-chip-ok">' + label + ': <b>' + prevEscapar(val) + (sufixo || '') + '</b></span>');
+        }
+        add('Idade', dados.idade, ' anos');
+        add('Sexo', dados.sexo === 'F' ? 'Feminino' : dados.sexo === 'M' ? 'Masculino' : dados.sexo);
+        add('PAS', dados.pas, ' mmHg');
+        add('CT', dados.ct);
+        add('HDL', dados.hdl);
+        add('LDL', dados.ldl);
+        add('Trig', dados.trig);
+        add('HbA1c', dados.hba1c, '%');
+        add('RAC', dados.rac);
+        add('Lp(a)', dados.lpa);
+        add('TFG', dados.tfg);
+        add('CAC', dados.cac);
+        chipsEl.innerHTML = chips.length ? chips.join('') : '<span class="prevent-crit-item" style="opacity:.7;">Nenhum dado identificado no laudo.</span>';
+      }
+
+      function ligarBotaoCopiarPrevent() {
+        var btn = resultadoEl.querySelector('#fmed-prevent-copiar');
+        if (!btn) return;
+        var timerCopia = null;
+        btn.addEventListener('click', function () {
+          if (!ultimoResultado) return;
+          copiarParaClipboard(textoPrevent(ultimoResultado)).then(function (ok) {
+            if (!ok) return;
+            window.clearTimeout(timerCopia);
+            btn.innerHTML = PREVENT_SVG_OK;
+            btn.classList.add('copiado');
+            btn.title = 'Copiado!';
+            timerCopia = window.setTimeout(function () {
+              if (!btn.parentNode) return;
+              btn.innerHTML = PREVENT_SVG_COPIAR;
+              btn.classList.remove('copiado');
+              btn.title = 'Copiar PREVENT';
+            }, 3000);
+          });
+        });
+      }
+
+      function atualizarPrevent() {
+        var dados = escopoDados();
+        renderChips(dados);
+        var faltando = [];
+        if (!dados.idade) faltando.push('Idade');
+        if (!dados.sexo) faltando.push('Sexo');
+        if (!dados.pas) faltando.push('Pressão arterial sistólica');
+        if (!dados.ct) faltando.push('Colesterol total');
+        if (!dados.hdl) faltando.push('HDL-c');
+        ultimoResultado = faltando.length ? null : calcularPrevent(dados);
+        if (ultimoResultado) {
+          resultadoEl.innerHTML = htmlResultadoPrevent(ultimoResultado);
+          ligarBotaoCopiarPrevent();
+        } else {
+          resultadoEl.innerHTML = htmlFaltandoPrevent(faltando);
+        }
+      }
+
+      var entradas = view.querySelectorAll('[data-prevent-key]');
+      for (var k = 0; k < entradas.length; k++) {
+        (function (el) {
+          var key = el.getAttribute('data-prevent-key');
+          function aplicar() {
+            dp[key] = el.value;
+            atualizarPrevent();
+          }
+          el.addEventListener('input', aplicar);
+          el.addEventListener('change', aplicar);
+        })(entradas[k]);
+      }
+
+      var switches = view.querySelectorAll('.switch-opt');
+      for (var s = 0; s < switches.length; s++) {
+        (function (btn) {
+          btn.addEventListener('click', function () {
+            var key = btn.getAttribute('data-key');
+            var val = btn.getAttribute('data-val');
+            dp[key] = val === 'true' ? true : val === 'false' ? false : val;
+            var irmaos = btn.parentNode.querySelectorAll('.switch-opt');
+            for (var q = 0; q < irmaos.length; q++) irmaos[q].className = 'switch-opt';
+            btn.className = 'switch-opt active';
+            atualizarPrevent();
+          });
+        })(switches[s]);
+      }
+
+      view.querySelector('#fmed-prevent-fechar').addEventListener('click', fecharPainel);
+      view.querySelector('#fmed-prevent-voltar').addEventListener('click', voltarParaChecklist);
+
+      atualizarPrevent();
+    }
+
+    backdrop.querySelector('#fmed-prevent-abrir').addEventListener('click', irParaPrevent);
+
+    // Fechar ao clicar fora do modal
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) fecharPainel();
+    });
+
+    // Auto-cópia imediata para conveniência
+    copiarParaClipboard(textoInicial).then(function (ok) {
+      if (ok) sinalizarCopia(true);
+    });
+  }
+
+  function previewDemonstracao(linhasCustomizadas) {
+    var linhas = linhasCustomizadas || LINHAS_EXEMPLO;
+    var parsed = interpretarLinhasDoLaudo(linhas);
+    exibirModalChecklist(parsed, 'Laudo de Demonstração (Preview)', null);
+  }
+
+  function processarBase64(base64, tituloOpcional) {
+    var backdrop = garantirBackdrop();
+    backdrop.innerHTML = [
+      '<div id="fmed-exames-modal">',
+      '  <div class="header">',
+      '    <div class="titulo-box">',
+      '      <span class="badge">LABORATÓRIO</span>',
+      '      <h3 class="titulo">Extraindo dados do laudo...</h3>',
+      '      <p class="subtitulo">Processando texto do PDF...</p>',
+      '    </div>',
+      '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo">✕</button>',
+      '  </div>',
+      '</div>'
+    ].join('');
+
+    backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
 
     return extrairTextoDoPdf(base64).then(function (linhas) {
       if (!linhas || !linhas.length) {
         throw new Error('Nenhum texto pôde ser extraído do PDF.');
       }
       var parsed = interpretarLinhasDoLaudo(linhas);
-      var linhaFinal = montarLinhaFinal(parsed);
-
-      if (!linhaFinal) {
-        p.innerHTML = [
-          '<div class="header">',
-          '  <span class="badge">LABORATÓRIO</span>',
-          '  <span class="titulo">Nenhum exame reconhecido</span>',
-          '</div>',
-          '<div class="info-msg">O laudo foi lido, mas nenhum exame compatível com o template foi identificado.</div>',
-          '<div class="acoes"><button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button></div>'
-        ].join('');
-        p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
-        return;
-      }
-
-      var subTitulo = parsed.nomePaciente
-        ? (parsed.data ? parsed.data + ' — ' : '') + parsed.nomePaciente
-        : (tituloOpcional || 'Laudo Extraído');
-
-      p.innerHTML = [
-        '<div class="header">',
-        '  <span class="badge">LABORATÓRIO</span>',
-        '  <span class="titulo">' + subTitulo + '</span>',
-        '  <span class="status">Formato exames_ui</span>',
-        '</div>',
-        '<textarea id="fmed-texto" spellcheck="false"></textarea>',
-        '<div class="acoes">',
-        '  <button type="button" class="btn-primary" id="fmed-copiar">Copiar</button>',
-        '  <button type="button" class="btn-secundario" id="fmed-ver-pdf">Ver Laudo PDF</button>',
-        '  <button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button>',
+      exibirModalChecklist(parsed, tituloOpcional, base64);
+    }).catch(function (err) {
+      backdrop.innerHTML = [
+        '<div id="fmed-exames-modal">',
+        '  <div class="header">',
+        '    <div class="titulo-box">',
+        '      <span class="badge" style="background:#ba120a;">LABORATÓRIO</span>',
+        '      <h3 class="titulo" style="color:#ba120a;">Falha na leitura</h3>',
+        '      <p class="subtitulo">' + (err && err.message ? err.message : String(err)) + '</p>',
+        '    </div>',
+        '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo">✕</button>',
+        '  </div>',
         '</div>'
       ].join('');
-
-      var area = p.querySelector('#fmed-texto');
-      area.value = linhaFinal;
-
-      var btnCopiar = p.querySelector('#fmed-copiar');
-      btnCopiar.addEventListener('click', function () {
-        copiarParaClipboard(area.value).then(function (ok) {
-          btnCopiar.textContent = ok ? '✓ Copiado!' : 'Copie com Ctrl+C';
-          btnCopiar.className = ok ? 'btn-primary btn-copiado' : 'btn-secundario';
-          if (!ok) { area.focus(); area.select(); }
-        });
-      });
-
-      p.querySelector('#fmed-ver-pdf').addEventListener('click', function () {
-        abrirVisualizadorPdf(base64, subTitulo);
-      });
-
-      p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
-
-      area.focus();
-      area.select();
-
-      // Auto-cópia para comodidade imediata
-      copiarParaClipboard(linhaFinal).then(function (ok) {
-        if (ok) {
-          btnCopiar.textContent = '✓ Copiado!';
-          btnCopiar.className = 'btn-primary btn-copiado';
-        }
-      });
-    }).catch(function (err) {
-      p.innerHTML = [
-        '<div class="header">',
-        '  <span class="badge">LABORATÓRIO</span>',
-        '  <span class="titulo" style="color:#ba120a;">Falha na leitura</span>',
-        '</div>',
-        '<div class="info-msg" style="color:#ba120a;">' + (err && err.message ? err.message : String(err)) + '</div>',
-        '<div class="acoes"><button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button></div>'
-      ].join('');
-      p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
+      backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
     });
   }
 
@@ -909,7 +2168,7 @@
     var limite = Date.now() + CFG.segundosVigia * 1000;
 
     vigiaTimer = setInterval(function () {
-      if (!document.getElementById('fmed-exames-root')) {
+      if (!document.getElementById('fmed-exames-backdrop')) {
         pararVigia();
         return;
       }
@@ -935,14 +2194,15 @@
       datas = [];
     }
 
-    var p = garantirPainel();
-    p.className = 'aguardando';
+    var backdrop = garantirBackdrop();
 
     var htmlDatas = '';
     if (datas.length) {
       htmlDatas = [
-        '<div class="datas-box">',
-        '  <div class="info-msg" style="font-weight:600;margin-bottom:4px;">Ou selecione uma data da grade para buscar direto:</div>',
+        '<div style="margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--fmed-border);">',
+        '  <div style="font-size: 12px; font-weight: 600; color: var(--fmed-text); margin-bottom: 6px;">',
+        '    Ou clique em uma data da grade para carregar e selecionar:',
+        '  </div>',
         '  <div class="datas-lista">'
       ].join('');
 
@@ -953,24 +2213,40 @@
       htmlDatas += '</div></div>';
     }
 
-    p.innerHTML = [
-      '<div class="header">',
-      '  <span class="badge">LABORATÓRIO</span>',
-      '  <span class="titulo">Aguardando abertura de laudo...</span>',
-      '</div>',
-      '<div class="info-msg">',
-      '  Abra a lupa <b>Visualizar Histórico de Resultados</b> na aba <b>Laudos de Exames</b>. ',
-      '  Assim que o laudo aparecer na tela, ele será transcrito automaticamente.',
-      '</div>',
+    backdrop.innerHTML = [
+      '<div id="fmed-exames-modal">',
+      '  <div class="header">',
+      '    <div class="titulo-box">',
+      '      <div><span class="badge">LABORATÓRIO</span></div>',
+      '      <h3 class="titulo">Aguardando abertura de laudo...</h3>',
+      '      <p class="subtitulo" style="margin-top: 4px; line-height: 1.5;">',
+      '        Abra a lupa <b>Visualizar Histórico de Resultados</b> na aba <b>Laudos de Exames</b>. ',
+      '        Assim que o laudo aparecer na tela, o checklist abrirá automaticamente.',
+      '      </p>',
+      '    </div>',
+      '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo" title="Fechar">✕</button>',
+      '  </div>',
       htmlDatas,
-      '<div class="acoes" style="margin-top:10px;">',
-      '  <button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button>',
+      '  <div class="acoes" style="justify-content: flex-start; margin-top: 10px;">',
+      '    <button type="button" class="btn btn-secundario" id="fmed-btn-demo" style="color:var(--fmed-ok);border-color:var(--fmed-ok-border);">🧪 Ver laudo de exemplo (preview)</button>',
+      '  </div>',
       '</div>'
     ].join('');
 
-    p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
+    var btnDemo = backdrop.querySelector('#fmed-btn-demo');
+    if (btnDemo) {
+      btnDemo.addEventListener('click', function () {
+        previewDemonstracao();
+      });
+    }
 
-    var botoesData = p.querySelectorAll('.fmed-btn-data');
+    backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
+
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === backdrop) fecharPainel();
+    });
+
+    var botoesData = backdrop.querySelectorAll('.fmed-btn-data');
     for (var i = 0; i < botoesData.length; i++) {
       botoesData[i].addEventListener('click', function (ev) {
         var idx = parseInt(ev.currentTarget.getAttribute('data-index'), 10);
@@ -978,29 +2254,36 @@
         if (!item) return;
 
         pararVigia();
-        p.className = '';
-        p.innerHTML = [
-          '<div class="header">',
-          '  <span class="badge">LABORATÓRIO</span>',
-          '  <span class="titulo">Buscando laudo de ' + item.data + '...</span>',
-          '</div>',
-          '<div class="info-msg">Requisitando laudo ao servidor do FastMedic...</div>',
-          '<div class="acoes"><button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button></div>'
+        backdrop.innerHTML = [
+          '<div id="fmed-exames-modal">',
+          '  <div class="header">',
+          '    <div class="titulo-box">',
+          '      <span class="badge">LABORATÓRIO</span>',
+          '      <h3 class="titulo">Buscando laudo de ' + item.data + '...</h3>',
+          '      <p class="subtitulo">Requisitando laudo ao servidor do FastMedic...</p>',
+          '    </div>',
+          '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo">✕</button>',
+          '  </div>',
+          '</div>'
         ].join('');
-        p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
+        backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
 
         baixarLaudoPorProtocolo(item.protocolo).then(function (b64) {
           processarBase64(b64, 'Laudo de ' + item.data);
         }).catch(function (erro) {
-          p.innerHTML = [
-            '<div class="header">',
-            '  <span class="badge">LABORATÓRIO</span>',
-            '  <span class="titulo" style="color:#ba120a;">Erro ao buscar laudo</span>',
-            '</div>',
-            '<div class="info-msg" style="color:#ba120a;">' + (erro && erro.message ? erro.message : String(erro)) + '</div>',
-            '<div class="acoes"><button type="button" class="btn-secundario" id="fmed-fechar">Fechar</button></div>'
+          backdrop.innerHTML = [
+            '<div id="fmed-exames-modal">',
+            '  <div class="header">',
+            '    <div class="titulo-box">',
+            '      <span class="badge" style="background:#ba120a;">LABORATÓRIO</span>',
+            '      <h3 class="titulo" style="color:#ba120a;">Erro ao buscar laudo</h3>',
+            '      <p class="subtitulo">' + (erro && erro.message ? erro.message : String(erro)) + '</p>',
+            '    </div>',
+            '    <button type="button" class="btn-fechar-topo" id="fmed-fechar-topo">✕</button>',
+            '  </div>',
+            '</div>'
           ].join('');
-          p.querySelector('#fmed-fechar').addEventListener('click', fecharPainel);
+          backdrop.querySelector('#fmed-fechar-topo').addEventListener('click', fecharPainel);
         });
       });
     }
@@ -1026,11 +2309,17 @@
    * EXPOSIÇÃO GLOBAL
    * ======================================================================== */
   window[NOME_GLOBAL] = {
-    versao: '1.0.0',
     rodando: true,
     executar: executarPrincipal,
-    fechar: fecharPainel
+    preview: previewDemonstracao,
+    fechar: fecharPainel,
+    valoresReferencia: VALORES_REFERENCIA,
+    verificarForaDaReferencia: verificarForaDaReferencia
   };
 
-  executarPrincipal();
+  if (window.__FASTMEDIC_AUTO_PREVIEW__) {
+    previewDemonstracao();
+  } else {
+    executarPrincipal();
+  }
 })();

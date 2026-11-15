@@ -147,6 +147,62 @@
     const rootDiv = document.getElementById('root');
 
     try {
+      const isJsFile = filename.endsWith('.js');
+      if (isJsFile) {
+        const response = await fetch(filename + '?' + CACHE_BUST);
+        if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
+        const jsCode = await response.text();
+
+        window.__FASTMEDIC_AUTO_PREVIEW__ = true;
+        const scriptEl = document.createElement('script');
+        scriptEl.textContent = jsCode;
+        document.body.appendChild(scriptEl);
+
+        if (rootDiv._reactRoot) {
+          rootDiv._reactRoot.unmount();
+        }
+        const root = ReactDOM.createRoot(rootDiv);
+        rootDiv._reactRoot = root;
+
+        root.render(
+          React.createElement('div', {
+            style: {
+              maxWidth: '680px',
+              margin: '40px auto',
+              padding: '24px 28px',
+              background: '#ffffff',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+              border: '1px solid #e5e7eb',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+          }, [
+            React.createElement('div', { key: 'badge', style: { display: 'inline-block', background: '#0284c7', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '4px', marginBottom: '8px' } }, 'BOOKMARKLET PREVIEW'),
+            React.createElement('h2', { key: 'h2', style: { margin: '0 0 6px', fontSize: '18px', color: '#111827' } }, 'FastMedic Exames — Preview do Bookmarklet'),
+            React.createElement('p', { key: 'p', style: { margin: '0 0 20px', fontSize: '13px', color: '#6b7280', lineHeight: 1.5 } }, 'O modal interativo com checklist de exames foi inicializado sobre a tela. Use os botões abaixo para testar o popup:'),
+            React.createElement('div', { key: 'actions', style: { display: 'flex', gap: '10px', flexWrap: 'wrap' } }, [
+              React.createElement('button', {
+                key: 'btn-sample',
+                style: { background: '#0284c7', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' },
+                onClick: () => { if (window.FastMedicExames) window.FastMedicExames.preview(); }
+              }, 'Reabrir Popup com Laudo de Exemplo'),
+              React.createElement('button', {
+                key: 'btn-wait',
+                style: { background: '#f3f4f6', color: '#374151', border: '1px solid #d1d5db', borderRadius: '8px', padding: '10px 18px', fontWeight: 600, fontSize: '13px', cursor: 'pointer' },
+                onClick: () => { if (window.FastMedicExames) window.FastMedicExames.executar(); }
+              }, 'Abrir em Modo "Aguardando Laudo"')
+            ])
+          ])
+        );
+
+        if (window.FastMedicExames && typeof window.FastMedicExames.preview === 'function') {
+          window.FastMedicExames.preview();
+        }
+
+        errorDiv.style.display = 'none';
+        return;
+      }
+
       const response = await fetch(filename + '?' + CACHE_BUST);
       if (!response.ok) throw new Error(`Arquivo não encontrado: ${filename}`);
 
@@ -200,7 +256,14 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', loadComponent);
+  window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const fileParam = params.get('file');
+    if (fileParam) {
+      document.getElementById('filename').value = fileParam;
+    }
+    loadComponent();
+  });
   document.getElementById('filename').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') loadComponent();
   });

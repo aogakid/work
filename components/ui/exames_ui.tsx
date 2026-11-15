@@ -834,9 +834,9 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         if (!v || v.trim() === "") return null
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
-    const labPart = parts.length === 0 ? null : `(${dateBr}): ${parts.join(" // ")}`
+    const labPart = parts.length === 0 ? null : `(${dateBr}): ${parts.join(" | ")}`
     const examesExtras = pdfExamChecklist.filter((exam) => exam.selected && !exam.fieldKey).map((exam) => `${exam.label} ${exam.value}`)
-    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" // ") || null
+    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" | ") || null
     const ampaPart = ampaOutput || null
     const glicemiaPart = glicemiaOutput || null
     const all = [labPart, outrosPart, ampaPart, glicemiaPart].filter(Boolean).join("\n") || null
@@ -922,11 +922,11 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     })
     if (extras.length > 0) {
       setOutros((prev) => {
-        const parts = prev ? prev.split(" // ").filter(Boolean) : []
+        const parts = prev ? prev.split(/\s*(?:\||\/\/)\s*/).filter(Boolean) : []
         for (const ex of extras) {
           parts.push(`${ex.label} ${ex.value}`)
         }
-        return parts.join(" // ")
+        return parts.join(" | ")
       })
     }
     setPdfExamChecklist(confirmed)
@@ -961,7 +961,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
           const field = FIELDS.find((item) => isField(item) && fieldId(item.label) === key)
           return { id: key, label: field && isField(field) ? field.label : key.toUpperCase(), value, fieldKey: key, selected: !isLikelyEmpty(value) }
         })
-      const extrasReconhecidos = (res.outros || "").split(" // ").filter(Boolean).map((item, index) => {
+      const extrasReconhecidos = (res.outros || "").split(/\s*(?:\||\/\/)\s*/).filter(Boolean).map((item, index) => {
         const separator = item.lastIndexOf(" ")
         const val = item.slice(separator + 1)
         return { id: `extra-${index}`, label: item.slice(0, separator), value: val, fieldKey: null, selected: !isLikelyEmpty(val) }
@@ -1158,10 +1158,10 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
         return `${f.label} ${v.trim()}`
       }).filter(Boolean)
     const examesExtras = pdfExamChecklist.filter((exam) => exam.selected && !exam.fieldKey).map((exam) => `${exam.label} ${exam.value}`)
-    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" // ")
+    const outrosPart = [outros.trim(), ...examesExtras].filter(Boolean).join(" | ")
     if (parts.length === 0 && !outrosPart) return ""
     const allParts = outrosPart ? [...parts, outrosPart] : parts
-    return `(${dateBr}): ${allParts.join(" // ")}`
+    return `(${dateBr}): ${allParts.join(" | ")}`
   }, [date, values, outros, pdfExamChecklist])
 
   const handleCopy = useCallback(() => {
@@ -1196,7 +1196,23 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
 
   const handleAtalhoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
-    alert("Arraste este botão para a sua barra de favoritos do navegador.")
+    const globalWin = typeof window !== "undefined" ? (window as unknown as Record<string, { preview?: () => void }>) : null
+    if (globalWin && globalWin.FastMedicExames && typeof globalWin.FastMedicExames.preview === "function") {
+      globalWin.FastMedicExames.preview()
+      return
+    }
+    const script = document.createElement("script")
+    script.src = "/fastmedic-exames.js"
+    script.onload = () => {
+      const g = window as unknown as Record<string, { preview?: () => void }>
+      if (g.FastMedicExames && typeof g.FastMedicExames.preview === "function") {
+        g.FastMedicExames.preview()
+      }
+    }
+    script.onerror = () => {
+      alert("Arraste este botão para a sua barra de favoritos do navegador.")
+    }
+    document.head.appendChild(script)
   }
 
   const handleClearAll = useCallback(() => {
@@ -1965,7 +1981,7 @@ setGlicemiaMeasures(() => {
               <span style={s.label}>Outros</span>
               <input
                 type="text"
-                placeholder="ex: EAS NDN // HIV negativo // TS O+"
+                placeholder="ex: EAS NDN | HIV negativo | TS O+"
                 value={outros}
                 onChange={(e) => setOutros(e.target.value)}
                 style={{ ...s.input, textAlign: "left" }}
