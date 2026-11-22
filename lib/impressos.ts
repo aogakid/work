@@ -25,7 +25,6 @@ export const IMPRESSOS: Impresso[] = [
     { id: "mapa-glicemico-regular-descompensado-drc", titulo: "Mapa glicêmico - Regular descompensado ou DRC", arquivo: "/contents/ferramentas/mapas glicemicos/Regular - Descompensado ou DRC.pdf" },
     { id: "mapa-glicemico-regular-compensado", titulo: "Mapa glicêmico - Regular compensado", arquivo: "/contents/ferramentas/mapas glicemicos/Regular - compensado.pdf" },
     { id: "implanon-termo-checklist", titulo: "Implanon - termo e checklist", arquivo: "/contents/ferramentas/procedimentos ambulatoriais/implanon/Implanon - termo e checklist.pdf" },
-    { id: "implanon-modelo-fastmedic", titulo: "Implanon - modelo fastmedic", arquivo: "/contents/ferramentas/procedimentos ambulatoriais/implanon/Implanon - modelo fastmedic.docx" },
     { id: "pequena-cirurgia-termo-ficha", titulo: "Pequena cirurgia - termo e ficha", arquivo: "/contents/ferramentas/procedimentos ambulatoriais/pequena cirurgia/Pequena cirurgia - termo e ficha.pdf" },
     { id: "pequena-cirurgia-modelo-fastmedic", titulo: "Pequena cirurgia - modelo fastmedic", arquivo: "/contents/ferramentas/procedimentos ambulatoriais/pequena cirurgia/Pequena cirurgia - modelo fastmedic.docx" },
 ]

@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2"
 interface RequestBody {
     action?: string
     calendarId?: string
+    team?: number
     name?: string
     description?: string | null
     color?: string
@@ -64,7 +65,7 @@ const decodeBase64 = (value: string): Uint8Array => {
 
 const derivePassword = async (password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> => {
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"])
-    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, key, 256)
+    const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" }, key, 256)
     return new Uint8Array(bits)
 }
 
@@ -113,7 +114,9 @@ Deno.serve(async request => {
     if (body.action === "create_calendar") {
         const name = body.name?.trim() || ""
         const password = body.password || ""
+        const team = body.team
         if (!name) return jsonResponse(400, { error: "Calendar name is required." })
+        if (typeof team !== "number" || !Number.isInteger(team) || team < 1) return jsonResponse(400, { error: "A valid team is required." })
         if (password.length < 4) return jsonResponse(400, { error: "Use a calendar password with at least 4 characters." })
         if (password.length > 256) return jsonResponse(400, { error: "Calendar password is too long." })
         const hours = Array.isArray(body.hours) ? body.hours : []
@@ -135,6 +138,7 @@ Deno.serve(async request => {
             seenPeriods.add(key)
         }
         const { data: calendar, error: calendarError } = await admin.from("calendars").insert({
+            team,
             name,
             description: body.description?.trim() || null,
             color: body.color || "#287a70",

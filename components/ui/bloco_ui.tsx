@@ -964,6 +964,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
     const handleArrumadorInserir = useCallback((texto: string) => {
         substituirConteudo(texto)
+        setTitle("Consulta Agendada")
         setArrumadorAberto(false)
     }, [substituirConteudo])
 
@@ -1057,13 +1058,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
                                 {meta.formulario === "dados_base" ? (
-                                    <DadosBaseForm value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
+                                    <DadosBaseForm key={`${s.id}-${contentVersionRef.current[s.id] || 0}`} value={s.content} onChange={handleDadosBaseChange} idade={contextoPaciente.idade} onSexoChange={handleSexoChange} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
                                 ) : meta.formulario === "lista_problemas" ? (
-                                    <ListaProblemasForm value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
+                                    <ListaProblemasForm key={`${s.id}-${contentVersionRef.current[s.id] || 0}`} value={s.content} onChange={handleListaProblemasChange} onSendToAssessment={enviarListaProblemasParaAvaliacao} />
                                 ) : meta.formulario === "subjetivo" ? (
-                                    <SubjetivoForm value={s.content} onChange={handleSubjetivoChange} onMotivoBlur={sugerirTimerAoSairDoMotivo} />
+                                    <SubjetivoForm key={`${s.id}-${contentVersionRef.current[s.id] || 0}`} value={s.content} onChange={handleSubjetivoChange} onMotivoBlur={sugerirTimerAoSairDoMotivo} />
                                 ) : (
-                                    <ObjetivoForm value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
+                                    <ObjetivoForm key={`${s.id}-${contentVersionRef.current[s.id] || 0}`} value={s.content} onChange={handleObjetivoChange} idade={contextoPaciente.idade} mostrarPrenatal={contextoPaciente.sexo === "F" && contextoPaciente.idade !== null && contextoPaciente.idade > 14} mostrarPuericultura={mostrarCrescimentoDesenvolvimento} expandirNaoVazios={contentVersionRef.current[s.id] || 0} recolherCampos={recolherGruposTrigger || undefined} />
                                 )}
                             </div>
                         ) : (

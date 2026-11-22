@@ -4,6 +4,7 @@ import { PDFDocument, PDFHexString, PDFName } from "pdf-lib"
 
 interface CalendarRecord {
     id: string
+    team: number
     name: string
     description: string | null
     color: string
@@ -266,10 +267,18 @@ const chaveDoCampo = (rotulo: string): string => {
     return base || "campo"
 }
 
-const carregarCalendarios = async (): Promise<CalendarRecord[]> => {
-    const { data, error } = await supabase.from("calendars").select("*").eq("is_active", true).order("created_at")
+const carregarCalendarios = async (team: number): Promise<CalendarRecord[]> => {
+    const { data, error } = await supabase.from("calendars").select("*").eq("is_active", true).eq("team", team).order("created_at")
     if (error) throw error
     return (data || []) as unknown as CalendarRecord[]
+}
+
+const carregarEquipes = async (): Promise<number[]> => {
+    const { data, error } = await supabase.from("calendars").select("team").eq("is_active", true)
+    if (error) throw error
+    const teams = Array.from(new Set((data || []).map(row => Number((row as { team: number }).team)).filter(value => Number.isInteger(value) && value > 0)))
+    teams.sort((a, b) => a - b)
+    return teams
 }
 
 const carregarMetadadosCalendario = async (calendarId: string) => {
@@ -327,6 +336,10 @@ const carregarMaximoHistoricoDeConsultas = async (calendarId: string): Promise<n
 }
 
 export default function CalendarUI() {
+    const [teamId, setTeamId] = React.useState<number | null>(null)
+    const [teamInput, setTeamInput] = React.useState("")
+    const [availableTeams, setAvailableTeams] = React.useState<number[]>([])
+    const [teamsLoading, setTeamsLoading] = React.useState(true)
     const [calendars, setCalendars] = React.useState<CalendarRecord[]>([])
     const [selectedCalendarId, setSelectedCalendarId] = React.useState("")
     const [selectedDate, setSelectedDate] = React.useState("2000-01-01")
@@ -446,14 +459,26 @@ export default function CalendarUI() {
         setCalendarView("month")
     }
 
-    const refreshCalendarList = async (selectCreatedId?: string) => {
+    const refreshCalendarList = async (selectCreatedId?: string, teamOverride?: number) => {
+        const team = teamOverride ?? teamId
+        if (!team) {
+            setCalendars([])
+            setSelectedCalendarId("")
+            setLoading(false)
+            return
+        }
         try {
-            const rows = await carregarCalendarios()
+            const rows = await carregarCalendarios(team)
             setCalendars(rows)
             if (selectCreatedId) setSelectedCalendarId(selectCreatedId)
-            else if (!selectedCalendarId && rows.length) {
-                const firstSortedCalendar = [...rows].sort((left, right) => left.name.localeCompare(right.name, "pt-BR", { sensitivity: "base" }))[0]
-                setSelectedCalendarId(firstSortedCalendar.id)
+            else if (rows.length) {
+                const selectedStillExists = rows.some(calendar => calendar.id === selectedCalendarId)
+                if (!selectedCalendarId || !selectedStillExists) {
+                    const firstSortedCalendar = [...rows].sort((left, right) => left.name.localeCompare(right.name, "pt-BR", { sensitivity: "base" }))[0]
+                    setSelectedCalendarId(firstSortedCalendar.id)
+                }
+            } else {
+                setSelectedCalendarId("")
             }
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Não foi possível carregar os calendários.")
@@ -575,6 +600,18 @@ export default function CalendarUI() {
         setSelectedDate(hojeIso())
         setMonthViewStart(hojeIso().slice(0, 7) + "-01")
         setHasMounted(true)
+        const stored = window.localStorage.getItem("calendar-selected-team")
+        if (stored) setTeamInput(stored)
+        void (async () => {
+            try {
+                const teams = await carregarEquipes()
+                setAvailableTeams(teams)
+            } catch (cause) {
+                setError(cause instanceof Error ? cause.message : "Não foi possível carregar as equipes.")
+            } finally {
+                setTeamsLoading(false)
+            }
+        })()
     }, [])
 
     React.useEffect(() => {
@@ -596,10 +633,27 @@ export default function CalendarUI() {
     }
 
     React.useEffect(() => {
-        void refreshCalendarList()
-        // A lista precisa considerar o calendário selecionado ao escolher o inicial.
+        setCalendars([])
+        setSelectedCalendarId("")
+        setLoadedDetailsKey("")
+        setCalendarMetadataById({})
+        setFields([])
+        setStaff([])
+        setAppointments([])
+        setBlocks([])
+        setCalendarHours([])
+        setAppointmentCounts({})
+        setAppointmentNamesByDate({})
+        setError("")
+        setNotice("")
+        if (teamId) {
+            setLoading(true)
+            void refreshCalendarList(undefined, teamId)
+        } else {
+            setLoading(false)
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedCalendarId])
+    }, [teamId])
 
     React.useEffect(() => {
         void refreshCalendarDetails()
@@ -624,6 +678,19 @@ export default function CalendarUI() {
         setEditingAppointmentId("")
         setCalendarHours([])
     }, [selectedCalendarId])
+
+    const selecionarEquipe = (valor: number) => {
+        if (!Number.isInteger(valor) || valor < 1) {
+            setError("Informe um número de equipe válido.")
+            return
+        }
+        setError("")
+        setNotice("")
+        window.localStorage.setItem("calendar-selected-team", String(valor))
+        setTeamId(valor)
+        setTeamInput(String(valor))
+        setAvailableTeams(current => Array.from(new Set([...current, valor])).sort((a, b) => a - b))
+    }
 
     const updateScheduleDay = (weekday: number, changes: Partial<CalendarScheduleDay>) => setCalendarSchedule(current => current.map(day => day.weekday === weekday ? { ...day, ...changes } : day))
 
@@ -676,10 +743,15 @@ export default function CalendarUI() {
             return
         }
         setSaving(true)
+        if (!teamId) {
+            setError("Selecione uma equipe antes de criar um calendário.")
+            return
+        }
         try {
             const { data, error: saveError } = await supabase.functions.invoke("calendar-staff", {
                 body: {
                     action: "create_calendar",
+                    team: teamId,
                     name: calendarName.trim(),
                     description: calendarDescription.trim() || null,
                     color: calendarColor,
@@ -1167,11 +1239,42 @@ export default function CalendarUI() {
     const calendarDetailsReady = !selectedCalendarId || loadedDetailsKey === `${selectedCalendarId}:${selectedDate}`
     const calendarMetadataReady = !selectedCalendarId || Boolean(calendarMetadataById[selectedCalendarId])
 
+    if (!hasMounted || teamsLoading) {
+        return <main aria-busy="true" style={{ minHeight: "100vh", width: "100%", display: "grid", placeItems: "center", background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#78716c" : "#6b6760", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif' }}>
+            <style>{"@keyframes calendar-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .calendar-loader-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(201,106,42,.25); border-top-color: #c96a2a; animation: calendar-loader-spin .8s linear infinite; }"}</style>
+            <div role="status" aria-label="Carregando agenda" className="calendar-loader-spinner" />
+        </main>
+    }
+
+    if (teamId === null) {
+        return <main style={{ minHeight: "100vh", width: "100%", display: "grid", placeItems: "center", padding: 24, background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#f5f5f4" : "#1a1916", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif' }}>
+            <div className="calendar-surface" style={{ width: "min(460px, 100%)", display: "grid", gap: 14, padding: 24, border: "1px solid var(--editor-border, rgba(120,120,120,0.15))", borderRadius: 14, background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#f5f5f4" : "#1a1916" }}>
+                <div>
+                    <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>Selecionar equipe</h1>
+                    <div style={{ marginTop: 6, fontSize: 13, color: darkMode ? "#78716c" : "#6b6760" }}>Escolha a equipe para carregar os calendários.</div>
+                </div>
+                {error ? <div role="alert" style={{ padding: 10, borderRadius: 8, color: "#ef4444", background: "rgba(239,68,68,.1)", fontSize: 13 }}>{error}</div> : null}
+                {availableTeams.length > 0 ? <div style={{ display: "grid", gap: 8 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", color: darkMode ? "#78716c" : "#6b6760" }}>Equipes disponíveis</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        {availableTeams.map(team => <button key={team} type="button" onClick={() => selecionarEquipe(team)} style={{ border: "1px solid var(--editor-border, rgba(120,120,120,0.15))", borderRadius: 10, minHeight: 38, padding: "8px 14px", background: teamInput === String(team) ? "#e02424" : "rgba(120,120,120,0.08)", color: teamInput === String(team) ? "#fff" : "inherit", font: "600 13px \"Google Sans Flex\", \"Google Sans\", sans-serif", cursor: "pointer" }}>Equipe {team}</button>)}
+                    </div>
+                </div> : null}
+                <form onSubmit={event => { event.preventDefault(); selecionarEquipe(Number(teamInput)) }} style={{ display: "grid", gap: 10 }}>
+                    <label style={{ display: "grid", gap: 6, fontSize: 11, color: darkMode ? "#78716c" : "#6b6760", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>Número da equipe
+                        <input required inputMode="numeric" pattern="[0-9]*" value={teamInput} onChange={event => { setTeamInput(event.target.value.replace(/\D/g, "")); setError("") }} style={{ width: "100%", height: 42, boxSizing: "border-box", border: "1px solid rgba(120,120,120,0.15)", borderRadius: 10, padding: "10px 14px", color: "inherit", background: "rgba(120,120,120,0.08)", font: "14px \"Google Sans Flex\", \"Google Sans\", sans-serif" }} />
+                    </label>
+                    <button type="submit" style={{ border: "1px solid #e02424", borderRadius: 10, minHeight: 40, padding: "8px 14px", background: "#e02424", color: "#fff", font: "600 13px \"Google Sans Flex\", \"Google Sans\", sans-serif", cursor: "pointer" }}>Entrar</button>
+                </form>
+            </div>
+        </main>
+    }
+
     if (hasMounted && !loading && selectedCalendarId && !calendarMetadataReady && error) {
         return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, background: "var(--meta-bg, Canvas)", color: "var(--editor-text, CanvasText)", fontFamily: '"Google Sans Flex", sans-serif' }}><div style={{ display: "grid", justifyItems: "center", gap: 12, maxWidth: 440, textAlign: "center" }}><div role="alert" style={{ fontSize: 14 }}>{error}</div><button type="button" onClick={() => void refreshCalendarDetails()} style={{ border: "1px solid var(--meta-border, var(--editor-border, #e7e5e4))", borderRadius: 8, minHeight: 36, padding: "7px 12px", background: "var(--meta-bg, rgba(120,113,108,0.1))", color: "var(--editor-text, CanvasText)", font: '600 12px "Google Sans Flex", sans-serif', cursor: "pointer" }}>Tentar novamente</button></div></main>
     }
 
-    if (!hasMounted || loading && (!selectedCalendarId || !calendarMetadataReady) || selectedCalendarId && !calendarMetadataReady) {
+    if (loading && (!selectedCalendarId || !calendarMetadataReady) || selectedCalendarId && !calendarMetadataReady) {
         return <main aria-busy="true" style={{ minHeight: "100vh", width: "100%", display: "grid", placeItems: "center", background: darkMode ? "#1c1917" : "#ffffff", color: darkMode ? "#78716c" : "#6b6760", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif' }}>
             <style>{"@keyframes calendar-loader-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .calendar-loader-spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(201,106,42,.25); border-top-color: #c96a2a; animation: calendar-loader-spin .8s linear infinite; }"}</style>
             <div role="status" aria-label="Carregando agenda" className="calendar-loader-spinner" />
@@ -1183,6 +1286,10 @@ export default function CalendarUI() {
         <div style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
             <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
                 <h1 className="calendar-page-title" style={{ margin: 0, fontSize: 20, letterSpacing: "normal", fontWeight: 700 }}>Agenda</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span className="calendar-muted" style={{ fontSize: 12, fontWeight: 600 }}>Equipe {teamId}</span>
+                    <button type="button" style={buttonStyle} onClick={() => { setTeamId(null); setError(""); setNotice("") }}>Trocar equipe</button>
+                </div>
             </header>
 
             {error ? <div role="alert" style={{ padding: 12, marginBottom: 14, borderRadius: 8, color: "#ef4444", background: "rgba(239,68,68,.1)", border: "1px solid rgba(239,68,68,.22)", fontSize: 13 }}>{error}</div> : null}

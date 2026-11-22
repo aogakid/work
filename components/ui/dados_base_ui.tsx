@@ -154,6 +154,7 @@ interface CampoRotuloProps {
     rotulo: string
     children: React.ReactNode
     onNega?: () => void
+    onCheck?: () => void
 }
 
 function BotaoNega({ onClick }: { onClick: () => void }) {
@@ -173,12 +174,30 @@ function BotaoNega({ onClick }: { onClick: () => void }) {
     )
 }
 
-function CampoRotulado({ rotulo, children, onNega }: CampoRotuloProps) {
+function BotaoCheck({ onClick }: { onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            title="Marcar como atualizada"
+            aria-label="Marcar como atualizada"
+            style={{ width: "20px", height: "20px", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--meta-text)", opacity: 0.75, cursor: "pointer", flexShrink: 0 }}
+        >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m8 12 3 3 5-6" />
+            </svg>
+        </button>
+    )
+}
+
+function CampoRotulado({ rotulo, children, onNega, onCheck }: CampoRotuloProps) {
+    const temAcao = !!onNega || !!onCheck
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: onNega ? "20px" : undefined }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: temAcao ? "20px" : undefined }}>
                 <span style={estiloRotuloCampo}>{rotulo}</span>
-                {onNega ? <BotaoNega onClick={onNega} /> : null}
+                {onCheck ? <BotaoCheck onClick={onCheck} /> : onNega ? <BotaoNega onClick={onNega} /> : null}
             </div>
             {children}
         </div>
@@ -293,6 +312,7 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
         /* Remounted companions replay a snapshot on mount. Ignore it while this
            consultation has already been filled in, otherwise the form would
            re-adopt stale values after a reset/reload. */
+        if (value.trim()) return
         if (idCampos.idade.trim() || idCampos.sexo) return
 
         const aplicarRecebido = (idade: string | undefined, sexo: string | undefined) => {
@@ -500,7 +520,11 @@ export function DadosBaseForm({ value, onChange, idade = null, onSexoChange, exp
                     {ANTECEDENTES_CAMPOS.map(campo => {
                         if (!campo.multilinha) {
                             return (
-                                <CampoRotulado key={campo.chave} rotulo={campo.rotulo}>
+                                <CampoRotulado
+                                    key={campo.chave}
+                                    rotulo={campo.rotulo}
+                                    onCheck={campo.chave === "vacinacao" ? () => alterarAntecedente(campo.chave, "Atualizada") : undefined}
+                                >
                                     <input
                                         data-campo={campo.chave}
                                         value={antecedentesCampos[campo.chave]}
