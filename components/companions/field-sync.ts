@@ -18,6 +18,12 @@ export function getFieldSyncSnapshot(): Record<string, string> {
     return { ...lastValues }
 }
 
+export function clearFieldSync() {
+    for (const key of Object.keys(lastValues)) {
+        delete lastValues[key]
+    }
+}
+
 export function listenFieldSync(
     handler: (payload: FieldSyncPayload) => void
 ): () => void {

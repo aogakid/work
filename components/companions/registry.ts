@@ -74,7 +74,6 @@ export const COMPANIONS: CompanionConfig[] = [
             { id: "carga", label: "Carga tabágica", targetSection: "subjetivo" },
         ],
         placement: "after-objetivo",
-        when: (ctx) => idadeMinima(ctx, 18),
     },
     {
         id: "exames",

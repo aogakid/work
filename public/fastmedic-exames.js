@@ -193,9 +193,60 @@
     { label: 'VHS', padrao: /^(v\.?h\.?s\.?|velocidade\s+de\s+hemossed)/i },
     { label: 'D-Dímero', padrao: /^d[\s-]?d[íi]mero/i },
     { label: 'TIBC', padrao: /^(tibc|capacidade\s+total\s+de\s+liga)/i },
-    { label: 'SU', padrao: /^(an[áa]lise\s+de\s+caracteres\s+f[íi]sicos|sum[áa]rio\s+de\s+urina|urina\s+rotina|e\.?a\.?s\.?)/i, fixo: '*AVALIAR*' },
+    { label: 'SU:', padrao: /^(an[áa]lise\s+de\s+caracteres\s+f[íi]sicos|sum[áa]rio\s+de\s+urina|urina\s+rotina|e\.?a\.?s\.?)/i, fixo: '*AVALIAR*' },
     { label: 'Urocultura', padrao: /^(urocultura|urinocultura|cultura\s+de\s+urina)/i, fixo: '*AVALIAR*', negativoRegex: /(n[ãa]o\s+houve\s+crescimento|aus[êe]ncia\s+de\s+crescimento|cultura\s+negativa)/i, negativoTexto: '(-)' }
   ];
+
+  // Exames com resultado qualitativo (sorologias, PSOF, etc.): o valor não é número.
+  var REGRAS_QUALITATIVAS = [
+    { label: 'VDRL', padrao: /^VDRL\b/i },
+    { label: 'RPR', padrao: /^RPR\b/i },
+    { label: 'HBsAg', padrao: /^(?:HEPATITE\s*B\s*-\s*)?HBsAg\b/i },
+    { label: 'Anti-HBs', padrao: /^(?:HEPATITE\s*B\s*-\s*)?ANTI[-\s]?HBs\b/i },
+    { label: 'Anti-HCV', padrao: /^(?:HEPATITE\s*C\s*-\s*)?ANTI[-\s]?HCV\b/i },
+    { label: 'HIV', padrao: /^(?:ANTI[-\s]?)?HIV\b/i },
+    { label: 'Sífilis', padrao: /^(?:SOROLOGIA\s+(?:PARA\s+)?)?S[ÍI]FILIS\b/i },
+    { label: 'PSOF', padrao: /^(?:PSOF|PESQUISA\s+DE\s+SANGUE\s+OCULTO|SANGUE\s+OCULTO)/i }
+  ];
+
+  function normalizarResultadoQualitativo(texto) {
+    var s = String(texto || '').replace(/\s+/g, ' ').trim().toLowerCase();
+    if (/reagente/.test(s)) return /n[ãa]o\s+reagente/.test(s) ? 'Não Reagente' : 'Reagente';
+    if (/fracamente\s+positivo/.test(s)) return 'Fracamente Positivo';
+    if (/positivo/.test(s)) return 'Positivo';
+    if (/negativo/.test(s)) return 'Negativo';
+    if (/detect/.test(s)) return /n[ãa]o\s+detect/.test(s) ? 'Não Detectado' : 'Detectado';
+    return '';
+  }
+
+  function adicionarExtraUnico(extras, label, valor) {
+    if (!label || !valor) return;
+    if (extras.some(function (item) { return item.label === label; })) return;
+    extras.push({ label: label, valor: valor });
+  }
+
+  function ehCabecalhoExameQualitativo(texto) {
+    var s = String(texto || '').trim();
+    if (!s || s.length > 90 || !/[a-z]/i.test(s)) return false;
+    if (/^(resultado|leitura|interpreta[çc][ãa]o|valor\s+de\s+refer[êe]ncia|limites?\s+de|m[ée]todo|material|liberado|respons[áa]vel|origem|cl[íi]nica|nome|solicitante|prontu[áa]rio|observa[çc][õo]es)/i.test(s)) return false;
+    if (/^(n[ãa]o\s+)?reagente\b|^(negativo|positivo|fracamente\s+positivo|indeterminado)\b|^amostra\b|^o resultado\b/i.test(s)) return false;
+    if (/:/.test(s) && /\d/.test(s)) return false;
+    if (/^-{3,}|^\|/.test(s)) return false;
+    return true;
+  }
+
+  function rotuloQualitativoGenerico(texto) {
+    var s = String(texto || '').trim();
+    var partes = s.split(/\s+[-–—]\s+/);
+    var nome = partes[0] || s;
+    nome = nome.replace(/^(exame|pesquisa|teste|sorologia|determina[çc][ãa]o)\s+(para\s+)?/i, '');
+    nome = nome.replace(/\s+(soro|fezes|urina|sangue)$/i, '');
+    nome = nome.replace(/\s+(de|da|do|das|dos|nas|nos|no|na|para)$/i, '');
+    nome = nome.replace(/\s+/g, ' ').trim();
+    var palavras = nome.split(/\s+/);
+    if (palavras.length > 3) nome = palavras.slice(0, 3).join(' ');
+    return nome.slice(0, 24);
+  }
 
   /* ===========================================================================
    * FUNÇÕES DE CÁLCULO (ESPELHO DO EXAMES_UI)
@@ -306,6 +357,9 @@
    * PARSER DO TEXTO DO LAUDO
    * ======================================================================== */
   function interpretarLinhasDoLaudo(linhas) {
+    var suLinhas = linhas.su || [];
+    var suDetectado = suLinhas.length > 0;
+    var valorSU = montarValorSU(suLinhas);
     var resultado = {
       valores: {},
       extras: [],
@@ -370,10 +424,35 @@
       resultado.valores.sexo = resultado.sexo;
     }
 
+    // A seção RELAÇÃO ALBUMINA/CREATININA (urina) traz três números:
+    // albumina, creatinina e relação. Somente a relação é o RAC; as linhas
+    // de albumina/creatinina da urina não podem virar Alb/Cr séricos.
+    var ignorarLinhas = {};
+    for (var ir = 0; ir < linhas.length; ir++) {
+      var linhaRac = linhas[ir] || '';
+      if (!/^rela[çc][ãa]o\s+albumina\s*\/?\s*creatinina/i.test(linhaRac)) continue;
+      ignorarLinhas[ir] = true;
+
+      var mRacTitulo = linhaRac.match(/rela[çc][ãa]o\s+albumina\s*\/?\s*creatinina[^:]*:\s*(-?\d+(?:[.,]\d+)*)/i);
+      if (mRacTitulo) resultado.valores.rac = normalizarNumero(mRacTitulo[1]);
+
+      var fimRac = Math.min(ir + 14, linhas.length);
+      for (var jr = ir + 1; jr < fimRac; jr++) {
+        var lr = linhas[jr] || '';
+        if (/^(M[ÉE]TODO|MATERIAL|LIBERADO|RESPONS[ÁA]VEL|-{4,})/i.test(lr)) break;
+        ignorarLinhas[jr] = true;
+        if (resultado.valores.rac || !/^rela[çc][ãa]o\b/i.test(lr)) continue;
+        var mRac = lr.match(/^rela[çc][ãa]o\b[^\d:]*:\s*(-?\d+(?:[.,]\d+)*)/i) ||
+                   lr.match(/^rela[çc][ãa]o\b[^\d]*?(-?\d+(?:[.,]\d+)*)/i);
+        if (mRac) resultado.valores.rac = normalizarNumero(mRac[1]);
+      }
+    }
+
     // 2. Extração dos exames
     for (var idx = 0; idx < linhas.length; idx++) {
       var linha = linhas[idx];
       if (!linha || linha.length < 2) continue;
+      if (ignorarLinhas[idx]) continue;
 
       // Campos fixos
       for (var r = 0; r < REGRAS_PADRAO.length; r++) {
@@ -407,6 +486,11 @@
         if (!extra.padrao.test(linha)) continue;
         if (resultado.extras.some(function (item) { return item.label === extra.label; })) break;
 
+        if (extra.label === 'SU:' && suDetectado) {
+          if (valorSU) resultado.extras.push({ label: extra.label, valor: valorSU });
+          break;
+        }
+
         if (extra.fixo) {
           var txtFixo = extra.fixo;
           if (extra.negativoRegex) {
@@ -426,6 +510,50 @@
         }
         break;
       }
+    }
+
+    // Resultados qualitativos (sorologias, PSOF, etc.): valor sem número,
+    // normalmente em "Resultado: ..." sob o título do exame. Exames não
+    // listados também são capturados, com rótulo derivado do cabeçalho.
+    for (var iq = 0; iq < linhas.length; iq++) {
+      var linhaQ = linhas[iq] || '';
+
+      var regraQ = null;
+      for (var q = 0; q < REGRAS_QUALITATIVAS.length; q++) {
+        if (REGRAS_QUALITATIVAS[q].padrao.test(linhaQ)) { regraQ = REGRAS_QUALITATIVAS[q]; break; }
+      }
+      if (regraQ) {
+        var mInlineQ = linhaQ.match(/^[^:]*:\s*(.+)$/);
+        if (mInlineQ) {
+          var vInline = normalizarResultadoQualitativo(mInlineQ[1]);
+          if (vInline) adicionarExtraUnico(resultado.extras, regraQ.label, vInline);
+        }
+      }
+
+      var mResQ = /^resultado\s*:\s*(.+)$/i.exec(linhaQ);
+      if (!mResQ) continue;
+      var valorQ = normalizarResultadoQualitativo(mResQ[1]);
+      if (!valorQ) continue;
+
+      var rotuloQ = '';
+      var iniQ = Math.max(0, iq - 12);
+      for (var k = iq - 1; k >= iniQ && !rotuloQ; k--) {
+        var candidataQ = linhas[k] || '';
+        for (var q2 = 0; q2 < REGRAS_QUALITATIVAS.length; q2++) {
+          if (REGRAS_QUALITATIVAS[q2].padrao.test(candidataQ)) {
+            rotuloQ = REGRAS_QUALITATIVAS[q2].label;
+            break;
+          }
+        }
+        if (!rotuloQ && ehCabecalhoExameQualitativo(candidataQ)) {
+          rotuloQ = rotuloQualitativoGenerico(candidataQ);
+        }
+      }
+      adicionarExtraUnico(resultado.extras, rotuloQ, valorQ);
+    }
+
+    if (valorSU && !resultado.extras.some(function (item) { return item.label === 'SU:'; })) {
+      resultado.extras.push({ label: 'SU:', valor: valorSU });
     }
 
     // 3. Cálculos automáticos do template
@@ -504,6 +632,85 @@
     return bytes;
   }
 
+  /* Extrai o Sumário de Urina usando as colunas do PDF: rótulo à esquerda,
+     resultado no meio e valor de referência à direita. Agrupar por Y com
+     Math.round (como em extrairTextoDoPdf) mistura as colunas de forma
+     imprevisível, então aqui os itens brutos são agrupados por proximidade. */
+  function extrairSUDoConteudo(conteudo) {
+    var itens = (conteudo.items || []).map(function (it) {
+      return { x: it.transform[4], y: it.transform[5], s: it.str || '' };
+    }).filter(function (it) { return it.s.length > 0; }).sort(function (a, b) {
+      return b.y - a.y || a.x - b.x;
+    });
+
+    var grupos = [];
+    itens.forEach(function (it) {
+      var grupo = null;
+      for (var gi = 0; gi < grupos.length; gi++) {
+        if (Math.abs(grupos[gi].y - it.y) < 2) { grupo = grupos[gi]; break; }
+      }
+      if (!grupo) { grupo = { y: it.y, itens: [] }; grupos.push(grupo); }
+      grupo.itens.push(it);
+    });
+
+    var linhas = [];
+    var secao = '';
+    grupos.forEach(function (grupo) {
+      var ordenados = grupo.itens.slice().sort(function (a, b) { return a.x - b.x; });
+      var txt = String(ordenados.map(function (i) { return i.s; }).join('')).replace(/\s+/g, ' ').trim();
+      if (!txt) return;
+
+      if (/^ELEMENTOS\s*ANORMAIS/i.test(txt)) { secao = 'EA'; return; }
+      if (/^SEDIMENTOSCOPIA/i.test(txt)) { secao = 'SED'; return; }
+      if (/^(SUM[ÁA]RIO|VALOR\s*DE\s*REFER[ÊE]NCIA|ANALISE\s*QUIMICA|CARACTERES\s*GERAIS|MATERIAL\b|ATEN[ÇC][ÃA]O|LIBERADO|RESPONS[ÁA]VEL|\|)/i.test(txt)) { secao = ''; return; }
+      if (/^M[ÉE]TODO\b/i.test(txt)) return;
+      if (!secao) return;
+
+      var ultimoRotulo = -1;
+      for (var i = 0; i < ordenados.length; i++) {
+        if (/:\s*$/.test(ordenados[i].s)) ultimoRotulo = i;
+      }
+      if (ultimoRotulo < 0) return;
+
+      var parteRotulo = ordenados.slice(0, ultimoRotulo + 1).map(function (it) { return it.s; }).join('');
+      var rotulo = String(parteRotulo).replace(/\.{2,}:?$/, '').replace(/:$/, '').replace(/\s+/g, ' ').trim();
+      if (!rotulo) return;
+
+      var depois = ordenados.slice(ultimoRotulo + 1);
+      var valor = String(depois.filter(function (it) { return it.x < 330; })
+        .map(function (it) { return it.s; }).join('')).replace(/\s+/g, ' ').trim();
+      if (!valor) {
+        var embed = parteRotulo.match(/:\s*(.+)$/);
+        valor = embed ? String(embed[1]).replace(/\s+/g, ' ').trim() : '';
+      }
+      if (!valor) return;
+      var referencia = String(depois.filter(function (it) { return it.x >= 330; })
+        .map(function (it) { return it.s; }).join('')).replace(/\s+/g, ' ').trim();
+      linhas.push({ secao: secao, rotulo: rotulo, valor: valor, referencia: referencia });
+    });
+    return linhas;
+  }
+
+  function normalizarSUParaComparacao(texto) {
+    var s = String(texto || '').toLowerCase();
+    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    s = s.replace(/[-–—]/g, 'a').replace(/\s*\/\s*/g, '/').replace(/\s+/g, '');
+    return s.replace(/s$/, '');
+  }
+
+  function montarValorSU(linhas) {
+    if (!linhas || !linhas.length) return '';
+    var partes = [];
+    linhas.forEach(function (r) {
+      if (!r.valor) return;
+      if (r.referencia && normalizarSUParaComparacao(r.valor) === normalizarSUParaComparacao(r.referencia)) return;
+      var sigla = String(r.rotulo || '').replace(/\s+/g, ' ').trim().slice(0, 5);
+      if (!sigla) return;
+      partes.push(sigla + ' ' + r.valor);
+    });
+    return partes.join(' ');
+  }
+
   function extrairTextoDoPdf(pdfEmBase64) {
     return carregarPdfjs().then(function (p) {
       var bytes = base64ParaBytes(pdfEmBase64, p.janela);
@@ -517,6 +724,8 @@
           return doc.getPage(numPag).then(function (page) {
             return page.getTextContent();
           }).then(function (conteudo) {
+            var suPagina = extrairSUDoConteudo(conteudo);
+            linhasAcumuladas.su = (linhasAcumuladas.su || []).concat(suPagina);
             var porAltura = {};
             conteudo.items.forEach(function (item) {
               var y = Math.round(item.transform[5]);
@@ -1006,6 +1215,25 @@
   /* ===========================================================================
    * MONTAGEM DO CHECKLIST INTERATIVO (ESPELHO DO EXAMES_UI)
    * ======================================================================== */
+  var ITENS_DESMARCADOS_PADRAO = [
+    'CHCM', 'RDW', 'Hemácias', 'Bastonetes', 'Segmentados',
+    'Eosinófilos', 'Linfócitos', 'Monócitos', 'Basófilos', 'VPM'
+  ];
+
+  function normalizarRotuloItem(texto) {
+    var s = String(texto || '').toLowerCase();
+    if (s.normalize) s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return s.replace(/[^a-z0-9]/g, '');
+  }
+
+  function deveDesmarcarPadrao(label) {
+    var alvo = normalizarRotuloItem(label);
+    for (var i = 0; i < ITENS_DESMARCADOS_PADRAO.length; i++) {
+      if (alvo === normalizarRotuloItem(ITENS_DESMARCADOS_PADRAO[i])) return true;
+    }
+    return false;
+  }
+
   function criarItemChecklist(id, label, valor, isCalculado, fieldKey, alterado) {
     return {
       id: id,
@@ -1013,7 +1241,7 @@
       valor: valor,
       isCalculado: !!isCalculado,
       fieldKey: fieldKey,
-      selected: true,
+      selected: !deveDesmarcarPadrao(label),
       alterado: !!alterado
     };
   }
@@ -1650,11 +1878,13 @@
     var htmlChecklist = '';
     itensChecklist.forEach(function (item, idx) {
       var classeValor = item.alterado ? 'item-valor alterado' : 'item-valor';
-      var classeCard = item.alterado ? 'check-card selected card-alterado' : 'check-card selected';
+      var classeCard = item.selected
+        ? (item.alterado ? 'check-card selected card-alterado' : 'check-card selected')
+        : (item.alterado ? 'check-card card-alterado' : 'check-card');
       var tituloValor = item.alterado ? ' title="Valor fora dos limites de referência habituais"' : '';
       htmlChecklist += [
         '<label class="' + classeCard + '" id="fmed-card-' + idx + '" data-idx="' + idx + '">',
-        '  <input type="checkbox" id="fmed-chk-' + idx + '" checked>',
+        '  <input type="checkbox" id="fmed-chk-' + idx + '"' + (item.selected ? ' checked' : '') + '>',
         '  <span class="item-info">',
         '    <span class="item-label">' + item.label + '</span>',
         '    <span class="' + classeValor + '"' + tituloValor + '>' + item.valor + '</span>',

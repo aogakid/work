@@ -20,8 +20,11 @@ import { ArrumadorBloco } from "./arrumador_bloco_ui"
 import { SECTION_META, createDefaultSections, mergeSections, parseSections, type Section } from "../../lib/bloco-secoes"
 import { AVISO_CLIPBOARD_BLOQUEADO, escreverClipboard, lerClipboard } from "../../lib/clipboard"
 import { publicarTextoDoBloco } from "../companions/bloco-texto"
+import { clearFieldSync } from "../companions/field-sync"
 import { extrairLinhaId } from "../../lib/dados-base"
 import { compositarObjetivo, parseObjetivo } from "../../lib/objetivo"
+
+const COR_SECAO_CONCLUIDA = "#ef4444"
 
 function SafeCompanion({ component, id, companionRefs }: { component: React.ElementType; id: string; companionRefs: React.MutableRefObject<Record<string, CompanionRef>> }) {
     const Comp = component
@@ -368,6 +371,27 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         return `${r},${g},${b}`
     }
 
+    function renderProgressFill(cor: string, preenchimento: number, urgente: boolean, concluido: boolean) {
+        const tamanho = Math.max(0, Math.min(100, preenchimento))
+        const corFill = concluido ? COR_SECAO_CONCLUIDA : cor
+        const classes = `gas-section-progress ${progressoVertical ? "gas-progress-vertical" : "gas-progress-horizontal"} ${urgente ? "gas-progress-urgente" : ""}`
+        const fundo = concluido ? `${corFill}80` : `${cor}40`
+        const borda: React.CSSProperties = progressoVertical
+            ? { borderBottom: `2px solid ${cor}`, boxShadow: `0 3px 12px ${cor}aa`, background: `linear-gradient(to top, ${cor}80, transparent)`, backgroundRepeat: "no-repeat" }
+            : { borderRight: `2px solid ${cor}`, boxShadow: `3px 0 12px ${cor}aa`, background: `linear-gradient(to left, ${cor}80, transparent)`, backgroundRepeat: "no-repeat" }
+        const brilho: React.CSSProperties = progressoVertical
+            ? { background: `linear-gradient(180deg, transparent 35%, ${cor}e6 50%, transparent 65%)`, backgroundSize: "100% 220%", backgroundRepeat: "no-repeat" }
+            : { background: `linear-gradient(90deg, transparent 35%, ${cor}e6 50%, transparent 65%)`, backgroundSize: "220% 100%", backgroundRepeat: "no-repeat" }
+        return (
+            <div className={classes} style={progressoVertical
+                ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${tamanho}%`, background: fundo, transition: "height 0.25s linear, background 0.3s", pointerEvents: "none", zIndex: 0 }
+                : { position: "absolute", top: 0, left: 0, height: "100%", width: `${tamanho}%`, background: fundo, transition: "width 0.25s linear, background 0.3s", pointerEvents: "none", zIndex: 0 }}>
+                {!concluido && <div className="gas-progress-edge" style={borda} />}
+                {!concluido && <div className="gas-progress-shimmer" style={brilho} />}
+            </div>
+        )
+    }
+
     const toggleCollapse = useCallback((sectionId: string) => {
         setSections(prev => prev.map(s => s.id === sectionId ? { ...s, collapsed: !s.collapsed } : s))
     }, [])
@@ -695,17 +719,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             }
             resetAllCompanions()
         },
-        limpar: () => {
-            setTitle("")
-            setSections(createDefaultSections())
-            setPlaintext(false)
-            setPlainTextContent("")
-            setPopupDispensado(false)
-            setEdicaoIniciada(false)
-            edicaoIniciadaRef.current = null
-            resetAllCompanions()
-            definirSexoContexto("")
-        },
+        limpar: () => limparTudo(),
         cronometro: () => {
             fecharCronometroCompleto()
             setMostrarSetupRelogio(true)
@@ -796,9 +810,6 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         window.addEventListener("mouseup", soltar)
     }
 
-    const minutosPassados = Math.floor(segundosDecorridos / 60)
-    const textoCronometro = cronometroAtivo ? `${String(minutosPassados).padStart(2, "0")} min.` : "00 min."
-
     const totalSegundosLimite = (tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)) * 60
     const limiteSegundosS = tempoLimite * 60 * 0.5
     const limiteSegundosO = tempoLimite * 60 * 0.6
@@ -818,6 +829,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         else if (mostrarBurocracia && segundosDecorridos < limiteSegundosB) { secaoAtual = "B"; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = ((segundosDecorridos - limiteSegundosP) / (limiteSegundosB - limiteSegundosP)) * 100 }
         else { secaoAtual = "FIM"; secaoExtrapolada = true; progressoVaoS = 100; progressoVaoO = 100; progressoVaoA = 100; progressoVaoP = 100; progressoVaoB = 100; progressoExtrapolado = Math.min((segundosDecorridos - (mostrarBurocracia ? limiteSegundosB : limiteSegundosP)) * 0.35, 55) }
     }
+
+    const minutosDecorridos = Math.floor(segundosDecorridos / 60)
+    const textoCronometro = cronometroAtivo ? `${minutosDecorridos} min.` : "00 min."
+    const textoLimiteCronometro = `/${tempoLimite} min.`
+    const idSecaoAtiva = !cronometroAtivo || arquivadoManualmente ? ""
+        : secaoAtual === "S" ? "subjetivo"
+        : secaoAtual === "O" ? "objetivo"
+        : secaoAtual === "A" ? "avaliacao"
+        : secaoAtual === "P" ? "plano"
+        : ""
 
     const plaintextBarColor = secaoAtual === "S" ? "#3b82f6" : secaoAtual === "O" ? "#22c55e" : secaoAtual === "A" ? "#eab308" : "#f97316"
 
@@ -849,15 +870,15 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
     else if (tempoLimite > 30 && tempoLimite <= 45) { corDinamicaPopup = "#eab308"; bgDinamicoPopup = "rgba(234,179,8,0.12)"; borderDinamicaPopup = "rgba(234,179,8,0.25)" }
     else if (tempoLimite > 45) { corDinamicaPopup = "#ef4444"; bgDinamicoPopup = "rgba(239,68,68,0.12)"; borderDinamicaPopup = "rgba(239,68,68,0.25)" }
 
-    let chipBg = "rgba(59,130,246,0.12)", chipBorder = "rgba(59,130,246,0.25)", chipTextColor = "#3b82f6"
+    let chipBg = "rgba(59,130,246,0.22)", chipBorder = "rgba(59,130,246,0.25)", chipTextColor = "#3b82f6"
     if (cronometroAtivo) {
         if (arquivadoManualmente) { chipBg = "rgba(120,113,108,0.1)"; chipBorder = "rgba(120,113,108,0.2)"; chipTextColor = "var(--meta-text)" }
-        else if (secaoExtrapolada) { chipBg = "rgba(120,113,108,0.1)"; chipBorder = "rgba(120,113,108,0.2)"; chipTextColor = "var(--meta-text)" }
-        else if (secaoAtual === "S") { chipBg = "rgba(59,130,246,0.12)"; chipBorder = "rgba(59,130,246,0.25)"; chipTextColor = "#3b82f6" }
-        else if (secaoAtual === "O") { chipBg = "rgba(34,197,94,0.12)"; chipBorder = "rgba(34,197,94,0.25)"; chipTextColor = "#22c55e" }
-        else if (secaoAtual === "A") { chipBg = "rgba(234,179,8,0.12)"; chipBorder = "rgba(234,197,94,0.25)"; chipTextColor = "#d9a707" }
-        else if (secaoAtual === "P") { chipBg = "rgba(249,115,22,0.12)"; chipBorder = "rgba(249,115,22,0.25)"; chipTextColor = "#f97316" }
-        else if (secaoAtual === "B") { chipBg = "rgba(139,92,246,0.12)"; chipBorder = "rgba(139,92,246,0.25)"; chipTextColor = "#8b5cf6" }
+        else if (secaoExtrapolada) { chipBg = "rgba(239,68,68,0.3)"; chipBorder = "rgba(239,68,68,0.5)"; chipTextColor = "#ffffff" }
+        else if (secaoAtual === "S") { chipBg = "rgba(59,130,246,0.22)"; chipBorder = "rgba(59,130,246,0.35)"; chipTextColor = "#3b82f6" }
+        else if (secaoAtual === "O") { chipBg = "rgba(34,197,94,0.22)"; chipBorder = "rgba(34,197,94,0.35)"; chipTextColor = "#22c55e" }
+        else if (secaoAtual === "A") { chipBg = "rgba(234,179,8,0.22)"; chipBorder = "rgba(234,197,94,0.35)"; chipTextColor = "#d9a707" }
+        else if (secaoAtual === "P") { chipBg = "rgba(249,115,22,0.22)"; chipBorder = "rgba(249,115,22,0.35)"; chipTextColor = "#f97316" }
+        else if (secaoAtual === "B") { chipBg = "rgba(139,92,246,0.22)"; chipBorder = "rgba(139,92,246,0.35)"; chipTextColor = "#8b5cf6" }
     }
 
     const dispararCronometroAtivo = () => {
@@ -871,6 +892,27 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         setCronometroAtivo(false); setIsPaused(false); setArquivadoManualmente(false); setSegundosDecorridos(0)
         segundosAcumuladosRef.current = 0; ultimoPercentualRef.current = 0; ultimaSecaoRef.current = "S"
         setShakeTimeCount(0); setShakeProgressCount(0); setMostrarSetupRelogio(false)
+    }
+
+    const limparTudo = () => {
+        externalUpdateRef.current = true
+        bumpAllVersions()
+        setTitle("")
+        setSections(createDefaultSections())
+        setPlaintext(false)
+        setPlainTextContent("")
+        setActiveCompanionId(null)
+        setEdicaoIniciada(false)
+        edicaoIniciadaRef.current = null
+        setSexoIdentificacao("")
+        definirSexoContexto("")
+        setPopupDispensado(false)
+        setMostrarPopupSugestao(false)
+        setSugestaoTimerCount(0)
+        setRelogioExiting(false)
+        resetAllCompanions()
+        clearFieldSync()
+        fecharCronometroCompleto()
     }
 
     const exibirControlesPainel = hoverTimer || isPaused
@@ -998,9 +1040,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             else if (s.id === "plano" && segundosDecorridos >= limiteSegundosA && segundosDecorridos < limiteSegundosP) sectionProgress = ((segundosDecorridos - limiteSegundosA) / (limiteSegundosP - limiteSegundosA)) * 100
         }
 
-        /* Each SOAP section keeps its own color once its time window is over:
-           the moving progress fill stops at 100% and stays as the section's
-           background. In overtime those finished fills slowly glow. */
+        /* Each SOAP section keeps its own color while its window is open; once
+           the window ends the fill stops at 100% and turns solid red. */
         const limiteFimSecao = s.id === "subjetivo" ? limiteSegundosS
             : s.id === "objetivo" ? limiteSegundosO
             : s.id === "avaliacao" ? limiteSegundosA
@@ -1009,13 +1050,18 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
         const secaoConcluida = cronometroAtivo && !arquivadoManualmente && limiteFimSecao !== null && segundosDecorridos >= limiteFimSecao
         const preenchimentoSecao = secaoConcluida ? 100 : sectionProgress
         const classeSecao = secaoConcluida ? "gas-section-concluida" : sectionProgress > 0 ? "gas-section-timer-active" : undefined
+        const progressoUrgente = sectionProgress >= 80 && !secaoConcluida
+        const secaoPendente = cronometroAtivo && !arquivadoManualmente && !!idSecaoAtiva && s.id !== idSecaoAtiva && !secaoConcluida
 
         const cartao = (
-            <div key={s.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginBottom: "8px", borderRadius: "10px", background: secaoConcluida ? `color-mix(in srgb, ${meta.color} 16%, var(--editor-bg))` : meta.bg, border: `1px solid ${secaoConcluida ? `${meta.color}66` : meta.border}`, transition: "background 0.3s, border-color 0.3s" }}>
+            <div key={s.id} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", marginBottom: "8px", borderRadius: "10px", position: "relative", background: meta.bg, border: `1px solid ${meta.border}`, boxShadow: sectionProgress > 0 ? `0 0 0 2px ${meta.color}99, 0 0 24px ${meta.color}44` : undefined, opacity: secaoPendente ? 0.8 : 1, transition: "background 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s" }}>
+                {cronometroAtivo && !arquivadoManualmente && s.id === idSecaoAtiva && shakeProgressCount > 0 && (
+                    <div key={`gas-flash-${shakeProgressCount}`} className="gas-flash" style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, borderRadius: "10px", background: meta.color, pointerEvents: "none", zIndex: 4 }} />
+                )}
                 {/* ── Section Header (sticky) ── */}
                 <div ref={observeStickySentinel} className="bloco-sticky-sentinel" />
                 <div className="bloco-sticky-head" style={{ position: "sticky", top: 0, zIndex: 2, background: "var(--editor-bg)", borderRadius: "10px 10px 0 0" }}>
-                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", minWidth: 0, boxSizing: "border-box", gap: "6px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},${secaoConcluida ? 0.18 : 0.08})`, borderRadius: "10px 10px 0 0" }}>
+                    <div onClick={() => toggleCollapse(s.id)} style={{ display: "flex", alignItems: "center", minWidth: 0, boxSizing: "border-box", gap: "6px", padding: "10px 12px", cursor: "pointer", transition: "all 0.2s ease", userSelect: "none", background: `rgba(${hexToRgb(meta.color)},0.08)`, borderRadius: "10px 10px 0 0" }}>
                         <span style={{ fontWeight: 800, color: meta.color, fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', width: "16px", flexShrink: 0, textAlign: "center" }}>{meta.letter}</span>
                         <span className="bloco-section-title" style={{ flex: "1 1 0%", minWidth: 0, overflowWrap: "anywhere", fontWeight: 600, fontSize: "16px", color: "var(--editor-text)" }}>{meta.label || s.title}</span>
 
@@ -1045,15 +1091,9 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* ── Section Body (white card inside color-coded card) ── */}
                 {s.enabled && !s.collapsed && (
-                    <div className={classeSecao} style={{ margin: "0 12px 10px 12px", background: preenchimentoSecao > 0 ? "transparent" : "var(--editor-bg)", borderRadius: "8px", border: `1px solid ${secaoConcluida ? `${meta.color}66` : "var(--editor-border)"}`, padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
+                    <div className={classeSecao} style={{ margin: "0 12px 10px 12px", background: preenchimentoSecao > 0 ? "transparent" : "var(--editor-bg)", borderRadius: "8px", border: "1px solid var(--editor-border)", padding: meta.formulario ? "4px 14px 0 14px" : "12px 14px", position: "relative", overflow: "hidden", transition: "background 0.3s, border-color 0.3s" }}>
                         {preenchimentoSecao > 0 && cronometroAtivo && !arquivadoManualmente && meta.formulario !== "dados_base" && meta.formulario !== "lista_problemas" && (
-                            <div className="gas-section-progress" style={progressoVertical
-                                ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${preenchimentoSecao}%`, background: `linear-gradient(180deg, ${meta.color}33, ${meta.color}88)`, transition: "height 0.25s linear", pointerEvents: "none", zIndex: 0 }
-                                : { position: "absolute", top: 0, left: 0, height: "100%", width: `${preenchimentoSecao}%`, background: `linear-gradient(90deg, ${meta.color}33, ${meta.color}88)`, transition: "width 0.25s linear", pointerEvents: "none", zIndex: 0 }} />
-                        )}
-                        {/* Overtime: the finished fill keeps glowing in the section's own color. */}
-                        {secaoExtrapolada && !arquivadoManualmente && limiteFimSecao !== null && (
-                            <div className="gas-section-brilho" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: meta.color, pointerEvents: "none", zIndex: 0 }} />
+                            renderProgressFill(meta.color, preenchimentoSecao, progressoUrgente, secaoConcluida)
                         )}
                         {meta.formulario ? (
                             <div style={{ position: "relative", zIndex: 1 }}>
@@ -1133,9 +1173,20 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-play-pulse-btn { animation: gasPlayPulse 1.4s ease-in-out infinite; }
                 @keyframes gasSlowCriticalBlink { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12); } }
                 .gas-critical-svg-pulse { animation: gasSlowCriticalBlink 2.4s ease-in-out infinite; transform-origin: center center; display: inline-block; }
-                /* Overtime: each finished section slowly glows in its own color. */
-                @keyframes gasSecaoBrilho { 0%, 100% { opacity: 0.04; } 50% { opacity: 0.26; } }
-                .gas-section-brilho { animation: gasSecaoBrilho 3s ease-in-out infinite; }
+                @keyframes gasFlash { 0% { opacity: 0.4; } 100% { opacity: 0; } }
+                .gas-flash { animation: gasFlash 0.6s ease-out forwards; }
+                /* Progress fill: a flat wash with a colored leading edge and shimmer. */
+                @keyframes gasProgressEdgeY { 0%, 100% { transform: translateY(-2px); opacity: 0.65; } 50% { transform: translateY(2px); opacity: 1; } }
+                @keyframes gasProgressEdgeX { 0%, 100% { transform: translateX(-2px); opacity: 0.65; } 50% { transform: translateX(2px); opacity: 1; } }
+                @keyframes gasProgressShimmerY { 0% { background-position: 0 -120%; } 100% { background-position: 0 120%; } }
+                @keyframes gasProgressShimmerX { 0% { background-position: -120% 0; } 100% { background-position: 120% 0; } }
+                .gas-progress-edge { position: absolute; pointer-events: none; }
+                .gas-progress-vertical .gas-progress-edge { left: 0; bottom: -1px; width: 100%; height: 10px; animation: gasProgressEdgeY 2s ease-in-out infinite; }
+                .gas-progress-horizontal .gas-progress-edge { top: 0; right: -1px; height: 100%; width: 10px; animation: gasProgressEdgeX 2s ease-in-out infinite; }
+                .gas-progress-shimmer { position: absolute; inset: 0; pointer-events: none; animation: gasProgressShimmerY 2.6s linear infinite; }
+                .gas-progress-horizontal .gas-progress-shimmer { animation-name: gasProgressShimmerX; }
+                .gas-progress-urgente .gas-progress-edge { animation-duration: 0.7s; }
+                .gas-progress-urgente .gas-progress-shimmer { animation-duration: 0.9s; }
                 .gas-soap-track { height: 2px; background: rgba(120,113,108,0.16); border-radius: 1px; align-self: center; position: relative; overflow: hidden; transition: width 0.4s cubic-bezier(0.25,1,0.5,1), opacity 0.4s ease; }
                 .gas-hover-btn { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; cursor: pointer; transition: background 0.2s, transform 0.1s; font-size: 8px; border: none; }
                 .gas-hover-btn:active { transform: scale(0.85); }
@@ -1168,15 +1219,16 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-section-timer-active input:not([type="checkbox"]):not([type="radio"]),
                 .gas-section-timer-active textarea,
                 .gas-section-timer-active select {
-                    background: color-mix(in srgb, var(--editor-bg) 72%, transparent) !important;
+                    background: color-mix(in srgb, var(--editor-bg) 50%, transparent) !important;
                 }
                 /* Once the section's window is over the fill stays at 100%, so the
-                   fields become fully transparent to show the section color behind. */
+                   fields become fully transparent to show the red fill behind. */
                 .gas-section-concluida .caixa-paragrafos,
                 .gas-section-concluida input:not([type="checkbox"]):not([type="radio"]),
                 .gas-section-concluida textarea,
                 .gas-section-concluida select {
                     background: transparent !important;
+                    color: #ffffff !important;
                 }
                 @media (prefers-color-scheme: dark) {
                     .gas-section-progress { mix-blend-mode: screen; }
@@ -1202,6 +1254,8 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .bloco-plaintext-editor:empty:before { content: attr(data-placeholder); color: var(--editor-placeholder); font-style: italic; pointer-events: none; }
                 .bloco-plaintext-editor div { margin-bottom: 4px; color: var(--editor-text) !important; }
                 .bloco-plaintext-editor div:empty { height: 1em; }
+                .gas-plaintext-concluido,
+                .gas-plaintext-concluido div { color: #ffffff !important; }
 
 
                 .bloco-icon-btn { transition: background 0.15s, color 0.15s, opacity 0.15s, transform 0.1s; }
@@ -1269,11 +1323,11 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <circle cx="42" cy="42" r="3" fill="var(--meta-text)" />
                         </svg>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "10px", marginBottom: "10px" }}>
-                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.max(1, p - 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>-15</button>
+                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.max(1, p - 5))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>-5</button>
                             <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--editor-text)", display: "flex", alignItems: "baseline", gap: "2px" }}>
                                 {tempoLimite}<span style={{ fontSize: "10px", fontWeight: 500, color: "var(--meta-text)" }}>minutos</span>
                             </div>
-                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.min(60, p + 15))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>+15</button>
+                            <button className="gas-scale-hover" onClick={() => setTempoLimite(p => Math.min(60, p + 5))} style={{ background: "rgba(120,113,108,0.12)", border: "none", color: corDinamicaPopup, borderRadius: "5px", padding: "3px 7px", fontSize: "10px", fontWeight: 700, cursor: "pointer" }}>+5</button>
                         </div>
                         <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px", marginTop: "8px" }}>
                             <span style={{ fontSize: "9px", fontWeight: 600, color: "var(--meta-text)", letterSpacing: "0.5px" }}>burocracia</span>
@@ -1285,11 +1339,10 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                             <div style={{ width: "100%", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
                                 <input type="number" value={tempoBurocracia} onChange={e => setTempoBurocracia(Math.max(1, Math.min(60, Number(e.target.value) || 1)))} onWheel={e => e.currentTarget.blur()} style={{ width: "50px", padding: "6px 8px", borderRadius: "5px", border: "1px solid var(--editor-border)", background: "var(--editor-bg)", color: "var(--editor-text)", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', outline: "none", textAlign: "center" }} />
                                 <span style={{ fontSize: "11px", fontWeight: 500, color: "var(--meta-text)" }}>min</span>
-                                <div style={{ fontSize: "9px", fontWeight: 600, color: corDinamicaPopup, marginLeft: "auto" }}>total: {tempoLimite + tempoBurocracia} min</div>
                             </div>
                         )}
-                        <button className="gas-scale-hover" onClick={dispararCronometroAtivo} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : "#ffffff", border: "none", borderRadius: "6px", padding: "6px 0", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
-                            <span>▶</span> iniciar
+                        <button className="gas-scale-hover" onClick={dispararCronometroAtivo} style={{ width: "100%", background: corDinamicaPopup, color: tempoLimite > 30 && tempoLimite <= 45 ? "#000000" : tempoLimite > 45 ? "var(--editor-text)" : "#ffffff", border: "none", borderRadius: "6px", padding: "6px 0", fontSize: "11px", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px", boxShadow: "0 2px 6px rgba(0,0,0,0.06)" }}>
+                            <span>▶</span> Iniciar {tempoLimite + (mostrarBurocracia ? tempoBurocracia : 0)} min.
                         </button>
                     </div>
                 </>
@@ -1414,7 +1467,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <button className="bloco-icon-btn" onClick={() => { void colarDoClipboard() }} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="colar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
                     </button>
-                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", () => { externalUpdateRef.current = true; bumpAllVersions(); setTitle(""); setSections(createDefaultSections()); setPlaintext(false); setPlainTextContent(""); setActiveCompanionId(null); setEdicaoIniciada(false); edicaoIniciadaRef.current = null; resetAllCompanions(); definirSexoContexto("") })} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
+                    <button className="bloco-icon-btn" onClick={() => requestConfirm("tem certeza que deseja limpar todo o conteúdo?", limparTudo)} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: "1px solid var(--meta-border)", background: "var(--meta-bg)", backdropFilter: "blur(4px)", color: "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title="limpar">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                     </button>
                     <button className="bloco-icon-btn" onClick={() => setIsOverlay(prev => !prev)} style={{ flexShrink: 0, width: "28px", height: "28px", borderRadius: "6px", border: `1px solid ${isOverlay ? "#3b82f6" : "var(--meta-border)"}`, background: isOverlay ? "rgba(59,130,246,0.1)" : "var(--meta-bg)", backdropFilter: "blur(4px)", color: isOverlay ? "#3b82f6" : "var(--meta-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }} title={isOverlay ? "sair da tela cheia" : "tela cheia"}>
@@ -1432,12 +1485,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                     <div style={{ marginBottom: "8px", borderRadius: "10px", background: "var(--editor-bg)", border: "1px solid var(--editor-border)" }}>
                         <div style={{ position: "relative", overflow: "hidden", borderRadius: "10px", padding: "4px 14px 0 14px" }}>
                             {cronometroAtivo && !arquivadoManualmente && (
-                                <div className="gas-section-progress" style={progressoVertical
-                                    ? { position: "absolute", top: 0, left: 0, width: "100%", height: `${Math.min(100, (segundosDecorridos / totalSegundosLimite) * 100)}%`, background: `linear-gradient(180deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "height 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }
-                                    : { position: "absolute", top: 0, left: 0, height: "100%", width: `${Math.min(100, (segundosDecorridos / totalSegundosLimite) * 100)}%`, background: `linear-gradient(90deg, ${plaintextBarColor}33, ${plaintextBarColor}88)`, transition: "width 0.25s linear, background 2s", pointerEvents: "none", zIndex: 0 }} />
-                            )}
-                            {secaoExtrapolada && !arquivadoManualmente && (
-                                <div className="gas-section-brilho" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: plaintextBarColor, pointerEvents: "none", zIndex: 0 }} />
+                                renderProgressFill(plaintextBarColor, (segundosDecorridos / totalSegundosLimite) * 100, (segundosDecorridos / totalSegundosLimite) * 100 >= 80, secaoExtrapolada)
                             )}
                             <div
                                 key={`plaintext-${plainTextVersionRef.current}`}
@@ -1450,7 +1498,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                         plainTextEditorRef.current = el
                                     }
                                 }}
-                                className="bloco-plaintext-editor"
+                                className={`bloco-plaintext-editor ${secaoExtrapolada && !arquivadoManualmente ? "gas-plaintext-concluido" : ""}`}
                                 contentEditable
                                 suppressContentEditableWarning
                                 data-placeholder="digite seu texto..."
@@ -1459,6 +1507,13 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                                 style={{ position: "relative", zIndex: 1 }}
                             />
                         </div>
+                    </div>
+                )}
+
+                {plaintext && (
+                    <div className="bloco-coluna bloco-coluna-dir" style={{ width: "100%" }}>
+                        {renderCompanionShelf("after-objetivo")}
+                        {renderCompanionShelf("after-plano")}
                     </div>
                 )}
 
@@ -1481,18 +1536,18 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
             <div className="gas-responsive-footer-bar">
                 {/* Time chip */}
                 {cronometroAtivo ? (
-                    <div key={`time-shake-${shakeTimeCount}`} onMouseEnter={() => setHoverTimer(true)} onMouseLeave={() => setHoverTimer(false)} className={`framer-timer-entrance gas-ui-blockout gas-order-time ${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: chipBg, backdropFilter: "blur(6px)", padding: exibirControlesPainel ? "5px 8px 5px 10px" : "6px 10px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: chipTextColor, border: `1px solid ${chipBorder}`, transition: "transform 0.25s", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px", pointerEvents: "auto", transform: hoverTimer ? "scale(1.1)" : "scale(1)" }}>
-                        <span>{textoCronometro}</span>
+                    <div key={`time-shake-${shakeTimeCount}`} onMouseEnter={() => setHoverTimer(true)} onMouseLeave={() => setHoverTimer(false)} className={`framer-timer-entrance gas-ui-blockout gas-order-time ${shakeTimeCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: chipBg, backdropFilter: "blur(6px)", padding: exibirControlesPainel ? "5px 8px 5px 10px" : "6px 10px", borderRadius: "6px", fontSize: "13px", fontFamily: '"Google Sans Flex", sans-serif', color: chipTextColor, border: `1px solid ${chipBorder}`, transition: "transform 0.25s", fontWeight: 700, display: "flex", alignItems: "center", gap: "6px", pointerEvents: "auto", transform: hoverTimer ? "scale(1.1)" : "scale(1)" }}>
+                        <span><span style={{ fontWeight: 700 }}>{textoCronometro}</span> <span style={{ fontWeight: 400, opacity: 0.85 }}>{textoLimiteCronometro}</span></span>
                         {exibirControlesPainel && (
                             <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                                 {secaoExtrapolada && !arquivadoManualmente ? (
-                                    <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); setArquivadoManualmente(true) }} style={{ background: "rgba(120,113,108,0.14)", color: "var(--editor-text)", fontWeight: 700, fontSize: "10px" }}>✓</button>
+                                    <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); setArquivadoManualmente(true) }} style={{ background: "rgba(120,113,108,0.14)", color: chipTextColor, fontWeight: 700, fontSize: "10px" }}>✓</button>
                                 ) : !arquivadoManualmente ? (
                                     <button className={`gas-hover-btn ${isPaused ? "gas-play-pulse-btn" : ""}`} onClick={e => { e.stopPropagation(); setIsPaused(!isPaused) }} style={{ background: "rgba(120,113,108,0.14)", color: chipTextColor }}>
                                         {isPaused ? "▶" : <span className="gas-btn-pause-bars">||</span>}
                                     </button>
                                 ) : null}
-                                <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); fecharCronometroCompleto() }} style={{ background: "rgba(239,68,68,0.14)", color: "#ef4444" }}>✕</button>
+                                <button className="gas-hover-btn" onClick={e => { e.stopPropagation(); fecharCronometroCompleto() }} style={{ background: "rgba(239,68,68,0.14)", color: secaoExtrapolada && !arquivadoManualmente ? "#ffffff" : "#ef4444" }}>✕</button>
                             </div>
                         )}
                     </div>
@@ -1500,7 +1555,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
 
                 {/* SOAP progress chip */}
                 {cronometroAtivo && !arquivadoManualmente ? (
-                    <div key={`progress-shake-${shakeProgressCount}`} className={`framer-timer-entrance gas-ui-blockout gas-order-progress ${shakeProgressCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: chipBg, backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: "var(--meta-text)", border: `1px solid ${chipBorder}`, display: "flex", alignItems: "center", gap: "5px", pointerEvents: "auto" }}>
+                    <div key={`progress-shake-${shakeProgressCount}`} className={`framer-timer-entrance gas-ui-blockout gas-order-progress ${shakeProgressCount > 0 ? "gas-soap-heavy-trigger" : ""}`} style={{ background: chipBg, backdropFilter: "blur(6px)", padding: "6px 12px", borderRadius: "6px", fontSize: "11px", fontFamily: '"Google Sans Flex", sans-serif', color: secaoExtrapolada && !arquivadoManualmente ? "#ffffff" : "var(--meta-text)", border: `1px solid ${chipBorder}`, display: "flex", alignItems: "center", gap: "5px", pointerEvents: "auto" }}>
                         {/* S */}
                         <div onClick={() => document.querySelector('[data-section-id="subjetivo"]')?.scrollIntoView({ behavior: "smooth", block: "center" })} style={{ display: "flex", alignItems: "center", gap: "2px", cursor: "pointer" }}>
                             <span style={{ fontWeight: 700, color: "#3b82f6" }}>S</span>
@@ -1545,7 +1600,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                         </>}
                         {/* Overtime */}
                         {secaoExtrapolada && <>
-                            <div className="gas-critical-svg-pulse" style={{ width: "12px", height: "12px", marginLeft: "2px", display: "flex", alignItems: "center", border: "1px solid var(--meta-border)", borderRadius: "2px", boxSizing: "border-box" }}>
+                            <div className="gas-critical-svg-pulse" style={{ width: "12px", height: "12px", marginLeft: "2px", display: "flex", alignItems: "center" }}>
                                 <svg viewBox="0 0 24 24" fill="none" style={{ width: "100%", height: "100%" }}>
                                     <path d="M12 3L2 22H22L12 3Z" fill="var(--meta-text)" />
                                     <path d="M12 9V15" stroke="var(--editor-bg)" strokeWidth="2" strokeLinecap="round" />
