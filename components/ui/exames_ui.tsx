@@ -866,6 +866,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       setAmpaSlotCount(1)
       setActiveTab("exames")
       setGlicemiaCopied(false)
+      setGlicemiaMetasCopied(false)
       setAmpaMeasures(() => {
         const init: Record<string, string> = {}
         for (const day of AMPA_DAY_INDEXES) {
@@ -1118,6 +1119,30 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
     return `Mapa glicêmico (${dateBr}): ${partes.join("; ")}`
   }, [glicemiaStats, glicemiaStart, glicemiaOutputPeriods])
 
+  const glicemiaMetas = useMemo(() => {
+    const idxGrupo = GLICEMIA_GRUPOS.findIndex((g) => g.id === grupoGlicemia)
+    const partesJejum = (GLICEMIA_ALVO_JEJUM[idxGrupo] || "").split("-")
+    const partesDeitar = (GLICEMIA_ALVO_DEITAR[idxGrupo] || "").split("-")
+    const a = partesJejum[0] || ""
+    const b = partesJejum[1] || ""
+    const e = partesDeitar[0] || ""
+    const f = partesDeitar[1] || ""
+    const bMais20 = (parseInt(b, 10) || 0) + 20
+    return [
+      "Metas para glicemia:",
+      `- Jejum e antes das refeições: entre ${a} e ${b}`,
+      "- 2 horas após as refeições: menor que 180",
+      `- Ao deitar: entre ${e} e ${f}`,
+      "",
+      "Ajuste de insulina basal (NPH/glargina):",
+      "Medir a glicemia de jejum e calcular a média dos últimos 3 dias.",
+      `- Se entre ${a} e ${b}: manter a mesma dose`,
+      `- Se abaixo de ${a}: diminuir a dose em 2 U`,
+      `- Se entre ${b} e ${bMais20}: aumentar a dose em 1 U`,
+      `- Se acima de ${bMais20}: aumentar a dose em 2 U`,
+    ].join("\n")
+  }, [grupoGlicemia])
+
   const glicemiaAlerta = useMemo(() => {
     for (const periodo of glicemiaOutputPeriods) {
       const stats = glicemiaStats(periodo.id)
@@ -1184,6 +1209,7 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
   }, [ampaOutput])
 
   const [glicemiaCopied, setGlicemiaCopied] = useState(false)
+  const [glicemiaMetasCopied, setGlicemiaMetasCopied] = useState(false)
 
   const handleGlicemiaCopy = useCallback(() => {
     const text = glicemiaOutput
@@ -1193,6 +1219,13 @@ export default forwardRef<CompanionActions, Props>(function ExamesUI({ style }: 
       setTimeout(() => setGlicemiaCopied(false), 1500)
     })
   }, [glicemiaOutput])
+
+  function handleGlicemiaMetasCopy() {
+    navigator.clipboard.writeText(glicemiaMetas).then(() => {
+      setGlicemiaMetasCopied(true)
+      setTimeout(() => setGlicemiaMetasCopied(false), 1500)
+    })
+  }
 
   const handleAtalhoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault()
@@ -1968,6 +2001,21 @@ setGlicemiaMeasures(() => {
                   {glicemiaCopied ? <IconeCheck /> : <IconeCopiar />}
                 </button>
               )}
+            </div>
+          </div>
+
+          <div style={{ minWidth: 0, maxWidth: "100%" }}>
+            <div style={{ position: "relative" }}>
+              <div style={{ ...s.markdownOutput, marginTop: 0 }}>
+                {glicemiaMetas}
+              </div>
+              <button
+                className={`${EXAMES_PREFIX}-copy-icon`}
+                onClick={handleGlicemiaMetasCopy}
+                title={glicemiaMetasCopied ? "Copiado!" : "Copiar"}
+              >
+                {glicemiaMetasCopied ? <IconeCheck /> : <IconeCopiar />}
+              </button>
             </div>
           </div>
         </div>

@@ -2,6 +2,15 @@ import * as React from "react"
 import supabase from "../../lib/calendar-supabase"
 import { PDFDocument, PDFHexString, PDFName } from "pdf-lib"
 
+const FASTMEDIC_AGENDA_BOOKMARKLET_HREF =
+    "javascript:(function(){var U='https://raw.githubusercontent.com/aogakid/work/main/public/fastmedic-agenda.js',K='fastmedic_agenda:sessao',G='FastMedicAgenda';var j=window[G];if(j&&j.rodando){if(j.executar)j.executar();return;}function r(c){var s=document.createElement('script');s.textContent=c;document.documentElement.appendChild(s);s.parentNode.removeChild(s);}function g(c){try{sessionStorage.setItem(K,JSON.stringify({url:U,codigo:c,em:Date.now()}));}catch(e){}}var v=null;try{v=JSON.parse(sessionStorage.getItem(K)||'null');}catch(e){}fetch(U+'?t='+Date.now(),{credentials:'omit'}).then(function(x){if(!x.ok)throw new Error('HTTP '+x.status);return x.text();}).then(function(t){if(!t.trim())throw new Error('o arquivo veio vazio');g(t);r(t);}).catch(function(e){if(v&&v.codigo){g(v.codigo);r(v.codigo);}else{alert('FastMedic Agenda: nao consegui carregar o script. '+e.message);}});})();"
+
+function IconeBookmarkAgenda() {
+    return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2z" />
+    </svg>
+}
+
 interface CalendarRecord {
     id: string
     team: number
@@ -349,6 +358,7 @@ export default function CalendarUI() {
     const detailsRequestSequence = React.useRef(0)
     const [calendarView, setCalendarView] = React.useState<CalendarView>("month")
     const [monthViewStart, setMonthViewStart] = React.useState("")
+    const [customDateSelected, setCustomDateSelected] = React.useState(false)
     const [darkMode, setDarkMode] = React.useState(false)
     const [appointmentCounts, setAppointmentCounts] = React.useState<Record<string, number>>({})
     const [appointmentNamesByDate, setAppointmentNamesByDate] = React.useState<Record<string, string[]>>({})
@@ -402,6 +412,9 @@ export default function CalendarUI() {
     const scheduleConfigured = calendarHours.length > 0
     const selectedDayIsOpen = !scheduleConfigured || selectedDayHours.length > 0
     const selectedTimeIsAllowed = !appointmentTime || !scheduleConfigured || selectedDayHours.some(hours => appointmentTime.slice(0, 5) >= hours.starts_at.slice(0, 5) && appointmentTime.slice(0, 5) < hours.ends_at.slice(0, 5))
+    const avisoForaDoHorario = scheduleConfigured && (!selectedDayIsOpen || !selectedTimeIsAllowed)
+    const bloqueioDeHorario = avisoForaDoHorario && !customDateSelected
+    const textoAvisoHorario = !avisoForaDoHorario ? "" : customDateSelected ? "Data personalizada fora dos horários configurados." : !selectedDayIsOpen ? "Este calendário não atende no dia selecionado." : "O horário escolhido fica fora do horário de atendimento."
     const periodDates = calendarView === "month" ? datasDeMesesEmSequencia(monthViewStart || selectedDate, 12) : datasVisiveis(selectedDate, calendarView)
     const scheduleWeekdays = scheduleConfigured ? DIAS_SEMANA.filter(day => calendarHours.some(hours => hours.weekday === day.weekday)) : DIAS_SEMANA
     const hasWeekends = scheduleWeekdays.some(day => day.weekday === 0 || day.weekday === 6)
@@ -434,6 +447,7 @@ export default function CalendarUI() {
     })
     const maxAppointmentsInCalendar = allTimeMaxAppointments[selectedCalendarId] || 0
     const navigatePeriod = (direction: number) => {
+        setCustomDateSelected(false)
         const nextDate = moverDataVisao(selectedDate, calendarView, direction)
         if (calendarView === "month") {
             const anchor = monthViewStart || selectedDate
@@ -517,7 +531,7 @@ export default function CalendarUI() {
                 loadedAt: cachedMetadata?.loadedAt || Date.now(),
             }
             setCalendarMetadataById(current => ({ ...current, [selectedCalendarId]: metadata }))
-            if (details.hours.length && !details.hours.some(hours => hours.weekday === new Date(selectedDate + "T12:00:00").getDay())) {
+            if (!customDateSelected && details.hours.length && !details.hours.some(hours => hours.weekday === new Date(selectedDate + "T12:00:00").getDay())) {
                 const nextOpenDate = Array.from({ length: 7 }, (_, offset) => deslocarData(selectedDate, offset))
                     .find(date => details.hours.some(hours => hours.weekday === new Date(date + "T12:00:00").getDay()))
                 if (nextOpenDate && nextOpenDate !== selectedDate) {
@@ -646,6 +660,7 @@ export default function CalendarUI() {
         setAppointmentNamesByDate({})
         setError("")
         setNotice("")
+        setCustomDateSelected(false)
         if (teamId) {
             setLoading(true)
             void refreshCalendarList(undefined, teamId)
@@ -676,6 +691,7 @@ export default function CalendarUI() {
         setStaffAccess(false)
         setStaffPassword("")
         setEditingAppointmentId("")
+        setCustomDateSelected(false)
         setCalendarHours([])
     }, [selectedCalendarId])
 
@@ -690,6 +706,28 @@ export default function CalendarUI() {
         setTeamId(valor)
         setTeamInput(String(valor))
         setAvailableTeams(current => Array.from(new Set([...current, valor])).sort((a, b) => a - b))
+    }
+
+    function selecionarDataPersonalizada(valor: string) {
+        if (!valor) return
+        setSelectedDate(valor)
+        setMonthViewStart(valor.slice(0, 7) + "-01")
+        setCustomDateSelected(true)
+    }
+
+    function aoAlterarDataPersonalizada(event: React.ChangeEvent<HTMLInputElement>) {
+        selecionarDataPersonalizada(event.target.value)
+    }
+
+    function selecionarDataDoCalendario(valor: string) {
+        setSelectedDate(valor)
+        setCustomDateSelected(false)
+    }
+
+    function irParaHoje() {
+        setSelectedDate(hojeIso())
+        setMonthViewStart(hojeIso().slice(0, 7) + "-01")
+        setCustomDateSelected(false)
     }
 
     const updateScheduleDay = (weekday: number, changes: Partial<CalendarScheduleDay>) => setCalendarSchedule(current => current.map(day => day.weekday === weekday ? { ...day, ...changes } : day))
@@ -817,7 +855,10 @@ export default function CalendarUI() {
             if (!hours.some(period => period.weekday === selectedWeekday)) {
                 const nextOpenDate = Array.from({ length: 7 }, (_, offset) => deslocarData(selectedDate, offset))
                     .find(date => hours.some(period => period.weekday === new Date(date + "T12:00:00").getDay()))
-                if (nextOpenDate) setSelectedDate(nextOpenDate)
+                if (nextOpenDate) {
+                    setCustomDateSelected(false)
+                    setSelectedDate(nextOpenDate)
+                }
             }
         } catch (cause) {
             setError(cause instanceof Error ? cause.message : "Não foi possível atualizar os horários.")
@@ -891,12 +932,8 @@ export default function CalendarUI() {
     const saveAppointment = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         if (!activeCalendar || !patientName.trim()) return
-        if (scheduleConfigured && !selectedDayIsOpen) {
-            setError("Este calendário não atende no dia selecionado.")
-            return
-        }
-        if (scheduleConfigured && !selectedTimeIsAllowed) {
-            setError("O horário escolhido fica fora do horário de atendimento deste calendário.")
+        if (bloqueioDeHorario) {
+            setError(textoAvisoHorario)
             return
         }
         const isNewAppointment = !editingAppointmentId
@@ -1229,7 +1266,7 @@ export default function CalendarUI() {
             ? { background: "var(--editor-bg, Canvas)", border: "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))", badge: "#57534e", badgeText: "#ffffff" }
             : corDoDia(count, maxAppointmentsInCalendar)
         const patientNames = appointmentNamesByDate[date] || []
-        return <button type="button" aria-label={`${date}${holiday ? `, feriado nacional: ${holiday}` : ""}`} title={holiday || undefined} aria-pressed={isSelected} onClick={() => setSelectedDate(date)} style={{ position: "relative", display: "flex", width: "100%", minWidth: 0, minHeight: isMonth ? 72 : 200, boxSizing: "border-box", flexDirection: "column", alignItems: "flex-start", gap: 5, padding: "8px 7px", borderRadius: 8, border: isSelected ? "2px solid var(--editor-text, CanvasText)" : `1px solid ${isPastDate ? "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))" : holiday ? "color-mix(in srgb, #ef4444 55%, transparent)" : countColor.border}`, background: isPastDate ? "var(--editor-bg, Canvas)" : holiday ? "color-mix(in srgb, #ef4444 14%, var(--editor-bg, Canvas))" : countColor.background, color: "var(--editor-text, CanvasText)", textAlign: "left", cursor: "pointer" }}>
+        return <button type="button" aria-label={`${date}${holiday ? `, feriado nacional: ${holiday}` : ""}`} title={holiday || undefined} aria-pressed={isSelected} onClick={() => selecionarDataDoCalendario(date)} style={{ position: "relative", display: "flex", width: "100%", minWidth: 0, minHeight: isMonth ? 72 : 200, boxSizing: "border-box", flexDirection: "column", alignItems: "flex-start", gap: 5, padding: "8px 7px", borderRadius: 8, border: isSelected ? "2px solid var(--editor-text, CanvasText)" : `1px solid ${isPastDate ? "var(--editor-border, color-mix(in srgb, CanvasText 18%, Canvas))" : holiday ? "color-mix(in srgb, #ef4444 55%, transparent)" : countColor.border}`, background: isPastDate ? "var(--editor-bg, Canvas)" : holiday ? "color-mix(in srgb, #ef4444 14%, var(--editor-bg, Canvas))" : countColor.background, color: "var(--editor-text, CanvasText)", textAlign: "left", cursor: "pointer" }}>
             <span className="calendar-date-display" style={{ fontSize: 18, lineHeight: 1.1, fontWeight: isSelected ? 750 : 550 }}>{date.slice(8, 10)}<span style={{ fontSize: 14, fontWeight: 400, marginLeft: 2 }}>/</span><span style={{ fontSize: 14, fontWeight: 400, marginLeft: 1 }}>{date.slice(5, 7)}</span></span>
             {holiday ? <span aria-hidden="true" style={{ position: "absolute", left: 7, bottom: 6, color: "#a16207", fontSize: 10, fontWeight: 800 }}>F</span> : null}
             {isMonth ? <span aria-label={`${count} agendamentos`} style={{ position: "absolute", right: 7, bottom: 6, display: "inline-flex", alignItems: "center", maxWidth: "100%", borderRadius: 999, padding: "3px 7px", background: countColor.badge, color: countColor.badgeText, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>{count}</span> : <div style={{ display: "grid", gap: 3, width: "100%", maxHeight: 150, overflowY: "auto", fontSize: 14, lineHeight: 1.3 }}>{patientNames.map((name, index) => <span key={`${date}-${index}`} style={{ width: "100%", overflowWrap: "anywhere" }}>{name}</span>)}</div>}
@@ -1281,13 +1318,51 @@ export default function CalendarUI() {
         </main>
     }
 
+    const handleAtalhoClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+        event.preventDefault()
+        const globalWin = typeof window !== "undefined"
+            ? (window as unknown as Record<string, { preview?: () => void }>)
+            : null
+        if (globalWin && globalWin.FastMedicAgenda && typeof globalWin.FastMedicAgenda.preview === "function") {
+            globalWin.FastMedicAgenda.preview()
+            return
+        }
+        if (typeof window !== "undefined") {
+            Reflect.set(window, "__FASTMEDIC_AGENDA_PREVIEW__", true)
+        }
+        const script = document.createElement("script")
+        script.src = "/fastmedic-agenda.js"
+        script.onload = () => {
+            const g = window as unknown as Record<string, { preview?: () => void }>
+            if (g.FastMedicAgenda && typeof g.FastMedicAgenda.preview === "function") {
+                g.FastMedicAgenda.preview()
+            }
+            Reflect.deleteProperty(window, "__FASTMEDIC_AGENDA_PREVIEW__")
+        }
+        script.onerror = () => {
+            Reflect.deleteProperty(window, "__FASTMEDIC_AGENDA_PREVIEW__")
+            alert("Arraste este botão para a sua barra de favoritos do navegador.")
+        }
+        document.head.appendChild(script)
+    }
+
     return <main className="calendar-root" style={{ minHeight: "100vh", width: "100%", minWidth: 0, boxSizing: "border-box", borderRadius: 16, background: darkMode ? "#1c1917" : "#ffffff", padding: 24, color: darkMode ? "#f5f5f4" : "#1a1916", fontFamily: '"Google Sans Flex", "Google Sans", sans-serif', colorScheme: darkMode ? "dark" : "light" }}>
-        <style>{".calendar-root { --editor-bg: #ffffff; --editor-text: #1a1916; --meta-text: #6b6760; --editor-border: rgba(120,120,120,0.15); --meta-border: rgba(120,120,120,0.15); --meta-bg: rgba(120,120,120,0.06); --calendar-input-bg: rgba(120,120,120,0.08); --editor-shadow: none; } @media (prefers-color-scheme: dark) { .calendar-root { --editor-bg: #1c1917; --editor-text: #f5f5f4; --meta-text: #78716c; --editor-border: rgba(255,255,255,0.15); --meta-border: rgba(255,255,255,0.15); --meta-bg: rgba(255,255,255,0.06); --calendar-input-bg: #2e2b29; } } .calendar-root h1, .calendar-root h2, .calendar-root h3, .calendar-root strong { font-family: inherit !important; } @media (max-width: 760px) { .calendar-agenda-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-content-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-page-title { font-size: 20px !important; } .calendar-date-display { font-size: 14px !important; } .calendar-date-display span { display: none !important; } } .calendar-surface { background: var(--editor-bg, #ffffff) !important; border-color: var(--editor-border, rgba(120,120,120,0.15)) !important; color: var(--editor-text, #1a1916); box-shadow: var(--editor-shadow, none); } .calendar-muted { color: var(--meta-text, #6b6760) !important; } .calendar-page-title { font-family: inherit !important; font-size: 20px !important; } .calendar-agenda-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 16px; align-items: start; } .calendar-view-dates { padding: 10px; } .calendar-action { transition: transform .15s ease, opacity .15s ease; } .calendar-action:hover { transform: translateY(-1px); } .calendar-create-modal { width: min(760px, 100%) !important; } .calendar-schedule-day { display: grid; grid-template-columns: minmax(135px, .65fr) minmax(210px, 1fr) minmax(230px, 1.1fr); align-items: center; gap: 12px; } .calendar-session-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } @media (max-width: 720px) { .calendar-schedule-day { grid-template-columns: minmax(0, 1fr); gap: 8px; } }"}</style>
+        <style>{".calendar-root { --editor-bg: #ffffff; --editor-text: #1a1916; --meta-text: #6b6760; --editor-border: rgba(120,120,120,0.15); --meta-border: rgba(120,120,120,0.15); --meta-bg: rgba(120,120,120,0.06); --calendar-input-bg: rgba(120,120,120,0.08); --editor-shadow: none; } @media (prefers-color-scheme: dark) { .calendar-root { --editor-bg: #1c1917; --editor-text: #f5f5f4; --meta-text: #78716c; --editor-border: rgba(255,255,255,0.15); --meta-border: rgba(255,255,255,0.15); --meta-bg: rgba(255,255,255,0.06); --calendar-input-bg: #2e2b29; } } .calendar-root h1, .calendar-root h2, .calendar-root h3, .calendar-root strong { font-family: inherit !important; } @media (max-width: 760px) { .calendar-agenda-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-content-grid { grid-template-columns: minmax(0, 1fr) !important; } .calendar-page-title { font-size: 20px !important; } .calendar-date-display { font-size: 14px !important; } .calendar-date-display span { display: none !important; } } .calendar-surface { background: var(--editor-bg, #ffffff) !important; border-color: var(--editor-border, rgba(120,120,120,0.15)) !important; color: var(--editor-text, #1a1916); box-shadow: var(--editor-shadow, none); } .calendar-muted { color: var(--meta-text, #6b6760) !important; } .calendar-page-title { font-family: inherit !important; font-size: 20px !important; } .calendar-agenda-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr); gap: 16px; align-items: start; } .calendar-view-dates { padding: 10px; } .calendar-action { transition: transform .15s ease, opacity .15s ease; } .calendar-action:hover { transform: translateY(-1px); } .calendar-create-modal { width: min(760px, 100%) !important; } .calendar-schedule-day { display: grid; grid-template-columns: minmax(135px, .65fr) minmax(210px, 1fr) minmax(230px, 1.1fr); align-items: center; gap: 12px; } .calendar-session-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } @media (max-width: 720px) { .calendar-schedule-day { grid-template-columns: minmax(0, 1fr); gap: 8px; } } .calendar-atalho-btn { background: var(--calendar-input-bg, rgba(120,120,120,0.08)); border: 1.5px dashed var(--editor-border, rgba(120,120,120,0.15)); border-radius: 8px; padding: 8px 12px; cursor: grab; color: var(--meta-text, #6b6760); display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-decoration: none; user-select: none; white-space: nowrap; } .calendar-atalho-btn:hover { color: #2563eb; border-color: rgba(37,99,235,0.5); background: rgba(37,99,235,0.08); } .calendar-atalho-btn:active { cursor: grabbing; background: rgba(37,99,235,0.14); } @media (prefers-color-scheme: dark) { .calendar-atalho-btn:hover { color: #93c5fd; border-color: rgba(96,165,250,0.55); background: rgba(59,130,246,0.15); } }"}</style>
         <div style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
             <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap", marginBottom: 16 }}>
-                <h1 className="calendar-page-title" style={{ margin: 0, fontSize: 20, letterSpacing: "normal", fontWeight: 700 }}>Agenda</h1>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span className="calendar-muted" style={{ fontSize: 12, fontWeight: 600 }}>Equipe {teamId}</span>
+                <h1 className="calendar-page-title" style={{ margin: 0, fontSize: 20, letterSpacing: "normal", fontWeight: 700 }}>Agenda - Equipe {teamId}</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <a
+                        href={FASTMEDIC_AGENDA_BOOKMARKLET_HREF}
+                        title="arraste este botão para a barra de favoritos"
+                        aria-label="arraste este botão para a barra de favoritos"
+                        draggable={true}
+                        onClick={handleAtalhoClick}
+                        className="calendar-atalho-btn"
+                    >
+                        <IconeBookmarkAgenda />
+                        Atalho do Fastmedic
+                    </a>
                     <button type="button" style={buttonStyle} onClick={() => { setTeamId(null); setError(""); setNotice("") }}>Trocar equipe</button>
                 </div>
             </header>
@@ -1353,7 +1428,7 @@ export default function CalendarUI() {
                         <button type="button" aria-label="Período anterior" style={buttonStyle} onClick={() => navigatePeriod(-1)}>‹</button>
                         <strong style={{ minWidth: 150, textAlign: "center", textTransform: "capitalize", fontFamily: '"Playfair Display", serif', fontSize: 16 }}>{calendarView === "month" ? rotuloMes(selectedDate) : new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short" }).format(new Date(periodDates[0] + "T12:00:00")) + " – " + new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", year: "numeric" }).format(new Date(periodDates[6] + "T12:00:00"))}</strong>
                         <button type="button" aria-label="Próximo período" style={buttonStyle} onClick={() => navigatePeriod(1)}>›</button>
-                        <button type="button" style={buttonStyle} onClick={() => { setSelectedDate(hojeIso()); setMonthViewStart(hojeIso().slice(0, 7) + "-01") }}>Hoje</button>
+                        <button type="button" style={buttonStyle} onClick={irParaHoje}>Hoje</button>
                         <div role="group" aria-label="Visualização do calendário" style={{ display: "flex", marginLeft: "auto", padding: 3, borderRadius: 8, border: "1px solid var(--meta-border, var(--editor-border, #e7e5e4))", background: "var(--meta-bg, rgba(120,113,108,0.1))" }}>
                             <button type="button" aria-pressed={calendarView === "month"} onClick={openMonthView} style={{ ...buttonStyle, minHeight: 30, border: 0, background: calendarView === "month" ? "var(--editor-bg, Canvas)" : "transparent", boxShadow: calendarView === "month" ? "0 1px 3px rgba(0,0,0,.12)" : "none" }}>Mês</button>
                             <button type="button" aria-pressed={calendarView === "week"} onClick={() => setCalendarView("week")} style={{ ...buttonStyle, minHeight: 30, border: 0, background: calendarView === "week" ? "var(--editor-bg, Canvas)" : "transparent", boxShadow: calendarView === "week" ? "0 1px 3px rgba(0,0,0,.12)" : "none" }}>Semana</button>
@@ -1410,12 +1485,13 @@ export default function CalendarUI() {
                     <section style={{ display: "grid", gap: 14 }}>
                         <form onSubmit={saveAppointment} className="calendar-surface" style={{ display: "grid", gap: 12, background: "var(--editor-bg, Canvas)", border: "1px solid var(--editor-border, color-mix(in srgb, CanvasText 20%, Canvas))", borderRadius: 12, padding: 18 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 8 }}><div><h2 style={{ margin: 0, fontSize: 19 }}>{editingAppointmentId ? "Editar agendamento" : "Novo agendamento"}</h2></div><div style={{ display: "flex", alignItems: "center", gap: 6 }}><button type="button" aria-label={staffAccess ? "Bloquear edição da equipe" : "Desbloquear edição da equipe"} title={staffAccess ? "Edição da equipe ativa" : "Desbloquear edição da equipe"} onClick={toggleStaffAccess} style={{ ...buttonStyle, width: 40, minWidth: 40, height: 40, padding: 0, color: staffAccess ? "#3b82f6" : "var(--meta-text, GrayText)" }}><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m14.5 5.5 4 4M4 20l4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" /></svg></button>{editingAppointmentId ? <button type="button" style={buttonStyle} onClick={cancelEditingAppointment}>Cancelar</button> : null}</div></div>
+                            <label style={labelStyle}>Data (personalizada)<input required type="date" value={selectedDate} onChange={aoAlterarDataPersonalizada} style={inputStyle} /></label>
                             <label style={labelStyle}>Horário (opcional)<input type="time" value={appointmentTime} onChange={event => setAppointmentTime(event.target.value)} style={inputStyle} /></label>
                             <label style={labelStyle}>Nome do paciente<input required maxLength={160} value={patientName} onChange={event => setPatientName(event.target.value)} onBlur={() => setPatientName(current => capitalizarSeTudoMaiusculo(current))} style={inputStyle} /></label>
-                            {scheduleConfigured && (!selectedDayIsOpen || !selectedTimeIsAllowed) ? <div role="status" style={{ padding: 9, borderRadius: 8, color: "#b45309", background: "rgba(245,158,11,.12)", fontSize: 12 }}>{!selectedDayIsOpen ? "Este calendário não atende no dia selecionado." : "O horário escolhido fica fora do horário de atendimento."}</div> : null}
+                            {avisoForaDoHorario ? <div role="status" style={{ padding: 9, borderRadius: 8, color: "#b45309", background: "rgba(245,158,11,.12)", fontSize: 12 }}>{textoAvisoHorario}</div> : null}
                             {staff.some(person => person.is_active) ? <div style={{ display: "flex", alignItems: "end", gap: 7 }}><label style={{ ...labelStyle, flex: 1 }}>Profissional<select value={appointmentStaff} onChange={event => setAppointmentStaff(event.target.value)} style={inputStyle}><option value="">Equipe</option>{staff.filter(person => person.is_active).map(person => <option key={person.id} value={person.id}>{person.name}</option>)}</select></label>{staffAccess ? <button type="button" aria-label="Gerenciar profissionais" title="Adicionar ou remover profissionais" onClick={openStaffManager} style={{ ...buttonStyle, width: 32, minWidth: 32, height: 32, padding: 0, color: "var(--meta-text, GrayText)" }}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m14.5 5.5 4 4M4 20l4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" /></svg></button> : null}</div> : staffAccess ? <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 7 }}><span style={{ ...labelStyle, display: "block" }}>Profissional</span><button type="button" aria-label="Gerenciar profissionais" title="Adicionar profissionais" onClick={openStaffManager} style={{ ...buttonStyle, width: 32, minWidth: 32, height: 32, padding: 0, color: "var(--meta-text, GrayText)" }}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m14.5 5.5 4 4M4 20l4-.8L19 8.2a2.1 2.1 0 0 0-3-3L5 16.2 4 20Z" /></svg></button></div> : null}
                             {fields.filter(field => field.is_active !== false).map(field => <label key={field.id} style={labelStyle}>{field.label}{field.field_type === "dropdown" ? <select required={field.is_required} value={String(customValues[field.field_key] || "")} onChange={event => setCustomValue(field.field_key, event.target.value)} style={inputStyle}><option value="">Selecione…</option>{field.options.map(option => <option key={option} value={option}>{option}</option>)}</select> : field.field_type === "multi_select" ? <select multiple value={stringArray(customValues[field.field_key])} onChange={event => setCustomValue(field.field_key, Array.from(event.target.selectedOptions).map(option => option.value))} style={{ ...inputStyle, minHeight: 76 }}>{field.options.map(option => <option key={option} value={option}>{option}</option>)}</select> : field.field_type === "boolean" ? <select required={field.is_required} value={String(customValues[field.field_key] ?? "")} onChange={event => setCustomValue(field.field_key, event.target.value === "true" ? true : event.target.value === "false" ? false : "")} style={inputStyle}><option value="">Selecione…</option><option value="true">Sim</option><option value="false">Não</option></select> : <input required={field.is_required} type={field.field_type === "number" || field.field_type === "date" ? field.field_type : "text"} value={String(customValues[field.field_key] || "")} onChange={event => setCustomValue(field.field_key, field.field_type === "number" ? (event.target.value === "" ? "" : Number(event.target.value)) : event.target.value)} onBlur={field.field_type === "text" ? () => setCustomValue(field.field_key, capitalizarSeTudoMaiusculo(String(customValues[field.field_key] || ""))) : undefined} style={inputStyle} />}</label>)}
-                            <button disabled={loading || saving || (Boolean(editingAppointmentId) && !staffAccess) || (scheduleConfigured && (!selectedDayIsOpen || !selectedTimeIsAllowed))} type="submit" style={primaryStyle}>{saving ? "Salvando…" : editingAppointmentId ? "Salvar alterações" : "Agendar"}</button>
+                            <button disabled={loading || saving || (Boolean(editingAppointmentId) && !staffAccess) || bloqueioDeHorario} type="submit" style={primaryStyle}>{saving ? "Salvando…" : editingAppointmentId ? "Salvar alterações" : "Agendar"}</button>
                             {appointmentNotice ? <div role="status" style={{ padding: 10, borderRadius: 8, color: "#22c55e", background: "rgba(34,197,94,.1)", border: "1px solid rgba(34,197,94,.22)", fontSize: 13 }}>{appointmentNotice}</div> : null}
                         </form>
                         {staffAccess ? <button type="button" style={{ ...buttonStyle, justifySelf: "start" }} onClick={() => setShowFieldForm(!showFieldForm)}>+ Adicionar campo</button> : null}

@@ -1228,7 +1228,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .gas-section-concluida textarea,
                 .gas-section-concluida select {
                     background: transparent !important;
-                    color: #ffffff !important;
+                    color: var(--editor-text) !important;
                 }
                 @media (prefers-color-scheme: dark) {
                     .gas-section-progress { mix-blend-mode: screen; }
@@ -1255,7 +1255,7 @@ const Bloco = forwardRef<BlocoActions>(function Bloco(_props, ref) {
                 .bloco-plaintext-editor div { margin-bottom: 4px; color: var(--editor-text) !important; }
                 .bloco-plaintext-editor div:empty { height: 1em; }
                 .gas-plaintext-concluido,
-                .gas-plaintext-concluido div { color: #ffffff !important; }
+                .gas-plaintext-concluido div { color: var(--editor-text) !important; }
 
 
                 .bloco-icon-btn { transition: background 0.15s, color 0.15s, opacity 0.15s, transform 0.1s; }

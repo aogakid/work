@@ -1,9 +1,10 @@
 import * as React from "react"
 import { useEffect, useRef, useState } from "react"
 import { PDFDocument, PDFForm, PDFName, PDFDict } from "pdf-lib"
-import { maskPA } from "../../lib/objetivo"
+import { calcularIMC, maskPA } from "../../lib/objetivo"
 
 const PDF_IMPLANON = "/contents/ferramentas/procedimentos ambulatoriais/implanon/Implanon - termo e checklist.pdf"
+const FONTE_TEXTO_PDF = 11
 
 const OPCOES_INDICACAO_SUBJETIVO: { valor: string; rotulo: string }[] = [
     { valor: "adolescente", rotulo: "Adolescente" },
@@ -151,6 +152,35 @@ const injectStyles = `
       --implanon-alert-bg: rgba(127, 29, 29, 0.28);
       --implanon-alert-border: rgba(248, 113, 113, 0.55);
       --implanon-alert-text: #fecaca;
+    }
+  }
+
+  .implanon-root input[type="date"] {
+    color-scheme: light;
+  }
+
+  .implanon-root input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: none;
+    opacity: 0.6;
+    cursor: pointer;
+  }
+
+  .implanon-root input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .implanon-root input[type="date"] {
+      color-scheme: dark;
+    }
+
+    .implanon-root input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      opacity: 0.7;
+    }
+
+    .implanon-root input[type="date"]::-webkit-calendar-picker-indicator:hover {
+      opacity: 1;
     }
   }
 
@@ -375,6 +405,24 @@ function dataHoje(): [string, string, string] {
     return [dia, mes, ano]
 }
 
+function dataBrParaIso(valor: string): string {
+    const [d, m, a] = dividirData(valor)
+    if (!d || !m || !a) return ""
+    const ano = a.length === 2 ? "20" + a : a
+    return `${ano}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`
+}
+
+function dataIsoParaBr(valor: string): string {
+    const m = (valor || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (!m) return ""
+    return `${m[3]}/${m[2]}/${m[1]}`
+}
+
+function dataHojeIso(): string {
+    const [d, m, a] = dataHoje()
+    return `${a}-${m}-${d}`
+}
+
 function dividirPA(valor: string): [string, string] {
     const m = (valor || "").trim().match(/^(\d{2,3})x(\d{2,3})$/)
     if (!m) return ["", ""]
@@ -384,6 +432,14 @@ function dividirPA(valor: string): [string, string] {
 function textoOuNega(valor: string): string {
     const v = (valor || "").trim()
     return v ? v : "nega"
+}
+
+function juntarDataRotulo(data: string, rotulo: string): string {
+    const valorData = (data || "").trim()
+    const valorRotulo = (rotulo || "").trim()
+    if (!valorData) return valorRotulo
+    if (!valorRotulo) return valorData
+    return valorData + " - " + valorRotulo
 }
 
 function parseDataBr(valor: string): Date | null {
@@ -495,6 +551,16 @@ function gerarTexto(c: CamposImplanon): string {
     const linhaIndicacao = TEXTO_INDICACAO[c.indicacaoSubjetivo] ? "- " + TEXTO_INDICACAO[c.indicacaoSubjetivo] + "\n" : ""
     const trgFeito = c.trgStatus === "negativo" || c.trgStatus === "positivo"
     const trgResultado = c.trgStatus === "positivo" ? "reagente" : "não reagente"
+    const cicloOpcao = OPCOES_CICLO.find(function (o) { return o.valor === c.ciclo })
+    const ultimaRelacaoOpcao = OPCOES_ULTIMA_RELACAO.find(function (o) { return o.valor === c.ultimaRelacaoTipo })
+    const posPartoAbortoOpcao = OPCOES_POS_PARTO_ABORTO.find(function (o) { return o.valor === c.posPartoAbortoTipo })
+    const bracoOpcao = OPCOES_BRACO.find(function (o) { return o.valor === c.braco })
+    const cicloRotulo = cicloOpcao ? cicloOpcao.rotulo.toLowerCase() : ""
+    const ultimaRelacaoRotulo = ultimaRelacaoOpcao ? ultimaRelacaoOpcao.rotulo.toLowerCase() : ""
+    const posPartoAbortoRotulo = posPartoAbortoOpcao ? posPartoAbortoOpcao.rotulo.toLowerCase() : ""
+    const bracoRotulo = bracoOpcao ? bracoOpcao.rotulo.toLowerCase() : ""
+    const bracoParte = bracoRotulo ? " (" + bracoRotulo + ")" : ""
+    const dadosVitais = "- PA: " + maskPA(c.pa) + " | Peso: " + c.peso.trim() + " | Alt: " + c.altura.trim() + " | IMC: " + calcularIMC(c.peso, c.altura)
 
     const linhas: string[] = []
     linhas.push("# Inserção de implante subdérmico de etonogestrel 68mg")
@@ -510,18 +576,18 @@ function gerarTexto(c: CamposImplanon): string {
         ? "  - MAC prévio: nega"
         : "  - MAC prévio: " + (macRotulo || "XXX") + " – última dose em: " + (c.macUltimaDose.trim() || "")
 
-    linhas.push("  - DUM: " + (c.dum.trim() || ""))
-    linhas.push("  - Data da última relação sexual: " + (c.ultimaRelacao.trim() || ""))
+    linhas.push("  - DUM: " + juntarDataRotulo(c.dum, cicloRotulo))
+    linhas.push("  - Data da última relação sexual: " + juntarDataRotulo(c.ultimaRelacao, ultimaRelacaoRotulo))
+    if (posPartoAbortoOpcao) linhas.push("  - Pós-parto/aborto: " + juntarDataRotulo(c.posPartoAbortoData, posPartoAbortoRotulo))
     linhas.push(macLinha)
     linhas.push("  - Patologias: " + textoOuNega(c.patologiasTexto))
     linhas.push("  - Medicações de uso contínuo: " + textoOuNega(c.medicamentosTexto))
     linhas.push("  - Alergias medicamentosas: " + textoOuNega(c.alergiasTexto))
     linhas.push("")
-    if (trgFeito) {
-        linhas.push("## Objetivo:")
-        linhas.push("- Teste rápido de gravidez (realizado hoje): " + trgResultado)
-        linhas.push("")
-    }
+    linhas.push("## Objetivo:")
+    linhas.push(dadosVitais)
+    if (trgFeito) linhas.push("- Teste rápido de gravidez (realizado hoje): " + trgResultado)
+    linhas.push("")
     linhas.push("## Avaliação:")
     linhas.push("- Desejo por anticoncepção por implante subdérmico de etonogestrel")
     linhas.push("")
@@ -531,7 +597,7 @@ function gerarTexto(c: CamposImplanon): string {
     }
     linhas.push("- Emito a prescrição do implante de etonogestrel 68mg")
     linhas.push("- Realizo inserção de implante subdérmico de etonogestrel:")
-    linhas.push("    1. Posiciono paciente em decúbito dorsal com braço não dominante fletido e abduzido.")
+    linhas.push("    1. Posiciono paciente em decúbito dorsal com braço não dominante" + bracoParte + " fletido e abduzido.")
     linhas.push("    2. Realizo primeira marcação com caneta cirúrgica a 10 cm do epicôndilo medial e segunda a 5 cm da primeira, ambas 5 cm abaixo do sulco bicipital medial.")
     linhas.push("    3. Realizo assepsia com clorexidina aquosa a 2%.")
     linhas.push("    4. Administro anestesia local na primeira marcação e ao longo do trajeto de inserção com 2 mL de lidocaína a 2%.")
@@ -546,6 +612,14 @@ function setTextoCampo(form: PDFForm, nome: string, valor: string) {
     try {
         const campo = form.getTextField(nome)
         campo.setText(valor || "")
+    } catch {
+        // campo ausente ou tipo inesperado
+    }
+}
+
+function setFonteCampo(form: PDFForm, nome: string, tamanho: number) {
+    try {
+        form.getTextField(nome).setFontSize(tamanho)
     } catch {
         // campo ausente ou tipo inesperado
     }
@@ -605,6 +679,7 @@ async function preencherPdf(c: CamposImplanon): Promise<Uint8Array> {
 
     setTextoCampo(form, "Nome", c.nome)
     setTextoCampo(form, "Text3", c.cpf)
+    setFonteCampo(form, "Text3", FONTE_TEXTO_PDF)
     setTextoCampo(form, "DD", dD)
     setTextoCampo(form, "MM", dM)
     setTextoCampo(form, "YYYY", dA)
@@ -655,6 +730,7 @@ async function preencherPdf(c: CamposImplanon): Promise<Uint8Array> {
 
     setTextoCampo(form, "Medico", c.medico)
     setTextoCampo(form, "MedicoCRM", c.medicoCrm)
+    setFonteCampo(form, "MedicoCRM", FONTE_TEXTO_PDF)
 
     setCheck(form, "Check Box1", !alergiasPreenchida)
     setCheck(form, "Check Box2", alergiasPreenchida)
@@ -815,6 +891,13 @@ export default function ImplanonUI() {
         atualizarCampo(chave, valor)
     }
 
+    function handleData(e: React.ChangeEvent<HTMLInputElement>) {
+        const alvo = e.target
+        const chave = alvo.getAttribute("data-campo") as keyof CamposImplanon | null
+        if (!chave) return
+        atualizarCampo(chave, dataIsoParaBr(alvo.value))
+    }
+
     function handleCheck(e: React.ChangeEvent<HTMLInputElement>) {
         const alvo = e.target
         const chave = alvo.getAttribute("data-campo") as keyof CamposImplanon | null
@@ -869,7 +952,11 @@ export default function ImplanonUI() {
                     </div>
                     <div style={estilos.inputGroup}>
                         <label style={estilos.label}>Data de nascimento</label>
-                        <input style={estilos.input} data-campo="dataNascimento" value={campos.dataNascimento} onChange={handleTexto} placeholder="dd/mm/aaaa" />
+                        <input type="date" style={estilos.input} data-campo="dataNascimento" value={dataBrParaIso(campos.dataNascimento)} onChange={handleData} max={dataHojeIso()} />
+                    </div>
+                    <div style={estilos.inputGroup}>
+                        <label style={estilos.label}>Idade</label>
+                        <input style={{ ...estilos.input, color: "var(--implanon-text-muted)", cursor: "default" }} value={calcularIdade(campos.dataNascimento)} readOnly placeholder="—" aria-label="Idade" />
                     </div>
                     <div style={estilos.inputGroup}>
                         <label style={estilos.label}>PA</label>
@@ -918,13 +1005,13 @@ export default function ImplanonUI() {
                     {campos.macTipo !== "" && campos.macTipo !== "sem_uso" ? (
                         <div style={estilos.inputGroup}>
                             <label style={estilos.label}>{campos.macTipo === "diu" ? "Data de inserção" : "Última dose"}</label>
-                            <input style={estilos.input} data-campo="macUltimaDose" value={campos.macUltimaDose} onChange={handleTexto} placeholder="dd/mm/aaaa" />
+                            <input type="date" style={estilos.input} data-campo="macUltimaDose" value={dataBrParaIso(campos.macUltimaDose)} onChange={handleData} max={dataHojeIso()} />
                         </div>
                     ) : null}
                     <div style={{ display: "grid", gridTemplateColumns: "minmax(150px, 220px) 1fr", gap: "12px", gridColumn: "1 / -1" }}>
                         <div style={estilos.inputGroup}>
                             <label style={estilos.label}>DUM</label>
-                            <input style={estilos.input} data-campo="dum" value={campos.dum} onChange={handleTexto} placeholder="dd/mm/aaaa" />
+                            <input type="date" style={estilos.input} data-campo="dum" value={dataBrParaIso(campos.dum)} onChange={handleData} max={dataHojeIso()} />
                         </div>
                         <div style={estilos.inputGroup}>
                             <label style={estilos.label}>Ciclo</label>
@@ -946,7 +1033,7 @@ export default function ImplanonUI() {
                     <div style={{ display: "grid", gridTemplateColumns: "minmax(150px, 220px) 1fr", gap: "12px", gridColumn: "1 / -1" }}>
                         <div style={estilos.inputGroup}>
                             <label style={estilos.label}>Última relação sexual</label>
-                            <input style={estilos.input} data-campo="ultimaRelacao" value={campos.ultimaRelacao} onChange={handleTexto} placeholder="dd/mm/aaaa" />
+                            <input type="date" style={estilos.input} data-campo="ultimaRelacao" value={dataBrParaIso(campos.ultimaRelacao)} onChange={handleData} max={dataHojeIso()} />
                         </div>
                         <div style={estilos.inputGroup}>
                             <label style={estilos.label}>Tipo de última relação</label>
@@ -984,7 +1071,7 @@ export default function ImplanonUI() {
                             {campos.posPartoAbortoTipo !== "" ? (
                                 <div style={{ ...estilos.inputGroup, minWidth: "180px", maxWidth: "220px" }}>
                                     <label style={estilos.label}>Data</label>
-                                    <input style={estilos.input} data-campo="posPartoAbortoData" value={campos.posPartoAbortoData} onChange={handleTexto} placeholder="dd/mm/aaaa" />
+                                    <input type="date" style={estilos.input} data-campo="posPartoAbortoData" value={dataBrParaIso(campos.posPartoAbortoData)} onChange={handleData} max={dataHojeIso()} />
                                 </div>
                             ) : null}
                         </div>
